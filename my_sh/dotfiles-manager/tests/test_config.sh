@@ -27,4 +27,4 @@ if [[ -z "$ARCHIVE_PREFIX" ]]; then
     exit 1
 fi
 
-echo "PASS: config"
+echo "PASS: config - OK"

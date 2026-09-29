@@ -8,4 +8,4 @@ for script in "${scripts[@]}"; do
     bash -n "$script"
 done
 bash -n "$ROOT/dotfiles-manager.sh"
-echo 'PASS: syntax'
+echo 'PASS: syntax - OK'

@@ -39,4 +39,4 @@ if ! is_managed_or_parent ".config"; then
     exit 1
 fi
 
-printf 'PASS: validation\n'
+printf 'PASS: validation - OK\n'

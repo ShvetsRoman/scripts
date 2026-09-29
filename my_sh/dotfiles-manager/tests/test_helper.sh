@@ -17,3 +17,5 @@ source "$ROOT_DIR/lib/config.sh"
 source "$ROOT_DIR/lib/validation.sh"
 # shellcheck source=../lib/status.sh
 source "$ROOT_DIR/lib/status.sh"
+
+# echo "PASS: helper - OK"

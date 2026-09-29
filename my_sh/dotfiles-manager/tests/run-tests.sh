@@ -10,5 +10,6 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 "$ROOT/tests/test_validation.sh"
 "$ROOT/tests/test_status.sh"
 "$ROOT/tests/test_shellcheck.sh"
+"$ROOT/tests/test_helper.sh"
 
 printf 'Усі доступні тести пройдено.\n'

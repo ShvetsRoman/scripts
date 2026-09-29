@@ -38,4 +38,4 @@ if [[ "$(status_one ".config/test")" != *"[OK]"* ]]; then
     exit 1
 fi
 
-printf 'PASS: status\n'
+printf 'PASS: status - OK\n'

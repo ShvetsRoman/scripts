@@ -34,4 +34,4 @@ if ((${#test_scripts[@]} > 0)); then
         "${test_scripts[@]}"
 fi
 
-echo 'PASS: shellcheck'
+echo 'PASS: shellcheck - OK'

@@ -31,4 +31,4 @@ if [[ -z "$LOCK_FILE" ]]; then
     exit 1
 fi
 
-printf 'PASS: globals\n'
+printf 'PASS: globals - OK\n'

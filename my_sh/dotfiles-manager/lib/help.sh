@@ -15,10 +15,10 @@ $SCRIPT_NAME v$VERSION
 Команди:
   backup [PATH]             Backup всього або конкретного шляху
   backup changed            Backup лише змінених шляхів
-  restore [PATH]            Restore всього або конкретного шляху
-  diff [PATH]               Порівняти HOME і backup
-  status                    Smart status
-  verify [PATH]             Перевірити відповідність HOME і backup
+  restore [PATH]            Відновлення всього або конкретного шляху
+  diff [PATH]               Показує що саме відрізняється. Тобто виводить конкретні рядки/файли, де є зміни.
+  status                    Дає короткий стан кожного шляху: [OK], [NEW], [MISSING], [CHANGED].
+  verify [PATH]             Відповідає на питання “backup повністю відповідає HOME чи ні?”
   clean                     Видалити unmanaged top-level entries
   clean-all                 Видалити весь backup
   recovery list             Список recovery snapshots
