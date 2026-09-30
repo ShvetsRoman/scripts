@@ -22,20 +22,28 @@ show_final_info() {
     local admin_password
 
     admin_password="$(
-        sed -n 's/^WORDPRESS_ADMIN_PASSWORD=//p' "$INSTALL_DIR/.env"
+        sed \
+            -n \
+            's/^WORDPRESS_ADMIN_PASSWORD=//p' \
+            "$INSTALL_DIR/.env"
     )"
 
     printf '\n'
     printf '============================================================\n'
-    printf ' WORDPRESS STACK V2.0\n'
+    printf ' WORDPRESS STACK V2.0.8\n'
     printf '============================================================\n'
+    printf '\n'
+
+    printf 'Install path:\n'
+    printf '  %s\n' "$INSTALL_DIR"
     printf '\n'
 
     if [[ "$NO_START" == true ]]; then
         log_success "Конфігурацію створено та перевірено."
+
         printf '\n'
         printf 'Запуск:\n'
-        printf '  cd %s\n' "$INSTALL_DIR"
+        printf '  cd %q\n' "$INSTALL_DIR"
         printf '  make up\n'
         printf '  make install\n'
         printf '\n'
@@ -50,16 +58,20 @@ show_final_info() {
     if [[ "$DEPLOY_MODE" == "internet" ]]; then
         printf '  WordPress: https://%s\n' "$DOMAIN"
         printf '  WP-Admin:  https://%s/wp-admin\n' "$DOMAIN"
-        printf '  HTTPS:     Let'\''s Encrypt / Traefik auto-renew\n'
     else
         local server_ip
         server_ip="$(get_server_ip)"
 
-        printf '  WordPress: http://%s\n' "${server_ip:-SERVER_IP}"
-        printf '  Hostname:  http://%s\n' "$DOMAIN"
+        printf '  LAN hostname: http://%s\n' "$DOMAIN"
+        printf '  На сервері:   http://localhost\n'
+        printf '  На сервері:   http://127.0.0.1\n'
+
         printf '\n'
-        printf 'Для клієнтського /etc/hosts за потреби:\n'
+        printf 'Для доступу з іншого LAN-компʼютера додай у /etc/hosts:\n'
         printf '  %s %s\n' "${server_ip:-SERVER_IP}" "$DOMAIN"
+
+        printf '\n'
+        printf 'Важливо: localhost і 127.0.0.1 працюють лише на самому сервері.\n'
     fi
 
     printf '\n'
@@ -68,12 +80,8 @@ show_final_info() {
     printf '  Password: %s\n' "$admin_password"
 
     printf '\n'
-    printf 'Project:\n'
-    printf '  %s\n' "$INSTALL_DIR"
-
-    printf '\n'
     printf 'Commands:\n'
-    printf '  cd %s\n' "$INSTALL_DIR"
+    printf '  cd %q\n' "$INSTALL_DIR"
     printf '  make help\n'
     printf '  make status\n'
     printf '  make logs\n'
@@ -81,6 +89,13 @@ show_final_info() {
     printf '  make healthcheck\n'
 
     printf '\n'
+
+    if (( EUID == 0 )); then
+        log_info "Installer запущено як root."
+    else
+        log_info "Installer виконано без root."
+    fi
+
     log_warning "Збережи admin password у password manager."
     log_warning "Не додавай ${INSTALL_DIR}/.env до Git."
 }

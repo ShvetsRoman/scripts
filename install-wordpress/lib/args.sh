@@ -3,7 +3,9 @@
 show_help() {
     cat <<EOF
 Використання:
-  sudo ./wordpress-stack.sh [OPTIONS]
+  ./wordpress-stack.sh [OPTIONS]
+
+За замовчуванням sudo НЕ потрібен.
 
 Обов'язково:
   --mode internet|lan
@@ -11,46 +13,69 @@ show_help() {
 Для Internet:
   --domain DOMAIN
   --email EMAIL
+      Email для Let's Encrypt.
 
 Опції:
-  --dir PATH             Директорія встановлення
-                         Default: /opt/wordpress
+  --admin-email EMAIL
+      Email адміністратора WordPress.
+      Internet default: значення --email
+      LAN default: admin@example.com
 
-  --ssh-port PORT        SSH-порт для nftables/Fail2ban
-                         Default: 2241
+  --dir PATH
+      Абсолютний шлях встановлення.
+      Default: <home-каталог користувача>/wordpress
 
-  --manage-firewall      Додати окрему таблицю nftables
-                         для захисту host INPUT
+  --project-name NAME
+      Docker Compose project name.
+      Для існуючої інсталяції зберігається попереднє значення.
+      Для нової генерується автоматично з install path.
 
-  --no-fail2ban          Не налаштовувати Fail2ban
+  --ssh-port PORT
+      SSH-порт для Fail2ban/nftables.
+      Default: 2241
 
-  --no-start             Створити/перевірити stack,
-                         але не запускати його
+  --enable-fail2ban
+      Встановити та налаштувати Fail2ban.
+      Потребує root.
 
-  --force                Перегенерувати .env і конфігурації,
-                         які містять секрети
+  --manage-firewall
+      Додати nftables integration.
+      Потребує root.
 
-  -h, --help             Допомога
+  --no-start
+      Створити та перевірити stack,
+      але не запускати Docker containers.
+
+  --force
+      Дозволити зміну mode/domain/project-name
+      існуючої інсталяції.
+      Паролі бази даних при цьому НЕ обнуляються.
+
+  -h, --help
+      Допомога.
 
 Приклади:
 
-  sudo ./wordpress-stack.sh \
-      --mode internet \
-      --domain example.com \
-      --email admin@example.com
+  ./wordpress-stack.sh --mode lan
 
-  sudo ./wordpress-stack.sh \
-      --mode internet \
-      --domain example.com \
-      --email admin@example.com \
-      --manage-firewall
-
-  sudo ./wordpress-stack.sh --mode lan
-
-  sudo ./wordpress-stack.sh \
+  ./wordpress-stack.sh \
       --mode lan \
-      --domain wp.local \
-      --no-start
+      --admin-email admin@example.com \
+      --dir "\$HOME/sites/wordpress"
+
+  ./wordpress-stack.sh \
+      --mode internet \
+      --domain example.com \
+      --email letsencrypt@example.com \
+      --admin-email admin@example.com
+
+  sudo ./wordpress-stack.sh \
+      --mode internet \
+      --domain example.com \
+      --email letsencrypt@example.com \
+      --dir /srv/wordpress \
+      --enable-fail2ban \
+      --manage-firewall
 EOF
 }
 
@@ -61,6 +86,11 @@ require_arg_value() {
     if [[ -z "$value" || "$value" == --* ]]; then
         die "Параметр $option потребує значення."
     fi
+}
+
+is_valid_email() {
+    local value="$1"
+    [[ "$value" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]]
 }
 
 parse_args() {
@@ -74,11 +104,18 @@ parse_args() {
             --domain)
                 require_arg_value "$1" "${2:-}"
                 DOMAIN="$2"
+                DOMAIN_EXPLICIT=true
                 shift 2
                 ;;
             --email)
                 require_arg_value "$1" "${2:-}"
-                EMAIL="$2"
+                ACME_EMAIL="$2"
+                shift 2
+                ;;
+            --admin-email)
+                require_arg_value "$1" "${2:-}"
+                ADMIN_EMAIL="$2"
+                ADMIN_EMAIL_EXPLICIT=true
                 shift 2
                 ;;
             --dir)
@@ -86,17 +123,23 @@ parse_args() {
                 INSTALL_DIR="$2"
                 shift 2
                 ;;
+            --project-name)
+                require_arg_value "$1" "${2:-}"
+                PROJECT_NAME="$2"
+                PROJECT_NAME_EXPLICIT=true
+                shift 2
+                ;;
             --ssh-port)
                 require_arg_value "$1" "${2:-}"
                 SSH_PORT="$2"
                 shift 2
                 ;;
-            --manage-firewall)
-                MANAGE_FIREWALL=true
+            --enable-fail2ban)
+                ENABLE_FAIL2BAN=true
                 shift
                 ;;
-            --no-fail2ban)
-                ENABLE_FAIL2BAN=false
+            --manage-firewall)
+                MANAGE_FIREWALL=true
                 shift
                 ;;
             --no-start)
@@ -131,19 +174,25 @@ validate_args() {
     esac
 
     if [[ "$DEPLOY_MODE" == "internet" ]]; then
-        [[ -n "$DOMAIN" ]] || die "Для internet mode необхідний --domain."
-        [[ -n "$EMAIL" ]] || die "Для internet mode необхідний --email."
+        [[ -n "$DOMAIN" ]] ||
+            die "Для internet mode необхідний --domain."
+
+        [[ -n "$ACME_EMAIL" ]] ||
+            die "Для internet mode необхідний --email."
 
         if [[ ! "$DOMAIN" =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
             die "Некоректний domain: $DOMAIN"
         fi
 
-        if [[ ! "$EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]]; then
-            die "Некоректний email: $EMAIL"
+        if ! is_valid_email "$ACME_EMAIL"; then
+            die "Некоректний Let's Encrypt email: $ACME_EMAIL"
         fi
     else
-        DOMAIN="${DOMAIN:-wp.local}"
-        EMAIL="${EMAIL:-admin@localhost}"
+        DOMAIN="${DOMAIN:-wp.home.arpa}"
+    fi
+
+    if [[ -n "$ADMIN_EMAIL" ]] && ! is_valid_email "$ADMIN_EMAIL"; then
+        die "Некоректний WordPress admin email: $ADMIN_EMAIL"
     fi
 
     if [[ ! "$SSH_PORT" =~ ^[0-9]+$ ]]; then
@@ -158,7 +207,19 @@ validate_args() {
         die "--dir має бути абсолютним шляхом."
     fi
 
-    if [[ "$INSTALL_DIR" == "/" ]]; then
-        die "INSTALL_DIR не може бути /."
+    if [[ "$INSTALL_DIR" =~ [[:space:]] ]]; then
+        die "Шлях встановлення не повинен містити пробіли: $INSTALL_DIR"
+    fi
+
+    INSTALL_DIR="$(realpath -m -- "$INSTALL_DIR")"
+
+    case "$INSTALL_DIR" in
+        /|/bin|/boot|/dev|/etc|/home|/lib|/lib64|/proc|/root|/run|/sbin|/sys|/tmp|/usr|/var)
+            die "Небезпечний шлях встановлення: $INSTALL_DIR"
+            ;;
+    esac
+
+    if [[ -n "$PROJECT_NAME" && ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
+        die "Некоректний project name: $PROJECT_NAME"
     fi
 }

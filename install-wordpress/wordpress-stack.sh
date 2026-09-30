@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 # WordPress Production Stack Installer
-# Version: 2.0.0
+# Version: 2.0.8
 # ============================================================
 
 set -Eeuo pipefail
@@ -10,7 +10,7 @@ readonly SCRIPT_DIR="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1
     pwd -P
 )"
-readonly VERSION="2.0.0"
+readonly VERSION="2.0.8"
 
 source "$SCRIPT_DIR/config/defaults.conf"
 
@@ -31,12 +31,17 @@ trap 'exit 143' TERM
 main() {
     print_banner
 
+    init_runtime_defaults
     parse_args "$@"
     validate_args
 
-    check_root
     check_system
     check_dependencies
+    resolve_runtime_defaults
+    check_docker_access
+    validate_privilege_requirements
+    prepare_install_path
+    check_disk_space
 
     create_project_structure
     create_env_file
@@ -60,7 +65,9 @@ main() {
     if [[ "$NO_START" == false ]]; then
         start_services
         wait_for_services
+        normalize_wordpress_permissions
         install_wordpress
+        normalize_wordpress_permissions
         run_healthcheck
     fi
 

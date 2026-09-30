@@ -88,6 +88,7 @@ services:
 
     environment:
       DEPLOY_MODE: "${DEPLOY_MODE}"
+      DOMAIN: "${DOMAIN}"
 
       WORDPRESS_DB_HOST: "${WORDPRESS_DB_HOST}"
       WORDPRESS_DB_USER: "${MYSQL_USER}"
@@ -98,6 +99,7 @@ services:
         define('DISALLOW_FILE_EDIT', true);
         define('WP_MEMORY_LIMIT', '${MEMORY_LIMIT}');
         define('WP_MAX_MEMORY_LIMIT', '${MEMORY_LIMIT}');
+
         if (getenv('DEPLOY_MODE') === 'internet') {
             if (
                 isset($$_SERVER['HTTP_X_FORWARDED_PROTO']) &&
@@ -105,7 +107,27 @@ services:
             ) {
                 $$_SERVER['HTTPS'] = 'on';
             }
+
             define('FORCE_SSL_ADMIN', true);
+        }
+
+        if (
+            getenv('DEPLOY_MODE') === 'lan' &&
+            isset($$_SERVER['HTTP_HOST'])
+        ) {
+            $$_wp_raw_host = strtolower($$_SERVER['HTTP_HOST']);
+            $$_wp_host = preg_replace('/:\\d+$/', '', $$_wp_raw_host);
+
+            $$_wp_allowed_hosts = array(
+                strtolower(getenv('DOMAIN') ?: 'wp.home.arpa'),
+                'localhost',
+                '127.0.0.1'
+            );
+
+            if (in_array($$_wp_host, $$_wp_allowed_hosts, true)) {
+                define('WP_HOME', 'http://' . $$_wp_raw_host);
+                define('WP_SITEURL', 'http://' . $$_wp_raw_host);
+            }
         }
 
     volumes:
@@ -163,10 +185,10 @@ services:
       test:
         - CMD-SHELL
         - >-
+          MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}"
           mysqladmin ping
           -h 127.0.0.1
           -uroot
-          -p"$${MYSQL_ROOT_PASSWORD}"
           --silent
       interval: 10s
       timeout: 5s
@@ -197,6 +219,7 @@ services:
       WORDPRESS_ADMIN_PASSWORD: "${WORDPRESS_ADMIN_PASSWORD}"
       WORDPRESS_ADMIN_EMAIL: "${WORDPRESS_ADMIN_EMAIL}"
       WORDPRESS_TITLE: "${WORDPRESS_TITLE}"
+      INSTALL_FORCE: "${INSTALL_FORCE}"
 
     volumes:
       - ./data/wordpress:/var/www/html
@@ -224,8 +247,9 @@ services:
 
 networks:
   frontend:
+    name: "${COMPOSE_PROJECT_NAME}_frontend"
     driver: bridge
 
   backend:
+    name: "${COMPOSE_PROJECT_NAME}_backend"
     driver: bridge
-    internal: true

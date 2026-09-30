@@ -44,6 +44,7 @@ docker compose \
     -f compose.override.yml \
     exec \
     -T \
+    -e "MYSQL_PWD=${MYSQL_PASSWORD}" \
     db \
     mysqldump \
     --single-transaction \
@@ -51,9 +52,10 @@ docker compose \
     --lock-tables=false \
     --no-tablespaces \
     -u"$MYSQL_USER" \
-    -p"$MYSQL_PASSWORD" \
     "$MYSQL_DATABASE" |
     gzip > "$BACKUP_DIR/database.sql.gz"
+
+gzip -t "$BACKUP_DIR/database.sql.gz"
 
 echo "[2/3] WordPress files"
 
@@ -62,12 +64,17 @@ tar \
     -czf "$BACKUP_DIR/wordpress.tar.gz" \
     wordpress
 
+tar -tzf "$BACKUP_DIR/wordpress.tar.gz" >/dev/null
+
 echo "[3/3] Metadata"
 
 cat > "$BACKUP_DIR/backup.info" <<EOF
+format_version=2
 created=$(date --iso-8601=seconds)
 domain=${DOMAIN}
 database=${MYSQL_DATABASE}
+install_dir=${INSTALL_DIR}
+project_name=${COMPOSE_PROJECT_NAME}
 EOF
 
 echo "Backup created:"

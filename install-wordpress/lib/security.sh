@@ -8,9 +8,14 @@ install_arch_package_if_missing() {
         return 0
     fi
 
-    if command_exists pacman; then
+    if [[ -x /usr/bin/pacman ]]; then
         log_info "Встановлення package: $package_name"
-        pacman -S --needed --noconfirm "$package_name"
+
+        /usr/bin/pacman \
+            --noconfirm \
+            --needed \
+            -S \
+            "$package_name"
     else
         die "Не знайдено $command_name. Встанови package: $package_name"
     fi
@@ -18,6 +23,9 @@ install_arch_package_if_missing() {
 
 setup_nftables() {
     log_step "Налаштування nftables."
+
+    (( EUID == 0 )) ||
+        die "setup_nftables потребує root."
 
     install_arch_package_if_missing nft nftables
 
@@ -27,13 +35,14 @@ setup_nftables() {
     mkdir -p "$rules_dir"
 
     if [[ -f "$rules_file" ]]; then
-        cp -a -- "$rules_file" "${rules_file}.bak.$(date '+%Y%m%d_%H%M%S')"
+        cp -a -- \
+            "$rules_file" \
+            "${rules_file}.bak.$(date '+%Y%m%d_%H%M%S')"
     fi
 
     cat > "$rules_file" <<EOF
 # Managed by wordpress-stack installer.
-# This table protects host INPUT only.
-# Docker forwarding/NAT remains managed by Docker.
+# Existing nftables rules and Docker rules are not flushed.
 
 table inet wordpress_stack {
     chain input {
@@ -44,16 +53,10 @@ table inet wordpress_stack {
 
         iifname "lo" accept
 
-        # Allow SSH used by this server.
         tcp dport ${SSH_PORT} accept
 
-        # ICMP / ICMPv6 remain available for network diagnostics and PMTU.
         ip protocol icmp accept
         ip6 nexthdr ipv6-icmp accept
-
-        # Do not set policy drop here: this installer must not silently
-        # lock out unrelated host services. Harden the global host policy
-        # separately after reviewing all required ports.
     }
 }
 EOF
@@ -63,8 +66,12 @@ EOF
 #!/usr/sbin/nft -f
 include "/etc/nftables.d/*.nft"
 EOF
-    elif ! grep -Fq 'include "/etc/nftables.d/*.nft"' /etc/nftables.conf; then
-        printf '\ninclude "/etc/nftables.d/*.nft"\n' >> /etc/nftables.conf
+    elif ! grep -Fq \
+        'include "/etc/nftables.d/*.nft"' \
+        /etc/nftables.conf
+    then
+        printf '\ninclude "/etc/nftables.d/*.nft"\n' \
+            >> /etc/nftables.conf
     fi
 
     nft -c -f /etc/nftables.conf
@@ -74,13 +81,18 @@ EOF
         systemctl enable --now nftables
     fi
 
-    log_success "nftables table wordpress_stack додано без flush ruleset."
+    log_success "nftables integration готова."
 }
 
 setup_fail2ban() {
     log_step "Налаштування Fail2ban."
 
-    install_arch_package_if_missing fail2ban-client fail2ban
+    (( EUID == 0 )) ||
+        die "setup_fail2ban потребує root."
+
+    install_arch_package_if_missing \
+        fail2ban-client \
+        fail2ban
 
     mkdir -p /etc/fail2ban/jail.d
 

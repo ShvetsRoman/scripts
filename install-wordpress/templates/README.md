@@ -1,64 +1,104 @@
-# WordPress Production Stack V2.0
+# install-wordpress V2.0.8
 
-Модульний production stack:
+Модульний WordPress stack:
 
 - Traefik
-- Let's Encrypt у Internet mode
 - Nginx
 - WordPress PHP-FPM
-- MySQL 8.4
+- MySQL 8.4 LTS
 - WP-CLI
-- Fail2ban для SSH
-- optional nftables integration
+- Let's Encrypt
+- optional Fail2ban
+- optional nftables
 - backup / restore
-- healthcheck
-
-## Основні команди
-
-```bash
-make help
-make up
-make down
-make status
-make logs
-make backup
-make healthcheck
-```
-
-WP-CLI:
-
-```bash
-make wp CMD="plugin list"
-```
-
-Restore:
-
-```bash
-make restore BACKUP=2026-09-30_20-00-00
-```
-
-## HTTPS
-
-У `internet` mode Traefik автоматично отримує та поновлює
-Let's Encrypt certificate.
-
-`letsencrypt/acme.json` зберігається у persistent bind mount.
+- layered healthcheck
 
 ## LAN
 
-LAN mode працює через HTTP і не вмикає HSTS/FORCE_SSL_ADMIN.
+```bash
+./wordpress-stack.sh \
+  --mode lan \
+  --admin-email admin@example.com
+```
 
-## Secrets
+Default LAN hostname:
 
-`.env` має mode `0600` і внесений у `.gitignore`.
+```text
+wp.home.arpa
+```
 
-Не коміть `.env`.
+На самому сервері WordPress доступний через:
 
-## Firewall
+```text
+http://wp.home.arpa
+http://localhost
+http://127.0.0.1
+```
 
-`--manage-firewall` не виконує `flush ruleset` і не переписує
-Docker forwarding rules. Installer додає окрему таблицю
-`inet wordpress_stack`.
+Для `wp.home.arpa` на сервері healthcheck використовує локальний DNS override,
+тому запис у `/etc/hosts` сервера не потрібен.
 
-Загальну host policy DROP потрібно налаштовувати окремо після
-перевірки всіх сервісів сервера, щоб не заблокувати SSH/VPN.
+Для доступу з іншого LAN-компʼютера додай:
+
+```text
+SERVER_IP wp.home.arpa
+```
+
+у `/etc/hosts` цього клієнта або створи запис у локальному DNS.
+
+`localhost` та `127.0.0.1` на іншому компʼютері означають сам той компʼютер,
+а не WordPress-сервер.
+
+## Чому не .local
+
+`.local` використовується mDNS/Bonjour, тому default LAN hostname у V2.0.8:
+
+```text
+wp.home.arpa
+```
+
+## LAN WordPress URL behavior
+
+У LAN mode WordPress дозволяє лише ці HTTP Host values:
+
+- configured `${DOMAIN}`;
+- `localhost`;
+- `127.0.0.1`.
+
+Для них `WP_HOME` та `WP_SITEURL` визначаються динамічно після whitelist-перевірки,
+тому WordPress не перекидає `localhost` або `127.0.0.1` назад на primary hostname.
+
+## Internet
+
+```bash
+./wordpress-stack.sh \
+  --mode internet \
+  --domain example.com \
+  --email letsencrypt@example.com \
+  --admin-email admin@example.com
+```
+
+Internet mode не дозволяє localhost aliases через public Traefik router.
+
+## Root-only hardening
+
+```bash
+sudo ./wordpress-stack.sh \
+  --mode internet \
+  --domain example.com \
+  --email letsencrypt@example.com \
+  --admin-email admin@example.com \
+  --dir /srv/wordpress \
+  --enable-fail2ban \
+  --manage-firewall
+```
+
+## V2.0.8
+
+Додано:
+
+- default LAN domain `wp.home.arpa`;
+- LAN Traefik router для primary hostname + `localhost` + `127.0.0.1`;
+- dynamic LAN `WP_HOME/WP_SITEURL` з whitelist;
+- healthcheck усіх трьох LAN entry points;
+- збережена explicit Traefik `frontend` network з V2.0.7.

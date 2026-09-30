@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 
+frontend_network_name() {
+    printf '%s_frontend\n' "$PROJECT_NAME"
+}
+
 create_traefik_config() {
     log_step "Створення Traefik configuration."
+
+    local frontend_network
+    frontend_network="$(frontend_network_name)"
 
     if [[ "$DEPLOY_MODE" == "internet" ]]; then
         cat > "$INSTALL_DIR/traefik/traefik.yml" <<EOF
@@ -32,17 +39,18 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+    network: "${frontend_network}"
 
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "${EMAIL}"
+      email: "${ACME_EMAIL}"
       storage: "/letsencrypt/acme.json"
       httpChallenge:
         entryPoint: web
 EOF
     else
-        cat > "$INSTALL_DIR/traefik/traefik.yml" <<'EOF'
+        cat > "$INSTALL_DIR/traefik/traefik.yml" <<EOF
 log:
   level: WARN
 
@@ -61,6 +69,7 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+    network: "${frontend_network}"
 EOF
     fi
 
@@ -71,9 +80,11 @@ configure_compose_mode() {
     log_step "Створення Compose override."
 
     local override="$INSTALL_DIR/compose.override.yml"
+    local frontend_network
+    frontend_network="$(frontend_network_name)"
 
     if [[ "$DEPLOY_MODE" == "internet" ]]; then
-        cat > "$override" <<'EOF'
+        cat > "$override" <<EOF
 services:
   traefik:
     ports:
@@ -82,8 +93,9 @@ services:
   nginx:
     labels:
       traefik.enable: "true"
+      traefik.docker.network: "${frontend_network}"
 
-      traefik.http.routers.wordpress.rule: "Host(`${DOMAIN}`)"
+      traefik.http.routers.wordpress.rule: "Host(\`${DOMAIN}\`)"
       traefik.http.routers.wordpress.entrypoints: "websecure"
       traefik.http.routers.wordpress.tls: "true"
       traefik.http.routers.wordpress.tls.certresolver: "letsencrypt"
@@ -94,19 +106,18 @@ services:
       traefik.http.middlewares.wordpress-security.headers.contentTypeNosniff: "true"
       traefik.http.middlewares.wordpress-security.headers.referrerPolicy: "strict-origin-when-cross-origin"
       traefik.http.middlewares.wordpress-security.headers.stsSeconds: "31536000"
-      traefik.http.middlewares.wordpress-security.headers.stsIncludeSubdomains: "true"
-      traefik.http.middlewares.wordpress-security.headers.stsPreload: "true"
 
       traefik.http.routers.wordpress.middlewares: "wordpress-security"
 EOF
     else
-        cat > "$override" <<'EOF'
+        cat > "$override" <<EOF
 services:
   nginx:
     labels:
       traefik.enable: "true"
+      traefik.docker.network: "${frontend_network}"
 
-      traefik.http.routers.wordpress.rule: "PathPrefix(`/`)"
+      traefik.http.routers.wordpress.rule: "Host(\`${DOMAIN}\`) || Host(\`localhost\`) || Host(\`127.0.0.1\`)"
       traefik.http.routers.wordpress.entrypoints: "web"
       traefik.http.routers.wordpress.service: "wordpress"
 
@@ -133,6 +144,7 @@ validate_project() {
 
     (
         cd "$INSTALL_DIR"
+
         docker compose \
             -f compose.yml \
             -f compose.override.yml \
@@ -148,6 +160,21 @@ start_services() {
 
     (
         cd "$INSTALL_DIR"
+
+        if docker compose \
+            -f compose.yml \
+            -f compose.override.yml \
+            ps -q 2>/dev/null | grep -q .; then
+
+            log_info "Знайдено існуючий stack — пересоздаю containers/networks без видалення даних."
+
+            docker compose \
+                -f compose.yml \
+                -f compose.override.yml \
+                down \
+                --remove-orphans
+        fi
+
         docker compose \
             -f compose.yml \
             -f compose.override.yml \
@@ -168,34 +195,57 @@ wait_for_services() {
     while (( elapsed < timeout )); do
         local unhealthy
         local starting
+        local exited
 
         unhealthy="$(
             cd "$INSTALL_DIR"
+
             docker compose \
                 -f compose.yml \
                 -f compose.override.yml \
-                ps --format json 2>/dev/null |
+                ps \
+                --format json \
+                2>/dev/null |
             grep -c '"Health":"unhealthy"' || true
         )"
 
         starting="$(
             cd "$INSTALL_DIR"
+
             docker compose \
                 -f compose.yml \
                 -f compose.override.yml \
-                ps --format json 2>/dev/null |
+                ps \
+                --format json \
+                2>/dev/null |
             grep -c '"Health":"starting"' || true
         )"
 
-        if (( unhealthy > 0 )); then
+        exited="$(
+            cd "$INSTALL_DIR"
+
+            docker compose \
+                -f compose.yml \
+                -f compose.override.yml \
+                ps \
+                --all \
+                --format json \
+                2>/dev/null |
+            grep -Ec '"State":"(exited|dead)"' || true
+        )"
+
+        if (( unhealthy > 0 || exited > 0 )); then
             (
                 cd "$INSTALL_DIR"
+
                 docker compose \
                     -f compose.yml \
                     -f compose.override.yml \
-                    ps
+                    ps \
+                    --all
             )
-            die "Один або більше контейнерів unhealthy."
+
+            die "Один або більше контейнерів unhealthy/exited."
         fi
 
         if (( starting == 0 )); then
@@ -207,12 +257,15 @@ wait_for_services() {
         elapsed=$((elapsed + 3))
     done
 
-    log_warning "Healthcheck timeout. Показую поточний статус."
     (
         cd "$INSTALL_DIR"
+
         docker compose \
             -f compose.yml \
             -f compose.override.yml \
-            ps
+            ps \
+            --all
     )
+
+    die "Healthcheck timeout після ${timeout} секунд."
 }
