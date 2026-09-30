@@ -1,2 +1,0 @@
-inherits = "onedark" # або назва іншої бажаної теми (наприклад, "dracula", "gruvbox")
-"ui.background" = {}
