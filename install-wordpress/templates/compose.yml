@@ -1,0 +1,231 @@
+services:
+  traefik:
+    image: "traefik:${TRAEFIK_VERSION}"
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./letsencrypt:/letsencrypt
+
+    networks:
+      - frontend
+
+    healthcheck:
+      test:
+        - CMD
+        - traefik
+        - healthcheck
+        - --ping
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: "nginx:${NGINX_VERSION}"
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    read_only: true
+
+    tmpfs:
+      - /var/run
+      - /var/cache/nginx
+
+    volumes:
+      - ./data/wordpress:/var/www/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/security-headers.conf:/etc/nginx/conf.d/security-headers.conf:ro
+      - ./logs/nginx:/var/log/nginx
+
+    networks:
+      - frontend
+      - backend
+
+    depends_on:
+      wordpress:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q --spider http://127.0.0.1/ || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  wordpress:
+    image: "wordpress:${WORDPRESS_VERSION}"
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      DEPLOY_MODE: "${DEPLOY_MODE}"
+
+      WORDPRESS_DB_HOST: "${WORDPRESS_DB_HOST}"
+      WORDPRESS_DB_USER: "${MYSQL_USER}"
+      WORDPRESS_DB_PASSWORD: "${MYSQL_PASSWORD}"
+      WORDPRESS_DB_NAME: "${MYSQL_DATABASE}"
+
+      WORDPRESS_CONFIG_EXTRA: |
+        define('DISALLOW_FILE_EDIT', true);
+        define('WP_MEMORY_LIMIT', '${MEMORY_LIMIT}');
+        define('WP_MAX_MEMORY_LIMIT', '${MEMORY_LIMIT}');
+        if (getenv('DEPLOY_MODE') === 'internet') {
+            if (
+                isset($$_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+                strpos($$_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false
+            ) {
+                $$_SERVER['HTTPS'] = 'on';
+            }
+            define('FORCE_SSL_ADMIN', true);
+        }
+
+    volumes:
+      - ./data/wordpress:/var/www/html
+      - ./php/custom.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+
+    networks:
+      - backend
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        - CMD
+        - php-fpm
+        - -t
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: "mysql:${MYSQL_VERSION}"
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=100
+
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+    networks:
+      - backend
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mysqladmin ping
+          -h 127.0.0.1
+          -uroot
+          -p"$${MYSQL_ROOT_PASSWORD}"
+          --silent
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  wpcli:
+    image: "wordpress:${WPCLI_VERSION}"
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      WORDPRESS_DB_HOST: "${WORDPRESS_DB_HOST}"
+      WORDPRESS_DB_USER: "${MYSQL_USER}"
+      WORDPRESS_DB_PASSWORD: "${MYSQL_PASSWORD}"
+      WORDPRESS_DB_NAME: "${MYSQL_DATABASE}"
+
+      APP_URL: "${APP_URL}"
+      WORDPRESS_ADMIN_USER: "${WORDPRESS_ADMIN_USER}"
+      WORDPRESS_ADMIN_PASSWORD: "${WORDPRESS_ADMIN_PASSWORD}"
+      WORDPRESS_ADMIN_EMAIL: "${WORDPRESS_ADMIN_EMAIL}"
+      WORDPRESS_TITLE: "${WORDPRESS_TITLE}"
+
+    volumes:
+      - ./data/wordpress:/var/www/html
+      - ./scripts:/scripts:ro
+
+    networks:
+      - backend
+
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_healthy
+
+    command:
+      - tail
+      - -f
+      - /dev/null
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  frontend:
+    driver: bridge
+
+  backend:
+    driver: bridge
+    internal: true
