@@ -1,13 +1,8 @@
 return {
-  -- 1. Вимикаємо стандартний Telescope
-  {
-    "nvim-telescope/telescope.nvim",
-    enabled = false,
-  },
-
-  -- 2. Додаємо та налаштовуємо FZF-lua (Загальний конфіг + LSP)
+  -- Додаємо та налаштовуємо FZF-lua (Загальний конфіг + LSP)
   {
     "ibhagwan/fzf-lua",
+    enabled = false,
     dependencies = { "nvim-tree/nvim-web-devicons" },
     cmd = "FzfLua",
     config = function()
