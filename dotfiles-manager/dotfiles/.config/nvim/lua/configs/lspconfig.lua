@@ -1,28 +1,33 @@
 -- load defaults i.e lua_lsp
 require("nvchad.configs.lspconfig").defaults()
 
-local lspconfig = require "lspconfig"
+-- lua/configs/lspconfig.lua
+local configs = require "nvchad.configs.lspconfig"
 
--- EXAMPLE
--- local servers = { "html", "cssls" }
-local servers = {
+-- Отримуємо стандартні обробники NvChad
+local on_attach = configs.on_attach
+local on_init = configs.on_init
+local capabilities = configs.capabilities
 
-}
+-- Масив серверів, які ми хочемо активувати
+local servers = { "html", "cssls", "bashls" }
 
-local nvlsp = require "nvchad.configs.lspconfig"
-
--- lsps with default config
 for _, lsp in ipairs(servers) do
-  lspconfig[lsp].setup {
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
-  }
-end
+  -- Новий синтаксис Neovim 0.11+: змінюємо параметри безпосередньо у vim.lsp.config
+  if vim.lsp.config[lsp] then
+    vim.lsp.config[lsp] = {
+      -- Додаємо або розширюємо стандартні налаштування сервера
+      cmd = vim.lsp.config[lsp].cmd,
+      filetypes = vim.lsp.config[lsp].filetypes,
+      root_markers = vim.lsp.config[lsp].root_markers,
 
--- configuring single server, example: typescript
--- lspconfig.ts_ls.setup {
---   on_attach = nvlsp.on_attach,
---   on_init = nvlsp.on_init,
---   capabilities = nvlsp.capabilities,
--- }
+      -- Передаємо функції зворотного виклику та capabilities від NvChad
+      on_attach = on_attach,
+      on_init = on_init,
+      capabilities = capabilities,
+    }
+
+    -- Вмикаємо сервер через вбудований метод Neovim
+    vim.lsp.enable(lsp)
+  end
+end
