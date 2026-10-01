@@ -12,13 +12,13 @@ map({ "n", "i", "v" }, "<C-s>", "<cmd> :w <CR>")
 -- Insert Line Below
 map("n", "<C-CR>", "O<ESC>", { desc = "Insert Insert line below UP" })
 map("n", "<CR>", "o<ESC>", { desc = "Insert Insert line below" })
--- Відкриває nvim-tree в директорії проекту
-map("n", "<F1>", "<cmd> :NvimTreeToggle <CR>", { desc = "Nvim-tree" })
--- Відкриває nvim-tree в домашній директорії
-map("n", "<F2>", function()
-  local home = vim.fn.expand "~"
-  require("nvim-tree.api").tree.open { path = home }
-end, { desc = "Open NvimTree in Home directory" })
+-- -- Відкриває nvim-tree в директорії проекту
+-- map("n", "<F1>", "<cmd> :NvimTreeToggle <CR>", { desc = "Nvim-tree" })
+-- -- Відкриває nvim-tree в домашній директорії
+-- map("n", "<F2>", function()
+--   local home = vim.fn.expand "~"
+--   require("nvim-tree.api").tree.open { path = home }
+-- end, { desc = "Open NvimTree in Home directory" })
 -- Search Replace
 map("n", "<F4>", ":%s///gc<LEFT><LEFT><LEFT><LEFT>", { desc = "Search Пошук та заміна" })
 map("i", "<F4>", "<ESC>:%s///gc<LEFT><LEFT><LEFT><LEFT>", { desc = "Search Пошук та заміна" })
@@ -166,6 +166,11 @@ map("n", "<leader>e", function()
 end, {
     desc = "Файловий менеджер",
 })
+map("n", "<F1>", function()
+    Snacks.explorer()
+end, {
+    desc = "Файловий менеджер",
+})
 -- Аналог стандартного <C-n> NvChad
 map("n", "<C-n>", function()
     Snacks.explorer()
@@ -174,6 +179,13 @@ end, {
 })
 -- Завжди відкриватиме Explorer від кореня поточного робочого каталогу.
 map("n", "<leader>fe", function()
+    Snacks.explorer({
+        cwd = vim.fn.getcwd(),
+    })
+end, {
+    desc = "Файловий менеджер",
+})
+map("n", "<F2>", function()
     Snacks.explorer({
         cwd = vim.fn.getcwd(),
     })
@@ -338,7 +350,7 @@ end, {
     desc = "Історія команд",
 })
 -- Історія пошуку
-map("n", "<leader>/", function()
+map("n", "<leader>f/", function()
     Snacks.picker.search_history()
 end, {
     desc = "Історія пошуку",

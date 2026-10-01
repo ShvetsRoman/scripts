@@ -7,13 +7,19 @@
 -- СПІЛЬНІ РОЗМІРИ EXPLORER ТА PICKER
 -- ------------------------------------------------------------
 
+-- Загальна ширина floating-вікна
 local picker_width = 0.88
+
+-- Загальна висота floating-вікна
 local picker_height = 0.80
 
--- Ширина лівої частини зі списком файлів / результатів
+-- Невеликий зсув вправо від центру
+local picker_col = 0.058
+
+-- Ширина лівої частини
 local list_width = 0.36
 
--- Ширина правої частини з preview
+-- Ширина preview
 local preview_width = 0.64
 
 -- ------------------------------------------------------------
@@ -65,10 +71,10 @@ return {
             explorer = {
                 enabled = true,
 
-                -- Замінює стандартний netrw
+                -- Замінює netrw
                 replace_netrw = true,
 
-                -- Використовувати системний кошик
+                -- Видалення через системний кошик
                 trash = true,
             },
 
@@ -87,13 +93,50 @@ return {
             picker = {
                 enabled = true,
 
-                -- Після відкриття файла закрити Picker / Explorer
+                -- Після переходу до файла Picker закривається
                 jump = {
                     close = true,
                 },
 
                 -- =====================================================
-                -- ВЛАСНІ LAYOUT
+                -- ВЛАСНІ ACTIONS
+                -- =====================================================
+
+                actions = {
+                    -- -------------------------------------------------
+                    -- ВІДКРИТТЯ ЕЛЕМЕНТА EXPLORER
+                    -- -------------------------------------------------
+
+                    explorer_open = function(picker, item)
+                        item = item or picker:current()
+
+                        if not item then
+                            return
+                        end
+
+                        -- Директорія:
+                        -- стандартний confirm розгортає / відкриває її
+                        if item.dir then
+                            picker:action("confirm")
+                            return
+                        end
+
+                        -- Файл:
+                        -- відкриваємо файл стандартною дією
+                        picker:action("confirm")
+
+                        -- Після відкриття файла гарантовано
+                        -- закриваємо Explorer
+                        vim.schedule(function()
+                            if picker and not picker.closed then
+                                picker:close()
+                            end
+                        end)
+                    end,
+                },
+
+                -- =====================================================
+                -- LAYOUTS
                 -- =====================================================
 
                 layouts = {
@@ -109,16 +152,14 @@ return {
 
                         layout = {
                             box = "horizontal",
-
-                            -- Floating-вікно
                             position = "float",
 
-                            -- =========================================
-                            -- СПІЛЬНИЙ РОЗМІР
-                            -- =========================================
-
+                            -- Розмір
                             width = picker_width,
                             height = picker_height,
+
+                            -- Невеликий зсув вправо
+                            col = picker_col,
 
                             backdrop = 40,
                             border = "rounded",
@@ -131,7 +172,6 @@ return {
                                 box = "vertical",
                                 width = list_width,
 
-                                -- Поле фільтрації
                                 {
                                     win = "input",
                                     height = 1,
@@ -141,7 +181,6 @@ return {
                                     title_pos = "center",
                                 },
 
-                                -- Дерево файлів
                                 {
                                     win = "list",
                                     border = "none",
@@ -149,7 +188,7 @@ return {
                             },
 
                             -- =========================================
-                            -- ПРАВА ЧАСТИНА
+                            -- PREVIEW
                             -- =========================================
 
                             {
@@ -158,6 +197,7 @@ return {
                                 width = preview_width,
 
                                 border = "left",
+
                                 title = "{preview:Preview}",
                                 title_pos = "center",
                             },
@@ -170,20 +210,18 @@ return {
 
                     helix_picker = {
                         cycle = true,
-
-                        -- Preview показується одразу
                         hidden = {},
 
                         layout = {
                             box = "horizontal",
                             position = "float",
 
-                            -- =========================================
-                            -- ТОЧНО ТАКИЙ САМИЙ РОЗМІР
-                            -- =========================================
-
+                            -- Такий самий розмір, як Explorer
                             width = picker_width,
                             height = picker_height,
+
+                            -- Такий самий зсув вправо
+                            col = picker_col,
 
                             backdrop = 40,
                             border = "rounded",
@@ -221,6 +259,7 @@ return {
                                 width = preview_width,
 
                                 border = "left",
+
                                 title = "{preview:Preview}",
                                 title_pos = "center",
                             },
@@ -229,7 +268,7 @@ return {
                 },
 
                 -- =====================================================
-                -- КЛАВІШІ PICKER
+                -- ГЛОБАЛЬНІ КЛАВІШІ PICKER
                 -- =====================================================
 
                 win = {
@@ -239,7 +278,7 @@ return {
 
                     input = {
                         keys = {
-                            -- ESC одразу закриває Picker
+                            -- ESC закриває Picker навіть з Insert mode
                             ["<Esc>"] = {
                                 "cancel",
                                 mode = { "i", "n" },
@@ -257,13 +296,13 @@ return {
                                 mode = { "i", "n" },
                             },
 
-                            -- Увімкнути / вимкнути preview
+                            -- Preview on/off
                             ["<A-p>"] = {
                                 "toggle_preview",
                                 mode = { "i", "n" },
                             },
 
-                            -- Перемикання між input/list/preview
+                            -- Перехід між вікнами Picker
                             ["<A-w>"] = {
                                 "cycle_win",
                                 mode = { "i", "n" },
@@ -286,13 +325,13 @@ return {
                             ["gg"] = "list_top",
                             ["G"] = "list_bottom",
 
-                            -- Перейти до поля пошуку
+                            -- Перейти до input
                             ["i"] = "focus_input",
 
                             -- Preview
                             ["<A-p>"] = "toggle_preview",
 
-                            -- Перемикання між вікнами
+                            -- Перехід між вікнами
                             ["<A-w>"] = "cycle_win",
                         },
                     },
@@ -324,18 +363,54 @@ return {
                     -- =================================================
 
                     explorer = {
+                        -- Показувати приховані файли
                         hidden = true,
+
+                        -- Git ignored не показуємо
                         ignored = false,
+
+                        -- Автоматичне закриття при переході
+                        -- в зовнішнє вікно
+                        auto_close = true,
 
                         layout = {
                             preset = "helix_explorer",
-
-                            -- Не приховувати preview
                             hidden = {},
                         },
 
-                        -- Preview відкривається автоматично
+                        -- Preview одразу відкритий
                         on_show = show_preview,
+
+                        -- ---------------------------------------------
+                        -- КЛАВІШІ САМЕ EXPLORER
+                        -- ---------------------------------------------
+
+                        win = {
+                            input = {
+                                keys = {
+                                    -- Enter:
+                                    -- директорія -> відкрити
+                                    -- файл -> відкрити та закрити Explorer
+                                    ["<CR>"] = {
+                                        "explorer_open",
+                                        mode = { "i", "n" },
+                                    },
+                                },
+                            },
+
+                            list = {
+                                keys = {
+                                    -- Enter
+                                    ["<CR>"] = "explorer_open",
+
+                                    -- Helix-подібне відкриття вправо
+                                    ["l"] = "explorer_open",
+
+                                    -- Вийти / назад стандартною дією Explorer
+                                    ["h"] = "explorer_up",
+                                },
+                            },
+                        },
                     },
 
                     -- =================================================
@@ -676,7 +751,7 @@ return {
             },
 
             -- =========================================================
-            -- WORDS / LSP REFERENCES
+            -- WORDS
             -- =========================================================
 
             words = {
