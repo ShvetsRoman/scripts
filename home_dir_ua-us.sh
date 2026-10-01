@@ -1,4 +1,4 @@
- #!/bin/bash
+#!/bin/bash
 
 rm -r "$HOME"/Відео
 rm -r "$HOME"/Документи

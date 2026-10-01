@@ -46,7 +46,8 @@ generate_secret() {
 }
 
 # ГЕНЕРАЦІЯ СЕКРЕТУ
-readonly SECRET="$(generate_secret "${SYMBOLS}")"
+SECRET="$(generate_secret "${SYMBOLS}")"
+readonly SECRET
 
 # РЕЗУЛЬТАТ
 echo "${SECRET}"
