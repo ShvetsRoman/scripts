@@ -13,7 +13,7 @@ local picker_width = 0.88
 -- Загальна висота floating-вікна
 local picker_height = 0.80
 
--- Невеликий зсув вправо від центру
+-- Невеликий зсув вправо
 local picker_col = 0.058
 
 -- Ширина лівої частини
@@ -71,7 +71,7 @@ return {
             explorer = {
                 enabled = true,
 
-                -- Замінює netrw
+                -- Замінює стандартний netrw
                 replace_netrw = true,
 
                 -- Видалення через системний кошик
@@ -92,6 +92,20 @@ return {
 
             picker = {
                 enabled = true,
+
+                -- =====================================================
+                -- LAYOUT ЗА ЗАМОВЧУВАННЯМ
+                -- =====================================================
+
+                -- Smart Search використовує той самий layout,
+                -- що й Explorer.
+                layout = {
+                    preset = "helix_explorer",
+                    hidden = {},
+                },
+
+                -- Preview автоматично відкривається
+                on_show = show_preview,
 
                 -- Після переходу до файла Picker закривається
                 jump = {
@@ -115,18 +129,18 @@ return {
                         end
 
                         -- Директорія:
-                        -- стандартний confirm розгортає / відкриває її
+                        -- просто розгортаємо / відкриваємо її
                         if item.dir then
                             picker:action("confirm")
                             return
                         end
 
                         -- Файл:
-                        -- відкриваємо файл стандартною дією
+                        -- відкриваємо стандартною дією
                         picker:action("confirm")
 
-                        -- Після відкриття файла гарантовано
-                        -- закриваємо Explorer
+                        -- Після відкриття файла
+                        -- гарантовано закриваємо Explorer
                         vim.schedule(function()
                             if picker and not picker.closed then
                                 picker:close()
@@ -141,28 +155,28 @@ return {
 
                 layouts = {
                     -- =================================================
-                    -- EXPLORER
+                    -- EXPLORER / SMART SEARCH
                     -- =================================================
 
                     helix_explorer = {
                         cycle = true,
-
-                        -- Не приховувати input/list/preview
                         hidden = {},
 
                         layout = {
                             box = "horizontal",
                             position = "float",
 
-                            -- Розмір
+                            -- =========================================
+                            -- РОЗМІР
+                            -- =========================================
+
                             width = picker_width,
                             height = picker_height,
 
-                            -- Невеликий зсув вправо
+                            -- Зсув вправо
                             col = picker_col,
 
                             backdrop = 40,
-                            border = "rounded",
 
                             -- =========================================
                             -- ЛІВА ЧАСТИНА
@@ -172,15 +186,20 @@ return {
                                 box = "vertical",
                                 width = list_width,
 
+                                -- Рамка та title для всієї
+                                -- лівої частини
+                                border = "rounded",
+                                title = " {source} ",
+                                title_pos = "center",
+
+                                -- Поле пошуку
                                 {
                                     win = "input",
                                     height = 1,
                                     border = "bottom",
-
-                                    title = " Explorer ",
-                                    title_pos = "center",
                                 },
 
+                                -- Список / дерево файлів
                                 {
                                     win = "list",
                                     border = "none",
@@ -193,19 +212,18 @@ return {
 
                             {
                                 win = "preview",
-
                                 width = preview_width,
 
-                                border = "left",
+                                border = "rounded",
 
-                                title = "{preview:Preview}",
+                                title = " {preview} ",
                                 title_pos = "center",
                             },
                         },
                     },
 
                     -- =================================================
-                    -- ПОШУК / PICKER
+                    -- ЗВИЧАЙНИЙ PICKER
                     -- =================================================
 
                     helix_picker = {
@@ -216,15 +234,15 @@ return {
                             box = "horizontal",
                             position = "float",
 
-                            -- Такий самий розмір, як Explorer
+                            -- Такий самий розмір,
+                            -- як Explorer і Smart Search
                             width = picker_width,
                             height = picker_height,
 
-                            -- Такий самий зсув вправо
+                            -- Такий самий зсув
                             col = picker_col,
 
                             backdrop = 40,
-                            border = "rounded",
 
                             -- =========================================
                             -- ЛІВА ЧАСТИНА
@@ -234,13 +252,14 @@ return {
                                 box = "vertical",
                                 width = list_width,
 
+                                border = "rounded",
+                                title = " {source} ",
+                                title_pos = "center",
+
                                 {
                                     win = "input",
                                     height = 1,
                                     border = "bottom",
-
-                                    title = " Search ",
-                                    title_pos = "center",
                                 },
 
                                 {
@@ -255,12 +274,11 @@ return {
 
                             {
                                 win = "preview",
-
                                 width = preview_width,
 
-                                border = "left",
+                                border = "rounded",
 
-                                title = "{preview:Preview}",
+                                title = " {preview} ",
                                 title_pos = "center",
                             },
                         },
@@ -278,7 +296,7 @@ return {
 
                     input = {
                         keys = {
-                            -- ESC закриває Picker навіть з Insert mode
+                            -- ESC закриває Picker навіть у Insert mode
                             ["<Esc>"] = {
                                 "cancel",
                                 mode = { "i", "n" },
@@ -302,7 +320,7 @@ return {
                                 mode = { "i", "n" },
                             },
 
-                            -- Перехід між вікнами Picker
+                            -- Перехід між input/list/preview
                             ["<A-w>"] = {
                                 "cycle_win",
                                 mode = { "i", "n" },
@@ -406,7 +424,7 @@ return {
                                     -- Helix-подібне відкриття вправо
                                     ["l"] = "explorer_open",
 
-                                    -- Вийти / назад стандартною дією Explorer
+                                    -- Назад / закрити директорію
                                     ["h"] = "explorer_up",
                                 },
                             },
