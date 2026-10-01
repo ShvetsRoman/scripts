@@ -3,12 +3,15 @@ require "nvchad.mappings"
 
 local map = vim.keymap.set
 
+map("n", "L", "$", { desc = "Перейти на кінець рядка" })
+map("n", "H", "0", { desc = "Перейти на початок рядка" })
+map("n", "%", "ggVG", { desc = "Виділити весь текст в файлі" })
 -- enter cmd mode with ";"
 map("n", ";", ":", { desc = "CMD enter command mode" })
 -- exit insert mode with "jk"
-map("i", "jk", "<ESC>")
+map("i", "jk", "<ESC>", { desc = "Exit insert mode with 'jk'" })
 -- save using Ctrl+s
-map({ "n", "i", "v" }, "<C-s>", "<cmd> :w <CR>")
+map({ "n", "i", "v" }, "<C-s>", "<cmd> :w <CR>", { desc = "Save using Ctrl+s" })
 -- Insert Line Below
 map("n", "<C-CR>", "O<ESC>", { desc = "Insert Insert line below UP" })
 map("n", "<CR>", "o<ESC>", { desc = "Insert Insert line below" })

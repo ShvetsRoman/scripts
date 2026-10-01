@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/sbin/env bash
 # ============================================================
 # RSYNC BACKUP / SYNC
 #   [SSH_HOST] MODE [-y]
@@ -51,7 +51,10 @@ readonly R=$'\e[31m' G=$'\e[32m' Y=$'\e[33m' B=$'\e[34m' C=$'\e[36m' N=$'\e[0m'
 
 # LOG_DIR
 if [[ ! -d "$LOG_DIR" ]]; then
-    mkdir -p "$LOG_DIR" || { echo "Не вдалося створити $LOG_DIR" >&2; exit 1; }
+    mkdir -p "$LOG_DIR" || {
+        echo "Не вдалося створити $LOG_DIR" >&2
+        exit 1
+    }
 fi
 
 # LOGGING
@@ -61,23 +64,30 @@ exec 3>&1 4>&2
 exec > >(tee "$LOG_DIR/$LOG_NAME") 2>&1
 
 # LOG HELPERS
-log_info()  { echo -e "${B}[INFO]${N} $*"; }
-log_ok()    { echo -e "${G}[ OK ]${N} $*"; }
-log_warn()  { echo -e "${Y}[WARN]${N} $*" >&2; }
-log_error() { echo -e "${R}[ERROR]${N} $*" >&2; exit 1; }
+log_info() { echo -e "${B}[INFO]${N} $*"; }
+log_ok() { echo -e "${G}[ OK ]${N} $*"; }
+log_warn() { echo -e "${Y}[WARN]${N} $*" >&2; }
+log_error() {
+    echo -e "${R}[ERROR]${N} $*" >&2
+    exit 1
+}
 log_title() { echo -e "\n${C}── $* ──${N}"; }
 
 # CLEANUP + EXIT TRAP
 # cleanup: видаляє файли старші за N днів із заданим патерном.
+# shellcheck disable=SC2329
 cleanup() {
     local dir="$1" name="$2" days="$3"
     local count=0 total=0
 
-    [[ -d "$dir" ]] || { log_warn "Немає каталогу: $dir"; return 0; }
+    [[ -d "$dir" ]] || {
+        log_warn "Немає каталогу: $dir"
+        return 0
+    }
 
-    local find_args=( "$dir" -type f -mtime +"$days" -print0 )
+    local find_args=("$dir" -type f -mtime +"$days" -print0)
     if [[ -n "$name" ]]; then
-        find_args=( "$dir" -type f -name "$name" -mtime +"$days" -print0 )
+        find_args=("$dir" -type f -name "$name" -mtime +"$days" -print0)
     fi
 
     while IFS= read -r -d '' f; do
@@ -85,11 +95,11 @@ cleanup() {
         size=$(stat -c %s -- "$f" 2>/dev/null || echo 0)
         printf "${Y}[WARN]${N} ${R}🗑${N} %s (%s)\n" "$f" "$(numfmt --to=iec "$size" 2>/dev/null || echo "${size}B")"
         rm -f -- "$f"
-        total=$(( total + size ))
-        count=$(( count + 1 ))
+        total=$((total + size))
+        count=$((count + 1))
     done < <(find "${find_args[@]}")
 
-    if (( count == 0 )); then
+    if ((count == 0)); then
         log_warn "log файлів для видалення не знайдено"
     else
         printf "${B}[INFO]${N} видалено: %d файлів, звільнено: %s\n" \
@@ -99,6 +109,7 @@ cleanup() {
 
 # Ротація старих логів + відновлення дескрипторів + очікування tee.
 FINAL_RC=0
+# shellcheck disable=SC2329
 on_exit() {
     FINAL_RC=$?
     log_title "🧹 Видаляємо старі log файли старші $KEEP_DAYS днів:"
@@ -136,20 +147,20 @@ for arg in "$@"; do
     fi
 
     case "$arg" in
-        -y|--yes)
-            ASSUME_YES=true
-            ;;
-        test-up|sync-up|test-down|sync-down)
-            [[ -n "$MODE" ]] && log_error "MODE вказано двічі: '$MODE' і '$arg'"
-            MODE="$arg"
-            ;;
-        -*)
-            log_error "Невідомий прапорець: $arg"
-            ;;
-        *)
-            [[ -n "$SSH_HOST" ]] && log_error "SSH_HOST вказано двічі: '$SSH_HOST' і '$arg'"
-            SSH_HOST="$arg"
-            ;;
+    -y | --yes)
+        ASSUME_YES=true
+        ;;
+    test-up | sync-up | test-down | sync-down)
+        [[ -n "$MODE" ]] && log_error "MODE вказано двічі: '$MODE' і '$arg'"
+        MODE="$arg"
+        ;;
+    -*)
+        log_error "Невідомий прапорець: $arg"
+        ;;
+    *)
+        [[ -n "$SSH_HOST" ]] && log_error "SSH_HOST вказано двічі: '$SSH_HOST' і '$arg'"
+        SSH_HOST="$arg"
+        ;;
     esac
 done
 
@@ -163,10 +174,22 @@ if [[ -z "$MODE" ]]; then
 fi
 
 case "$MODE" in
-    test-up)      DIR=up;   DRY=true  ;;
-    sync-up)      DIR=up;   DRY=false ;;
-    test-down)    DIR=down; DRY=true  ;;
-    sync-down)    DIR=down; DRY=false ;;
+test-up)
+    DIR=up
+    DRY=true
+    ;;
+sync-up)
+    DIR=up
+    DRY=false
+    ;;
+test-down)
+    DIR=down
+    DRY=true
+    ;;
+sync-down)
+    DIR=down
+    DRY=false
+    ;;
 esac
 
 # SSH
@@ -199,7 +222,7 @@ done
 
 RSYNC_OPTS=(--archive --verbose --stats --human-readable --rsh="$rsh_string")
 [[ "$DRY" == false ]] && RSYNC_OPTS+=(--info=progress2)
-[[ "$DIR" == up   ]] && RSYNC_OPTS+=(--delete)
+[[ "$DIR" == up ]] && RSYNC_OPTS+=(--delete)
 [[ "$DRY" == true ]] && RSYNC_OPTS+=(--dry-run)
 
 # PRE-FLIGHT
@@ -218,14 +241,14 @@ log_info "Delete   : $([[ $DIR == up ]] && echo 'ТАК' || echo 'НІ')"
 log_info "Dry-run  : $([[ $DRY == true ]] && echo 'ТАК' || echo 'НІ')"
 
 log_title "SSH"
-"${SSH_CMD[@]}" -o BatchMode=yes -o ConnectTimeout=5 "$SSH_TARGET" true \
-    || log_error "SSH недоступний: $SSH_TARGET"
+"${SSH_CMD[@]}" -o BatchMode=yes -o ConnectTimeout=5 "$SSH_TARGET" true ||
+    log_error "SSH недоступний: $SSH_TARGET"
 log_ok "SSH OK"
 
 # mkdir REMOTE_DIR — тільки коли реально щось робимо
 if [[ "$DRY" == false ]]; then
-    "${SSH_CMD[@]}" "$SSH_TARGET" "mkdir -p '$REMOTE_DIR'" \
-        || log_error "Не вдалося створити $REMOTE_DIR"
+    "${SSH_CMD[@]}" "$SSH_TARGET" "mkdir -p '$REMOTE_DIR'" ||
+        log_error "Не вдалося створити $REMOTE_DIR"
 fi
 
 # CONFIRM
@@ -239,17 +262,22 @@ if [[ "$DRY" == false && "$ASSUME_YES" == false ]]; then
     fi
     read -rp "Продовжити? [y/N] " a
     case "$a" in
-        y|Y|yes|YES) ;;
-        *) log_info "Скасовано."; exit 0 ;;
+    y | Y | yes | YES) ;;
+    *)
+        log_info "Скасовано."
+        exit 0
+        ;;
     esac
 fi
 
 # SYNC
-TOTAL=0; SUCCESS=0; FAILED=0
+TOTAL=0
+SUCCESS=0
+FAILED=0
 FAILED_DIRS=()
 
 for d in "${BACKUP_DIRS[@]}"; do
-    TOTAL=$(( TOTAL + 1 ))
+    TOTAL=$((TOTAL + 1))
     log_title "Синхронізація каталогу: $d"
 
     if [[ "$DIR" == up ]]; then
@@ -257,11 +285,18 @@ for d in "${BACKUP_DIRS[@]}"; do
         DST="${SSH_TARGET}:${REMOTE_DIR}/${d}/"
         if [[ ! -d "$SRC" ]]; then
             log_warn "Немає локально: $SRC"
-            FAILED=$(( FAILED + 1 )); FAILED_DIRS+=("$d"); continue
+            FAILED=$((FAILED + 1))
+            FAILED_DIRS+=("$d")
+            continue
         fi
         if [[ "$DRY" == false ]]; then
-            "${SSH_CMD[@]}" "$SSH_TARGET" "mkdir -p '${REMOTE_DIR}/${d}'" \
-                || { log_warn "Не вдалося створити ${REMOTE_DIR}/${d}"; FAILED=$(( FAILED + 1 )); FAILED_DIRS+=("$d"); continue; }
+            "${SSH_CMD[@]}" "$SSH_TARGET" "mkdir -p '${REMOTE_DIR}/${d}'" ||
+                {
+                    log_warn "Не вдалося створити ${REMOTE_DIR}/${d}"
+                    FAILED=$((FAILED + 1))
+                    FAILED_DIRS+=("$d")
+                    continue
+                }
         fi
     else
         SRC="${SSH_TARGET}:${REMOTE_DIR}/${d}/"
@@ -274,45 +309,53 @@ for d in "${BACKUP_DIRS[@]}"; do
         rc=$?
         set -e
 
-        if (( rc == 255 )); then
+        if ((rc == 255)); then
             log_error "SSH-помилка при перевірці ${REMOTE_DIR}/${d} (rc=255). Перервано."
-        elif (( rc != 0 )); then
+        elif ((rc != 0)); then
             log_warn "Немає на сервері: ${REMOTE_DIR}/${d}"
-            FAILED=$(( FAILED + 1 )); FAILED_DIRS+=("$d"); continue
+            FAILED=$((FAILED + 1))
+            FAILED_DIRS+=("$d")
+            continue
         fi
 
         if [[ "$DRY" == false ]]; then
-            mkdir -p "$DST" || { log_warn "Не вдалося створити $DST"; FAILED=$(( FAILED + 1 )); FAILED_DIRS+=("$d"); continue; }
+            mkdir -p "$DST" || {
+                log_warn "Не вдалося створити $DST"
+                FAILED=$((FAILED + 1))
+                FAILED_DIRS+=("$d")
+                continue
+            }
         fi
     fi
 
     # Запуск синхронізації
     if rsync "${RSYNC_OPTS[@]}" "$SRC" "$DST"; then
         log_ok "$d синхронізовано"
-        SUCCESS=$(( SUCCESS + 1 ))
+        SUCCESS=$((SUCCESS + 1))
     else
         log_warn "$d — помилка"
-        FAILED=$(( FAILED + 1 )); FAILED_DIRS+=("$d")
+        FAILED=$((FAILED + 1))
+        FAILED_DIRS+=("$d")
     fi
 done
 
 # SUMMARY
 log_title "ПІДСУМОК"
 log_info "Усього: $TOTAL | OK: $SUCCESS | FAIL: $FAILED"
-if (( ${#FAILED_DIRS[@]} > 0 )); then
+if ((${#FAILED_DIRS[@]} > 0)); then
     log_warn "З помилками: ${FAILED_DIRS[*]}"
 fi
 
 if [[ "$DRY" == true ]]; then
     log_warn "DRY-RUN завершено (змін не внесено)."
-elif (( FAILED == 0 )); then
+elif ((FAILED == 0)); then
     log_ok "Готово."
 else
     log_warn "Готово з помилками."
 fi
 
 # Явний код виходу. Ротація логів і flush tee виконаються через trap EXIT.
-if (( FAILED == 0 )); then
+if ((FAILED == 0)); then
     exit 0
 else
     exit 1
