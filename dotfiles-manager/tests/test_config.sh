@@ -3,6 +3,10 @@
 set -Eeuo pipefail
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$ROOT"
+
+# shellcheck source=../lib/globals.sh
+source "$ROOT/lib/globals.sh"
 
 # shellcheck source=../config/dotfiles.conf
 source "$ROOT/config/dotfiles.conf"
@@ -27,4 +31,4 @@ if [[ -z "$ARCHIVE_PREFIX" ]]; then
     exit 1
 fi
 
-echo "PASS: config - OK"
+echo "PASS: config"

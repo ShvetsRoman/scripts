@@ -2,10 +2,11 @@
 
 set -Eeuo pipefail
 
-readonly PROJECT_DIR="$(
+PROJECT_DIR="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1
     pwd -P
 )"
+readonly PROJECT_DIR
 
 cd "$PROJECT_DIR"
 

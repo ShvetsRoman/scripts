@@ -21,6 +21,7 @@ install_module_packages() {
     local module="$1"
     local pacman_array="${MODULE_PACMAN_ARRAYS[$module]-}"
     local aur_array="${MODULE_AUR_ARRAYS[$module]-}"
+    local github_array="${MODULE_GITHUB_ARRAYS[$module]-}"
 
     if [[ -n "$pacman_array" ]]; then
         array_exists "$pacman_array" || {
@@ -41,6 +42,20 @@ install_module_packages() {
 
         local -n aur_ref="$aur_array"
         install_paru "${aur_ref[@]}"
+    fi
+
+    # Зовнішні/GitHub/install-script пакети.
+    if [[ -n "$github_array" ]]; then
+        array_exists "$github_array" || {
+            log_error "Для модуля '$module' не знайдено GitHub-масив: $github_array"
+            return 1
+        }
+
+        local -n github_ref="$github_array"
+        local github_package
+        for github_package in "${github_ref[@]}"; do
+            install_github_package "$github_package"
+        done
     fi
 }
 
@@ -92,7 +107,7 @@ install_registered_module() {
 # Валідація metadata одного модуля.
 validate_module_metadata() {
     local module="$1"
-    local dep pacman_array aur_array hook
+    local dep pacman_array aur_array github_array hook
 
     [[ -v "MODULE_TITLES[$module]" ]] || {
         log_error "Відсутній MODULE_TITLES[$module]."
@@ -111,6 +126,11 @@ validate_module_metadata() {
 
     [[ -v "MODULE_AUR_ARRAYS[$module]" ]] || {
         log_error "Відсутній MODULE_AUR_ARRAYS[$module]."
+        return 1
+    }
+
+    [[ -v "MODULE_GITHUB_ARRAYS[$module]" ]] || {
+        log_error "Відсутній MODULE_GITHUB_ARRAYS[$module]."
         return 1
     }
 
@@ -146,6 +166,24 @@ validate_module_metadata() {
     if [[ -n "$aur_array" ]] && ! array_exists "$aur_array"; then
         log_error "Модуль '$module': не знайдено AUR-масив '$aur_array' у packages.conf."
         return 1
+    fi
+
+    github_array="${MODULE_GITHUB_ARRAYS[$module]-}"
+    if [[ -n "$github_array" ]]; then
+        if ! array_exists "$github_array"; then
+            log_error "Модуль '$module': не знайдено GitHub-масив '$github_array' у packages.conf."
+            return 1
+        fi
+
+        local -n github_ref="$github_array"
+        local github_package
+        for github_package in "${github_ref[@]}"; do
+            [[ -v "GITHUB_PACKAGES[$github_package]" ]] || {
+                log_error "Модуль '$module': невідомий GITHUB package '$github_package'."
+                return 1
+            }
+            parse_github_package "$github_package" >/dev/null || return 1
+        done
     fi
 
     hook="${MODULE_POST_HOOKS[$module]-}"

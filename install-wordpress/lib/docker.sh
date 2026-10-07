@@ -143,7 +143,7 @@ validate_project() {
     log_step "Перевірка Docker Compose."
 
     (
-        cd "$INSTALL_DIR"
+        cd "$INSTALL_DIR" || exit 1
 
         docker compose \
             -f compose.yml \
@@ -159,7 +159,7 @@ start_services() {
     log_step "Запуск Docker stack."
 
     (
-        cd "$INSTALL_DIR"
+        cd "$INSTALL_DIR" || exit 1
 
         if docker compose \
             -f compose.yml \
@@ -198,7 +198,7 @@ wait_for_services() {
         local exited
 
         unhealthy="$(
-            cd "$INSTALL_DIR"
+            cd "$INSTALL_DIR" || exit 1
 
             docker compose \
                 -f compose.yml \
@@ -210,7 +210,7 @@ wait_for_services() {
         )"
 
         starting="$(
-            cd "$INSTALL_DIR"
+            cd "$INSTALL_DIR" || exit 1
 
             docker compose \
                 -f compose.yml \
@@ -222,7 +222,7 @@ wait_for_services() {
         )"
 
         exited="$(
-            cd "$INSTALL_DIR"
+            cd "$INSTALL_DIR" || exit 1
 
             docker compose \
                 -f compose.yml \
@@ -236,7 +236,7 @@ wait_for_services() {
 
         if (( unhealthy > 0 || exited > 0 )); then
             (
-                cd "$INSTALL_DIR"
+                cd "$INSTALL_DIR" || exit 1
 
                 docker compose \
                     -f compose.yml \
@@ -258,7 +258,7 @@ wait_for_services() {
     done
 
     (
-        cd "$INSTALL_DIR"
+        cd "$INSTALL_DIR" || exit 1
 
         docker compose \
             -f compose.yml \

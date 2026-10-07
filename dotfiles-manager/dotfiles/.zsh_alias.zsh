@@ -19,13 +19,17 @@ alias cat='bat'
 # yazi
 alias y='yazi'
 
+# Superfile
+alias fm='spf'
+
 # LazyGit
 alias lg='lazygit'
 
 # LazyDocker
 alias ld='lazydocker'
 
-alias genpass='sh $HOME/00_setup/sh/my_sh/gen_pass.sh'
+# Генерація паролю
+alias genpass='sh $HOME/00_setup/scripts_bash/gen_pass.sh'
 
 # HELIX
 alias hx='helix'

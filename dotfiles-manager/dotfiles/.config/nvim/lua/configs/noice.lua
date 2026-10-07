@@ -26,7 +26,7 @@ local options = {
   views = {
     cmdline_popup = {
       position = {
-        row = 3,
+        row = "45%",
         col = "50%",
       },
       size = {

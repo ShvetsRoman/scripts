@@ -6,21 +6,31 @@
 
 set -Eeuo pipefail
 
-readonly SCRIPT_DIR="$(
+SCRIPT_DIR="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1
     pwd -P
 )"
+readonly SCRIPT_DIR
+
 readonly VERSION="2.0.8"
 
+# shellcheck source=config/defaults.conf
 source "$SCRIPT_DIR/config/defaults.conf"
-
+# shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
+# shellcheck source=lib/args.sh
 source "$SCRIPT_DIR/lib/args.sh"
+# shellcheck source=lib/system.sh
 source "$SCRIPT_DIR/lib/system.sh"
+# shellcheck source=lib/project.sh
 source "$SCRIPT_DIR/lib/project.sh"
+# shellcheck source=lib/security.sh
 source "$SCRIPT_DIR/lib/security.sh"
+# shellcheck source=lib/docker.sh
 source "$SCRIPT_DIR/lib/docker.sh"
+# shellcheck source=lib/wordpress.sh
 source "$SCRIPT_DIR/lib/wordpress.sh"
+# shellcheck source=lib/summary.sh
 source "$SCRIPT_DIR/lib/summary.sh"
 
 trap 'handle_error "$LINENO" "$BASH_COMMAND" "$?"' ERR

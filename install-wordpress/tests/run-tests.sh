@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016
 
 set -Eeuo pipefail
 
-readonly ROOT="$(
+ROOT="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1
     pwd -P
 )"
+readonly ROOT
 
 pass() {
     printf 'PASS: %s\n' "$1"
@@ -231,13 +233,32 @@ fi
 
 pass "no unconditional root requirement"
 
+echo
+echo "== ShellCheck =="
+
 if command -v shellcheck >/dev/null 2>&1; then
-    mapfile -d '' shell_files < <(
-        find "$ROOT" -type f -name '*.sh' -print0
+    (
+        cd "$ROOT" || exit 1
+
+        # Основний application аналізуємо разом з усіма sourced modules.
+        shellcheck \
+            -x \
+            -P "$ROOT" \
+            wordpress-stack.sh
     )
 
-    shellcheck "${shell_files[@]}"
-    pass "shellcheck"
+    # Самостійні runtime scripts аналізуємо окремо.
+    shellcheck \
+        "$ROOT/templates/scripts/backup.sh" \
+        "$ROOT/templates/scripts/restore.sh" \
+        "$ROOT/templates/scripts/healthcheck.sh" \
+        "$ROOT/templates/scripts/wp-install.sh"
+
+    # Test runner є самостійним скриптом.
+    shellcheck \
+        "$ROOT/tests/run-tests.sh"
+
+    echo "PASS: shellcheck"
 else
     echo "SKIP: shellcheck not installed"
 fi

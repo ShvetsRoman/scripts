@@ -1,170 +1,250 @@
-# Додавання нового модуля — Installer Packages V1.5
+# Додавання нового модуля — Installer Packages V1.6
 
-У V1.5 меню, `all`, multi-select, `status`, `verify`, пакети, AUR, сервіси та post-install hooks керуються metadata. `MODULE_CONFIGS` вручну більше не створюється — він автоматично будується з `CONFIG_MAP`.
+У V1.6 меню, Status, Verify та встановлення модулів працюють через metadata.
+Для нового модуля зазвичай потрібно змінити 4 файли:
 
-Нижче приклад нового модуля `graphics`.
+- `config/packages.conf`
+- `config/modules.conf`
+- `config/configs.conf`
+- `modules/<module>.sh`
 
-## 1. Додай пакети в `config/packages.conf`
+## 1. Пакети pacman
 
-Pacman:
+У `config/packages.conf`:
 
 ```bash
-GRAPHICS_PACKAGES=(
-    gimp
-    inkscape
-    imagemagick
+MYMODULE_PACKAGES=(
+    package1
+    package2
 )
 ```
 
-AUR, якщо потрібен:
+## 2. AUR-пакети
+
+Якщо потрібні AUR-пакети:
 
 ```bash
-GRAPHICS_AUR_PACKAGES=(
-    some-aur-package
+MYMODULE_AUR_PACKAGES=(
+    aur-package1
 )
 ```
 
-Якщо AUR-пакетів немає, масив створювати не потрібно.
+`paru` перевіряється автоматично. Якщо його немає, installer встановить `base-devel` і `git`, збере `paru` з AUR і продовжить встановлення.
 
-## 2. Зареєструй модуль у `config/modules.conf`
+Якщо AUR-пакетів немає, окремий порожній масив створювати не потрібно — у `MODULE_AUR_ARRAYS` достатньо `""`.
 
-Додай `graphics` у `MODULES`:
+## 3. Зовнішні / GitHub програми
+
+Усі зовнішні джерела описуються в `config/packages.conf`.
+
+Спочатку створити список ID для модуля:
+
+```bash
+MYMODULE_GITHUB_PACKAGES=(
+    superfile
+    my-git-tool
+    my-binary
+)
+```
+
+Потім додати записи у registry `GITHUB_PACKAGES`.
+
+### TYPE=script
+
+```bash
+[superfile]="script|https://superfile.dev/install.sh|spf"
+```
+
+Формат:
+
+```text
+ID="script|URL|CHECK_COMMAND"
+```
+
+Installer завантажить script через `curl -fsSL` і виконає його через `bash`.
+
+### TYPE=git
+
+```bash
+[my-git-tool]="git|https://github.com/user/repo.git|mytool|~/.local/share/mytool|bin/mytool"
+```
+
+Формат:
+
+```text
+ID="git|REPOSITORY_URL|CHECK_COMMAND|DEST_DIR|EXECUTABLE_REL"
+```
+
+Installer:
+
+1. клонує repository в `DEST_DIR`;
+2. при повторному запуску виконує `git pull --ff-only`;
+3. робить `DEST_DIR/EXECUTABLE_REL` виконуваним;
+4. створює symlink `~/.local/bin/CHECK_COMMAND`.
+
+### TYPE=binary
+
+```bash
+[my-binary]="binary|https://github.com/user/repo/releases/download/v1.0/mytool|mytool|~/.local/bin/mytool"
+```
+
+Формат:
+
+```text
+ID="binary|BINARY_URL|CHECK_COMMAND|DEST_FILE"
+```
+
+Installer завантажує файл через `curl`, встановлює права `755` і переносить його у `DEST_FILE`. Для `/usr/*` та `/opt/*` автоматично використовується `sudo`.
+
+`CHECK_COMMAND` використовується для перевірки встановлення, `Status` і `Verify`.
+
+## 4. Реєстрація модуля
+
+У `config/modules.conf` додати модуль до `MODULES`:
 
 ```bash
 MODULES=(
-    base
-    cli
-    shell
-    dev
-    docker
-    network
-    desktop
-    multimedia
-    graphics
+    ...
+    mymodule
 )
 ```
 
-Додай metadata:
+Назва:
 
 ```bash
-MODULE_TITLES[graphics]="Graphics"
-MODULE_DEPENDENCIES[graphics]="base"
-MODULE_PACMAN_ARRAYS[graphics]="GRAPHICS_PACKAGES"
-MODULE_AUR_ARRAYS[graphics]="GRAPHICS_AUR_PACKAGES"
-MODULE_SERVICES[graphics]=""
-MODULE_POST_HOOKS[graphics]=""
+MODULE_TITLES[mymodule]="My Module"
 ```
 
-Якщо pacman або AUR пакетів немає:
+Залежності:
 
 ```bash
-MODULE_PACMAN_ARRAYS[graphics]=""
-MODULE_AUR_ARRAYS[graphics]=""
+MODULE_DEPENDENCIES[mymodule]="base"
 ```
 
-Кілька залежностей або сервісів записуються через пробіл.
+Pacman-масив:
 
-## 3. Додай конфіги в `config/configs.conf`
+```bash
+MODULE_PACMAN_ARRAYS[mymodule]="MYMODULE_PACKAGES"
+```
 
-Формат V1.5:
+AUR-масив:
+
+```bash
+MODULE_AUR_ARRAYS[mymodule]="MYMODULE_AUR_PACKAGES"
+```
+
+або без AUR:
+
+```bash
+MODULE_AUR_ARRAYS[mymodule]=""
+```
+
+Зовнішні install-script packages:
+
+```bash
+MODULE_GITHUB_ARRAYS[mymodule]="MYMODULE_GITHUB_PACKAGES"
+```
+
+або:
+
+```bash
+MODULE_GITHUB_ARRAYS[mymodule]=""
+```
+
+Сервіси:
+
+```bash
+MODULE_SERVICES[mymodule]="myservice"
+```
+
+Post-install hook:
+
+```bash
+MODULE_POST_HOOKS[mymodule]=""
+```
+
+або:
+
+```bash
+MODULE_POST_HOOKS[mymodule]="configure_something"
+```
+
+## 5. Конфігурації
+
+`MODULE_CONFIGS` вручну не заповнюється. Він генерується автоматично з `CONFIG_MAP`.
+
+У `config/configs.conf`:
+
+```bash
+[myconfig]="mymodule|home|.config/myapp|.config/myapp"
+```
+
+Формат:
 
 ```text
 [ID]="MODULE|SCOPE|SOURCE|DESTINATION"
 ```
 
-Користувацький конфіг:
+Для системного файлу:
 
 ```bash
-CONFIG_MAP[graphics-app]="graphics|home|.config/graphics-app|.config/graphics-app"
+[my-system-config]="mymodule|system|etc/myapp/config.conf|/etc/myapp/config.conf"
 ```
 
-Системний конфіг:
+## 6. Файл модуля
 
-```bash
-CONFIG_MAP[graphics-system]="graphics|system|etc/graphics/app.conf|/etc/graphics/app.conf"
-```
-
-На цьому все. Запис на кшталт:
-
-```bash
-MODULE_CONFIGS[graphics]="graphics-app graphics-system"
-```
-
-**більше не потрібен**. `build_module_configs()` сам збере всі записи `CONFIG_MAP`, у яких перше поле дорівнює `graphics`.
-
-Якщо модуль не має конфігів — у `configs.conf` для нього взагалі нічого додавати не потрібно.
-
-## 4. Створи `modules/graphics.sh`
+Створити `modules/mymodule.sh`:
 
 ```bash
 #!/usr/bin/env bash
 
 install_module() {
-    install_registered_module graphics
+    install_registered_module "mymodule"
 }
 ```
 
-Стандартний runner сам:
+`install_registered_module` автоматично виконає:
 
-1. встановить pacman-пакети;
-2. встановить AUR-пакети;
-3. скопіює всі конфіги, автоматично знайдені через `CONFIG_MAP`;
-4. увімкне systemd-сервіси;
-5. запустить post-install hook.
-
-## 5. Необов'язковий post-install hook
-
-```bash
-configure_graphics() {
-    log_step "Додаткове налаштування Graphics."
-    run_cmd some-command --example
-}
-
-install_module() {
-    install_registered_module graphics
-}
-```
-
-У `config/modules.conf`:
-
-```bash
-MODULE_POST_HOOKS[graphics]="configure_graphics"
-```
-
-Для команд усередині hook використовуй `run_cmd`, щоб `--dry-run` працював автоматично.
-
-## 6. Що НЕ потрібно змінювати
-
-Не редагуй:
-
-```text
-install.sh
-lib/ui.sh
-lib/status.sh
-lib/package-manager.sh
-lib/modules.sh
-```
-
-Меню та службові команди підхоплять модуль автоматично.
+1. pacman packages;
+2. AUR packages через paru;
+3. зовнішні/GitHub/install-script packages;
+4. configs;
+5. systemd services;
+6. post-install hook.
 
 ## 7. Перевірка
 
 ```bash
 ./tests/run-tests.sh
-./install.sh --list
-./install.sh --list-configs
-./install.sh --dry-run graphics
-./install.sh status graphics
-./install.sh verify graphics
+./install.sh --dry-run mymodule
+./install.sh status mymodule
+./install.sh verify mymodule
 ```
 
-## Короткий чекліст
+## Приклад: Superfile у CLI
 
-Для нового модуля зазвичай змінюються тільки:
+`config/packages.conf`:
 
-1. `config/packages.conf`
-2. `config/modules.conf`
-3. `config/configs.conf` — тільки якщо є конфіги
-4. `modules/<module>.sh`
+```bash
+CLI_GITHUB_PACKAGES=(
+    superfile
+)
 
-`MODULE_CONFIGS` у V1.5 вручну не редагується.
+declare -Ag GITHUB_PACKAGES=(
+    [superfile]="script|https://superfile.dev/install.sh|spf"
+)
+```
+
+`config/modules.conf`:
+
+```bash
+MODULE_GITHUB_ARRAYS[cli]="CLI_GITHUB_PACKAGES"
+```
+
+`config/configs.conf`:
+
+```bash
+[superfile]="cli|home|.config/superfile|.config/superfile"
+```
+
+Тоді `./install.sh cli` встановить Superfile та скопіює його конфіг із `dotfiles-manager`.

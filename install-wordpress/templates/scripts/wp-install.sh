@@ -10,6 +10,7 @@ log() {
     printf '[WP-CLI] %s\n' "$*"
 }
 
+# shellcheck disable=SC2016
 database_ready() {
     php -r '
         $host = getenv("WORDPRESS_DB_HOST") ?: "db:3306";

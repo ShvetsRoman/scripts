@@ -4,7 +4,7 @@
 # ДИНАМІЧНЕ МЕНЮ, CLI ТА ЗАЛЕЖНОСТІ МОДУЛІВ
 # ============================================================
 #
-# У V1.5 меню формується автоматично з MODULES і MODULE_TITLES.
+# У V1.6 меню формується автоматично з MODULES і MODULE_TITLES.
 # Додавати case-пункти для нового модуля більше не потрібно.
 # ============================================================
 
@@ -17,39 +17,206 @@ declare -Ag _RESOLVE_DONE=()
 
 show_help() {
     cat <<'HELP'
-Installer Packages V1.5
+Installer Packages V1.6
 
-Використання:
+ПРИЗНАЧЕННЯ
+  Модульний installer для Arch Linux:
+  - pacman-пакети;
+  - AUR-пакети через paru;
+  - зовнішні install-script/GitHub пакети;
+  - копіювання конфігів із ../dotfiles-manager/dotfiles;
+  - backup конфігів;
+  - systemd-сервіси та post-install hooks;
+  - Status / Verify;
+  - очищення backups та logs.
+
+ВИКОРИСТАННЯ
   ./install.sh
+      Відкрити інтерактивне меню.
+
   ./install.sh <module> [module...]
+      Встановити один або декілька модулів.
+
   ./install.sh all
+      Встановити всі модулі.
+
   ./install.sh status [module...|all]
+      Показати детальний поточний стан пакетів, конфігів і сервісів.
+
   ./install.sh verify [module...|all]
+      Строго перевірити очікуваний стан.
+      Exit code 1 означає, що знайдено невідповідності.
 
-Опції:
-  --list             Показати доступні модулі та залежності
-  --list-configs     Показати mapping усіх конфігів
-  --dry-run          Нічого не змінювати, лише показати дії
-  --yes, -y          Автоматично підтверджувати операції
-  --no-configs       Не копіювати конфігурації
-  --configs-only     Копіювати лише конфіги, без пакетів/сервісів
-  --no-backup        Не створювати backup існуючих конфігів
-  --strict-configs   Відсутній source-конфіг вважати помилкою
-  --sync-delete      Синхронізувати каталоги з rsync --delete
-  --no-deps          Не додавати залежності модулів автоматично
-  --help, -h         Показати цю довідку
+ОПЦІЇ
+  --list
+      Показати доступні модулі та їх залежності.
 
-Приклади:
-  ./install.sh docker
+  --list-configs
+      Показати mapping конфігів source -> destination.
+
+  --dry-run
+      Нічого не змінювати, лише показати майбутні дії.
+
+  --yes, -y
+      Автоматично підтверджувати операції.
+
+  --no-configs
+      Встановити пакети/сервіси, але не копіювати конфігурації.
+
+  --configs-only
+      Копіювати лише конфіги без пакетів, сервісів і post-hooks.
+
+  --no-backup
+      Не створювати backup існуючих конфігів.
+
+  --strict-configs
+      Вважати відсутній source-конфіг помилкою.
+
+  --sync-delete
+      Для каталогів використовувати rsync --delete.
+      У destination будуть видалені файли, яких немає у source.
+
+  --no-deps
+      Не встановлювати залежності модулів автоматично.
+
+  --help, -h, help
+      Показати цю довідку.
+
+ПРИКЛАДИ
+  ./install.sh cli
   ./install.sh cli shell dev
+  ./install.sh all
   ./install.sh --dry-run all
+  ./install.sh --yes desktop
   ./install.sh --configs-only cli shell
   ./install.sh --no-configs docker
   ./install.sh status all
+  ./install.sh status network
   ./install.sh verify cli shell
   ./install.sh --list
   ./install.sh --list-configs
+
+ДЕ ЩО НАЛАШТОВУЄТЬСЯ
+  config/packages.conf
+      Списки pacman/AUR пакетів і адреси зовнішніх install-script.
+
+  config/modules.conf
+      Прив'язка package-масивів до модулів, dependencies,
+      systemd services та post-install hooks.
+
+  config/configs.conf
+      Mapping конфігів:
+      [ID]="MODULE|SCOPE|SOURCE|DESTINATION"
+
+  modules/<module>.sh
+      Мінімальний wrapper модуля та, за потреби, спеціальні hooks.
+
+ДОДАВАННЯ PACMAN-ПАКЕТА
+  Додати пакет у потрібний масив config/packages.conf, наприклад:
+
+    CLI_PACKAGES=(
+        bat
+        eza
+        my-package
+    )
+
+ДОДАВАННЯ AUR-ПАКЕТА
+  Додати пакет у AUR-масив:
+
+    DESKTOP_AUR_PACKAGES=(
+        google-chrome
+        my-aur-package
+    )
+
+  paru перевіряється автоматично. Якщо paru відсутній,
+  installer встановить base-devel + git, збере paru з AUR,
+  а потім продовжить встановлення.
+
+ДОДАВАННЯ ЗОВНІШНЬОЇ / GITHUB-ПРОГРАМИ
+  1. Додати ID до масиву модуля:
+
+    CLI_GITHUB_PACKAGES=(
+        superfile
+        my-git-tool
+        my-binary
+    )
+
+  2. Додати запис у GITHUB_PACKAGES.
+
+  TYPE=script:
+
+    [superfile]="script|https://superfile.dev/install.sh|spf"
+
+    Формат:
+      ID="script|URL|CHECK_COMMAND"
+
+  TYPE=git:
+
+    [my-git-tool]="git|https://github.com/user/repo.git|mytool|~/.local/share/mytool|bin/mytool"
+
+    Формат:
+      ID="git|REPOSITORY_URL|CHECK_COMMAND|DEST_DIR|EXECUTABLE_REL"
+
+    Installer clone/pull repository і створить symlink:
+      ~/.local/bin/CHECK_COMMAND -> DEST_DIR/EXECUTABLE_REL
+
+  TYPE=binary:
+
+    [my-binary]="binary|https://github.com/user/repo/releases/download/v1.0/mytool|mytool|~/.local/bin/mytool"
+
+    Формат:
+      ID="binary|BINARY_URL|CHECK_COMMAND|DEST_FILE"
+
+    Installer завантажить executable та встановить права 755.
+    Для /usr/* та /opt/* автоматично використовується sudo.
+
+  CHECK_COMMAND використовується для Install/Status/Verify.
+
+ДОДАВАННЯ КОНФІГУ
+  config/configs.conf:
+
+    [superfile]="cli|home|.config/superfile|.config/superfile"
+
+  Це означає:
+    source:      ../dotfiles-manager/dotfiles/.config/superfile
+    destination: ~/.config/superfile
+
+ДОДАВАННЯ SYSTEMD-СЕРВІСУ
+  config/modules.conf:
+
+    MODULE_SERVICES[network]="sshd"
+
+  Installer виконає:
+    sudo systemctl enable --now sshd
+
+ОБСЛУГОВУВАННЯ
+  Через пункт "Обслуговування" доступно:
+  1) Видалити всі backups
+  2) Залишити останні 3 backups
+  3) Видалити backups старші за 30 днів
+  4) Видалити всі logs
+  5) Залишити останні 10 logs
+  6) Видалити logs старші за 30 днів
+
+BACKUP
+  Backup створюється у:
+    installer-packages/backups/YYYY-MM-DD_HH-MM-SS/
+
+LOG
+  Logs створюються у:
+    installer-packages/log/
+
+ВАЖЛИВО
+  Не запускай installer через sudo:
+    ./install.sh ...
+
+  sudo викликається всередині installer тільки там, де потрібні
+  системні права.
 HELP
+
+    echo
+    echo "Доступні модулі:"
+    list_modules
 }
 
 module_exists() {
@@ -81,6 +248,7 @@ add_requested_module() {
     REQUESTED_MODULES+=("$candidate")
 }
 
+# shellcheck disable=SC2034
 parse_arguments() {
     while (($#)); do
         case "$1" in
@@ -106,7 +274,7 @@ parse_arguments() {
                 list_config_mappings
                 exit 0
                 ;;
-            --help|-h)
+            --help|-h|help)
                 show_help
                 exit 0
                 ;;
@@ -270,6 +438,7 @@ render_main_menu() {
     MENU_CONFIGS=$((i + 4))
     MENU_DEPS=$((i + 5))
     MENU_CLEANUP=$((i + 6))
+    MENU_HELP=$((i + 7))
 
     echo
     printf ' %2d) Встановити всі модулі\n' "$MENU_INSTALL_ALL"
@@ -280,6 +449,7 @@ render_main_menu() {
     printf ' %2d) Показати залежності модулів\n' "$MENU_DEPS"
     echo
     printf ' %2d) Обслуговування\n' "$MENU_CLEANUP"
+    printf ' %2d) Допомога\n' "$MENU_HELP"
     echo
     echo "  0) Вихід"
     echo
@@ -288,7 +458,7 @@ render_main_menu() {
 show_main_menu() {
     while true; do
         clear
-        print_header "INSTALLER PACKAGES V1.5"
+        print_header "INSTALLER PACKAGES V1.6"
         render_main_menu
 
         local choice
@@ -333,6 +503,10 @@ show_main_menu() {
                 ;;
             "$MENU_CLEANUP")
                 maintenance_menu
+                ;;
+            "$MENU_HELP")
+                show_help
+                pause
                 ;;
             0)
                 log_info "Завершення роботи."

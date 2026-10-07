@@ -130,11 +130,13 @@ show_menu() {
         echo "3) Backup changed    Backup лише змінених шляхів"
         echo "4) Restore all       Відновлення всього"
         echo "5) Restore path      Відновлення конкретного шляху"
-        echo "6) Diff all          Показує що саме відрізняється."
-        echo "7) Smart status      Дає короткий стан кожного шляху: [OK], [NEW], [MISSING], [CHANGED]."
-        echo "8) Verify            Відповідає на питання - backup повністю відповідає HOME чи ні?"
-        echo "9) Archive create    Створити tar.gz archive"
+        echo "6) Diff              Показати відмінності між оригіналами і dotfiles"
+        echo "7) Status            Показати стан оригіналів відносно dotfiles"
+        echo "8) Verify sync       Перевірити повну відповідність оригіналів і dotfiles"
+        echo "9) Archive create    Створити archive ${ARCHIVE_PREFIX}_Y-m-d_H-M-S.tar.gz в ${ARCHIVE_DIR##*/}"
+        echo
         echo "10) Help             Допомога"
+        echo
         echo "0) Exit              Вихід"
         echo
 
@@ -165,7 +167,11 @@ show_menu() {
                 show_status
                 ;;
             8)
-                verify_all
+                if verify_all; then
+                    log_debug "Verify завершено успішно."
+                else
+                    log_debug "Verify виявив невідповідності."
+                fi
                 ;;
             9)
                 archive_create ""

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# ShellCheck не може статично визначити ROOT_DIR для dynamic source.
+# shellcheck disable=SC1091
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,7 +19,7 @@ pass "syntax"
 required_files=(
     install.sh README.md
     config/installer.conf config/packages.conf config/modules.conf config/configs.conf
-    lib/colors.sh lib/common.sh lib/package-manager.sh lib/configs.sh
+    lib/colors.sh lib/common.sh lib/cleanup.sh lib/package-manager.sh lib/configs.sh
     lib/services.sh lib/modules.sh lib/status.sh lib/ui.sh
     docs/ADDING_MODULE.md templates/module.sh
 )
@@ -26,7 +29,9 @@ done
 pass "structure"
 
 # 3. Завантаження проєкту.
+# shellcheck disable=SC2034
 source "$ROOT_DIR/lib/colors.sh"
+# shellcheck disable=SC2034
 source "$ROOT_DIR/lib/common.sh"
 source "$ROOT_DIR/config/installer.conf"
 source "$ROOT_DIR/config/packages.conf"
@@ -49,6 +54,7 @@ pass "config-map"
 [[ " ${MODULE_CONFIGS[cli]} " == *" nvim "* ]] || fail "nvim not mapped to cli"
 [[ " ${MODULE_CONFIGS[cli]} " == *" kitty "* ]] || fail "kitty not mapped to cli"
 [[ " ${MODULE_CONFIGS[cli]} " == *" wezterm "* ]] || fail "wezterm not mapped to cli"
+[[ " ${MODULE_CONFIGS[cli]} " == *" superfile "* ]] || fail "superfile config not mapped to cli"
 [[ " ${MODULE_CONFIGS[shell]} " == *" zsh "* ]] || fail "zsh not mapped to shell"
 [[ " ${MODULE_CONFIGS[shell]} " == *" starship "* ]] || fail "starship not mapped to shell"
 [[ -z "${MODULE_CONFIGS[base]}" ]] || fail "base configs should be empty"
@@ -73,11 +79,13 @@ pass "module-metadata"
 
 # 7. Resolver залежностей.
 REQUESTED_MODULES=(docker)
+# shellcheck disable=SC2034
 INSTALL_DEPENDENCIES=true
 resolve_requested_modules
-[[ "${RESOLVED_MODULES[*]}" == "base docker" ]] || fail "dependencies: ${RESOLVED_MODULES[*]}"
+[[ "${RESOLVED_MODULES[*]}" == "docker" ]] || fail "dependencies: ${RESOLVED_MODULES[*]}"
 pass "dependencies"
 
+# shellcheck disable=SC2034
 REQUESTED_MODULES=(base docker cli)
 resolve_requested_modules
 [[ "${RESOLVED_MODULES[*]}" == "base docker cli" ]] || fail "dependency-dedup: ${RESOLVED_MODULES[*]}"
@@ -119,11 +127,27 @@ if declare -p SHELL_AUR_PACKAGES >/dev/null 2>&1; then
 fi
 pass "optional-aur-array"
 
-# 12. Starship — каталог і належить shell.
+# 12. Зовнішні/GitHub packages.
+[[ "${MODULE_GITHUB_ARRAYS[cli]}" == "CLI_GITHUB_PACKAGES" ]] || fail "cli github array mapping"
+[[ " ${CLI_GITHUB_PACKAGES[*]} " == *" superfile "* ]] || fail "superfile not in cli github packages"
+[[ "${GITHUB_PACKAGES[superfile]}" == 'script|https://superfile.dev/install.sh|spf' ]] || fail "superfile github mapping"
+parse_github_package superfile >/dev/null || fail "parse github package"
+
+# Перевіряємо всі підтримувані типи без реального встановлення.
+GITHUB_PACKAGES["test-git"]='git|https://github.com/user/repo.git|mytool|~/.local/share/mytool|bin/mytool'
+GITHUB_PACKAGES["test-binary"]='binary|https://github.com/user/repo/releases/download/v1.0/mytool|mytool|~/.local/bin/mytool'
+parse_github_package test-git >/dev/null || fail "parse git package"
+parse_github_package test-binary >/dev/null || fail "parse binary package"
+unset 'GITHUB_PACKAGES[test-git]' 'GITHUB_PACKAGES[test-binary]'
+pass "github-packages"
+
+# 13. Starship — каталог і належить shell.
 [[ "${CONFIG_MAP[starship]}" == 'shell|home|.config/starship|.config/starship' ]] || fail "starship mapping"
+[[ "${CONFIG_MAP[superfile]}" == 'cli|home|.config/superfile|.config/superfile' ]] || fail "superfile config mapping"
 pass "starship-directory"
 
 # 13. Shell dry-run hook.
+# shellcheck disable=SC2034
 (
     DRY_RUN=true
     USER=nobody
@@ -140,13 +164,14 @@ render_main_menu > "$menu_tmp"
 module_count=${#MODULES[@]}
 [[ "$MENU_INSTALL_ALL" -eq $((module_count + 1)) ]] || fail "dynamic menu install-all"
 [[ "$MENU_DEPS" -eq $((module_count + 6)) ]] || fail "dynamic menu deps"
+[[ "$MENU_HELP" -eq $((module_count + 8)) ]] || fail "dynamic menu help"
 rm -f -- "$menu_tmp"
 trap - EXIT
 pass "dynamic-menu"
 
 # 15. Версія.
 for file in install.sh README.md lib/ui.sh docs/ADDING_MODULE.md; do
-    grep -q 'V1\.5' "$ROOT_DIR/$file" || fail "version: $file"
+    grep -q 'V1\.6' "$ROOT_DIR/$file" || fail "version: $file"
 done
 pass "version"
 
@@ -156,13 +181,15 @@ grep -q 'VERIFY: перевірка очікуваного стану' "$ROOT_DI
 grep -q 'Підсумок VERIFY' "$ROOT_DIR/lib/status.sh" || fail "verify summary"
 pass "status-verify-separation"
 
-# 17. Документація V1.5.
+# 17. Документація V1.6.
 for needle in \
     'config/packages.conf' \
     'config/modules.conf' \
     'config/configs.conf' \
     'modules/<module>.sh' \
     'MODULE_POST_HOOKS' \
+    'MODULE_GITHUB_ARRAYS' \
+    'GITHUB_PACKAGES' \
     'install_registered_module' \
     'MODULE_CONFIGS'; do
     grep -Fq "$needle" "$ROOT_DIR/docs/ADDING_MODULE.md" || fail "docs: $needle"
@@ -174,9 +201,15 @@ for config_name in "${!CONFIG_MAP[@]}"; do
     IFS='|' read -r a b c d e <<< "${CONFIG_MAP[$config_name]}"
     [[ -n "$a" && -n "$b" && -n "$c" && -n "$d" && -z "${e:-}" ]] || fail "4-field map: $config_name"
 done
-pass "config-map-v1.5-format"
+pass "config-map-v1.6-format"
 
-# 19. ShellCheck.
+# 19. Help.
+for needle in 'ДОДАВАННЯ ЗОВНІШНЬОЇ / GITHUB-ПРОГРАМИ' 'TYPE=script' 'TYPE=git' 'TYPE=binary' 'ДОДАВАННЯ AUR-ПАКЕТА' 'ОБСЛУГОВУВАННЯ' 'superfile'; do
+    grep -Fq "$needle" "$ROOT_DIR/lib/ui.sh" || fail "help: $needle"
+done
+pass "help"
+
+# 20. ShellCheck.
 if command -v shellcheck >/dev/null 2>&1; then
     mapfile -t files < <(find "$ROOT_DIR" -type f -name '*.sh')
     shellcheck -x "${files[@]}" || fail "shellcheck"

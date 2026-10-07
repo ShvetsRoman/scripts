@@ -26,7 +26,7 @@ error_handler() {
 
 require_arch() {
     if [[ ! -f /etc/arch-release ]]; then
-        log_error "Installer Packages V1.5 призначений для Arch Linux."
+        log_error "Installer Packages V1.6 призначений для Arch Linux."
         exit 1
     fi
 }

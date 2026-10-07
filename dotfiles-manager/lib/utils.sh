@@ -60,7 +60,7 @@ normalize_archive_name() {
     local requested="${1:-}"
 
     if [[ -z "$requested" ]]; then
-        printf '%s-%s.tar.gz\n' "$ARCHIVE_PREFIX" "$(timestamp)"
+        printf '%s_%s.tar.gz\n' "$ARCHIVE_PREFIX" "$(timestamp)"
         return 0
     fi
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
+# ShellCheck не може статично визначити ROOT_DIR для dynamic source.
+# shellcheck disable=SC1091
 set -Eeuo pipefail
 
 # ============================================================
-# INSTALLER PACKAGES V1.5
+# INSTALLER PACKAGES V1.6
 # ============================================================
 #
 # Призначення:

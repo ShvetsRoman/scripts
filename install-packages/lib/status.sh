@@ -6,16 +6,13 @@
 #
 # STATUS:
 # - інформаційний звіт про поточний стан;
-# - показує всі пакети, конфіги та сервіси;
+# - показує pacman, AUR, зовнішні пакети, конфіги та сервіси;
 # - завжди повертає 0.
 #
 # VERIFY:
 # - строгий контроль очікуваного стану;
 # - показує тільки проблеми;
 # - повертає 1, якщо знайдено невідповідності.
-#
-# У V1.5 логіка повністю працює з metadata з modules.conf.
-# Для нового модуля цей файл редагувати не потрібно.
 # ============================================================
 
 print_module_packages_status() {
@@ -35,6 +32,14 @@ print_module_packages_status() {
         local -n aur_ref="$array_name"
         for package in "${aur_ref[@]}"; do
             print_package_status "$package" || true
+        done
+    fi
+
+    array_name="${MODULE_GITHUB_ARRAYS[$module]-}"
+    if [[ -n "$array_name" ]]; then
+        local -n github_ref="$array_name"
+        for package in "${github_ref[@]}"; do
+            print_github_package_status "$package" || true
         done
     fi
 }
@@ -101,16 +106,28 @@ verify_package() {
     return 1
 }
 
+verify_github_package() {
+    local package_id="$1"
+
+    if github_package_installed "$package_id"; then
+        return 0
+    fi
+
+    printf '    %-32s %b\n' "$package_id" "${RED}MISSING${NC}"
+    return 1
+}
+
 verify_config() {
     local config_name="$1"
-    local parsed scope source_relative target_value target
+    local parsed module scope source_relative target_value target
 
     parsed="$(parse_config_mapping "$config_name")" || {
         printf '    %-32s %b\n' "$config_name" "${RED}MAPPING ERROR${NC}"
         return 1
     }
 
-    IFS=$'\t' read -r scope source_relative target_value <<< "$parsed"
+# shellcheck disable=SC2034
+    IFS=$'\t' read -r module scope source_relative target_value <<< "$parsed"
     target="$(resolve_config_target "$scope" "$target_value")" || {
         printf '    %-32s %b\n' "$config_name" "${RED}TARGET ERROR${NC}"
         return 1
@@ -149,6 +166,14 @@ verify_module_packages() {
         local -n aur_ref="$array_name"
         for package in "${aur_ref[@]}"; do
             verify_package "$package" || failed=1
+        done
+    fi
+
+    array_name="${MODULE_GITHUB_ARRAYS[$module]-}"
+    if [[ -n "$array_name" ]]; then
+        local -n github_ref="$array_name"
+        for package in "${github_ref[@]}"; do
+            verify_github_package "$package" || failed=1
         done
     fi
 

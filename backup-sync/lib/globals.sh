@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+COMMAND=""
+DIRECTION=""
+DRY_RUN=false
+ASSUME_YES=false
+CHECK_DISK_SPACE=true
+SSH_HOST=""
+VERIFY_DIRECTION="both"
+
+TOTAL=0
+SUCCESS=0
+FAILED=0
+CHANGED=0
+FAILED_DIRS=()
+CHANGED_DIRS=()
+
+START_EPOCH=0
+END_EPOCH=0
+TIMESTAMP=""
+LOG_FILE=""
+LOCK_FILE=""
+SSH_TARGET=""
+SSH_MODE_DESC=""
+RSH_STRING=""
+
+SSH_CMD=()
+RSYNC_RSH_CMD=()
+RSYNC_OPTS=()
+
+readonly C_RED=$'\e[31m'
+readonly C_GREEN=$'\e[32m'
+readonly C_YELLOW=$'\e[33m'
+readonly C_BLUE=$'\e[34m'
+readonly C_CYAN=$'\e[36m'
+readonly C_RESET=$'\e[0m'

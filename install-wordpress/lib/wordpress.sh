@@ -4,7 +4,7 @@ normalize_wordpress_permissions() {
     log_step "Нормалізація прав WordPress."
 
     (
-        cd "$INSTALL_DIR"
+        cd "$INSTALL_DIR" || exit 1
 
         docker compose \
             -f compose.yml \
@@ -28,7 +28,7 @@ install_wordpress() {
     log_step "Встановлення WordPress."
 
     (
-        cd "$INSTALL_DIR"
+        cd "$INSTALL_DIR" || exit 1
 
         docker compose \
             -f compose.yml \
@@ -47,7 +47,7 @@ run_healthcheck() {
     log_step "Healthcheck."
 
     (
-        cd "$INSTALL_DIR"
+        cd "$INSTALL_DIR" || exit 1
 
         bash ./scripts/healthcheck.sh
     )

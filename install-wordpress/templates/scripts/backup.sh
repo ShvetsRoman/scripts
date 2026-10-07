@@ -2,10 +2,11 @@
 
 set -Eeuo pipefail
 
-readonly PROJECT_DIR="$(
+PROJECT_DIR="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1
     pwd -P
 )"
+readonly PROJECT_DIR
 
 cd "$PROJECT_DIR"
 
@@ -19,7 +20,8 @@ set -a
 source .env
 set +a
 
-readonly TIMESTAMP="$(date '+%Y-%m-%d_%H-%M-%S')"
+TIMESTAMP="$(date '+%Y-%m-%d_%H-%M-%S')"
+readonly TIMESTAMP
 readonly BACKUP_ROOT="$PROJECT_DIR/backups"
 readonly BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 

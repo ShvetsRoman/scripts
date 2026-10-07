@@ -24,8 +24,9 @@ configure_docker_user() {
         log_info "Користувач '$current_user' вже входить до групи docker."
     fi
 
-    # Якщо конфіги Docker встановлювалися, застосовуємо їх.
-    if [[ "$INSTALL_CONFIGS" == true ]]; then
+    # Перезапускаємо Docker тільки якщо для модуля реально є
+    # конфіги і їх копіювання не вимкнене.
+    if [[ "$INSTALL_CONFIGS" == true && -n "${MODULE_CONFIGS[docker]-}" ]]; then
         restart_service docker
     fi
 }

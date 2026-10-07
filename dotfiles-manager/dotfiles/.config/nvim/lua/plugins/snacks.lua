@@ -27,6 +27,7 @@ local function show_preview(picker)
         end
     end)
 end
+
 return {
     {
         "folke/snacks.nvim",

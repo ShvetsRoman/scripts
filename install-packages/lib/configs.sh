@@ -125,6 +125,9 @@ backup_config() {
     local backup_target
     local backup_parent
 
+    # --no-backup або CONFIG_BACKUP=false повністю вимикає backup.
+    [[ "$CONFIG_BACKUP" == true ]] || return 0
+
     # Якщо конфігу ще немає — backup не потрібен.
     if [[ ! -e "$target" && ! -L "$target" ]]; then
         return 0
