@@ -1,4 +1,5 @@
 return {
+
 	{
 		"akinsho/bufferline.nvim",
 
@@ -32,13 +33,13 @@ return {
 
 		keys = {
 			{
-				"<S-h>",
+				"<S-Tab>",
 				"<cmd>BufferLineCyclePrev<CR>",
 				desc = "Попередній буфер",
 			},
 
 			{
-				"<S-l>",
+				"<Tab>",
 				"<cmd>BufferLineCycleNext<CR>",
 				desc = "Наступний буфер",
 			},

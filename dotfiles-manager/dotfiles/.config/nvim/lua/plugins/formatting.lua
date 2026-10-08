@@ -1,238 +1,199 @@
--- ============================================================
 -- FORMATTING
 -- conform.nvim
--- ============================================================
 
 return {
-    {
-        "stevearc/conform.nvim",
+	{
+		"stevearc/conform.nvim",
 
-        event = {
-            "BufWritePre",
-        },
+		event = {
+			"BufWritePre",
+		},
 
-        cmd = {
-            "ConformInfo",
-        },
+		cmd = {
+			"ConformInfo",
+		},
 
-        keys = {
-            {
-                "<leader>lf",
+		keys = {
+			{
+				"<leader>lf",
 
-                function()
-                    require("conform").format({
-                        async = true,
-                        lsp_format = "fallback",
-                    })
-                end,
+				function()
+					require("conform").format({
+						async = true,
+						lsp_format = "fallback",
+					})
+				end,
 
-                mode = {
-                    "n",
-                    "v",
-                },
+				mode = {
+					"n",
+					"v",
+				},
 
-                desc = "Format",
-            },
-        },
+				desc = "Format",
+			},
+		},
 
-        opts = {
-            -- ====================================================
-            -- FORMATTERS
-            -- ====================================================
+		opts = {
+			-- FORMATTERS
+			formatters_by_ft = {
+				-- Lua
+				lua = {
+					"stylua",
+				},
 
-            formatters_by_ft = {
-                -- Lua
-                lua = {
-                    "stylua",
-                },
+				-- Shell
+				sh = {
+					"shfmt",
+				},
 
-                -- Shell
-                sh = {
-                    "shfmt",
-                },
+				bash = {
+					"shfmt",
+				},
 
-                bash = {
-                    "shfmt",
-                },
+				zsh = {
+					"shfmt",
+				},
 
-                zsh = {
-                    "shfmt",
-                },
+				-- JSON
+				json = {
+					"prettier",
+				},
 
-                -- JSON
-                json = {
-                    "prettier",
-                },
+				jsonc = {
+					"prettier",
+				},
 
-                jsonc = {
-                    "prettier",
-                },
+				-- YAML
+				yaml = {
+					"prettier",
+				},
 
-                -- YAML
-                yaml = {
-                    "prettier",
-                },
+				-- Markdown
+				markdown = {
+					"prettier",
+				},
 
-                -- Markdown
-                markdown = {
-                    "prettier",
-                },
+				-- HTML
+				html = {
+					"prettier",
+				},
 
-                -- HTML
-                html = {
-                    "prettier",
-                },
+				-- CSS
+				css = {
+					"prettier",
+				},
 
-                -- CSS
-                css = {
-                    "prettier",
-                },
+				scss = {
+					"prettier",
+				},
 
-                scss = {
-                    "prettier",
-                },
+				-- JavaScript
+				javascript = {
+					"prettier",
+				},
 
-                -- JavaScript
-                javascript = {
-                    "prettier",
-                },
+				javascriptreact = {
+					"prettier",
+				},
 
-                javascriptreact = {
-                    "prettier",
-                },
+				-- TypeScript
+				typescript = {
+					"prettier",
+				},
 
-                -- TypeScript
-                typescript = {
-                    "prettier",
-                },
+				typescriptreact = {
+					"prettier",
+				},
 
-                typescriptreact = {
-                    "prettier",
-                },
+				-- PHP
+				php = {
+					"php_cs_fixer",
+				},
+			},
 
-                -- PHP
-                php = {
-                    "php_cs_fixer",
-                },
-            },
+			-- FORMAT ON SAVE
+			format_on_save = function(bufnr)
+				-- Не форматувати special buffers
+				if vim.bo[bufnr].buftype ~= "" then
+					return
+				end
 
-            -- ====================================================
-            -- FORMAT ON SAVE
-            -- ====================================================
+				-- Можна вимкнути глобально:
+				-- :lua vim.g.disable_autoformat = true
+				-- або тільки для поточного buffer:
+				-- :lua vim.b.disable_autoformat = true
+				if vim.g.disable_autoformat then
+					return
+				end
 
-            format_on_save = function(bufnr)
-                -- Не форматувати special buffers
-                if vim.bo[bufnr].buftype ~= "" then
-                    return
-                end
+				if vim.b[bufnr].disable_autoformat then
+					return
+				end
 
-                -- Можна вимкнути глобально:
-                --
-                -- :lua vim.g.disable_autoformat = true
-                --
-                -- або тільки для поточного buffer:
-                --
-                -- :lua vim.b.disable_autoformat = true
+				return {
+					timeout_ms = 1000,
 
-                if vim.g.disable_autoformat then
-                    return
-                end
+					-- Якщо зовнішнього formatter немає,
+					-- використовувати LSP formatting
+					lsp_format = "fallback",
+				}
+			end,
 
-                if vim.b[bufnr].disable_autoformat then
-                    return
-                end
+			-- FORMAT OPTIONS
+			default_format_opts = {
+				lsp_format = "fallback",
+			},
 
-                return {
-                    timeout_ms = 1000,
+			-- FORMATTER SETTINGS
+			formatters = {
+				-- SHFMT
+				shfmt = {
+					append_args = {
+						"-i",
+						"4",
 
-                    -- Якщо зовнішнього formatter немає,
-                    -- використовувати LSP formatting
-                    lsp_format = "fallback",
-                }
-            end,
+						"-ci",
+					},
+				},
+			},
 
-            -- ====================================================
-            -- FORMAT OPTIONS
-            -- ====================================================
+			notify_on_error = true,
 
-            default_format_opts = {
-                lsp_format = "fallback",
-            },
+			notify_no_formatters = false,
+		},
 
-            -- ====================================================
-            -- FORMATTER SETTINGS
-            -- ====================================================
+		init = function()
+			-- Використовувати Conform для gq/operator formatting
+			vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+		end,
 
-            formatters = {
-                -- --------------------------------------------
-                -- SHFMT
-                -- --------------------------------------------
+		config = function(_, opts)
+			require("conform").setup(opts)
 
-                shfmt = {
-                    append_args = {
-                        "-i",
-                        "4",
+			-- COMMANDS
+			vim.api.nvim_create_user_command("FormatDisable", function(args)
+				if args.bang then
+					vim.b.disable_autoformat = true
 
-                        "-ci",
-                    },
-                },
-            },
+					vim.notify("Autoformat вимкнено для поточного buffer")
+				else
+					vim.g.disable_autoformat = true
 
-            notify_on_error = true,
+					vim.notify("Autoformat вимкнено глобально")
+				end
+			end, {
+				desc = "Вимкнути format-on-save",
+				bang = true,
+			})
 
-            notify_no_formatters = false,
-        },
+			vim.api.nvim_create_user_command("FormatEnable", function()
+				vim.g.disable_autoformat = false
+				vim.b.disable_autoformat = false
 
-        init = function()
-            -- Використовувати Conform для gq/operator formatting
-            vim.o.formatexpr =
-                "v:lua.require'conform'.formatexpr()"
-        end,
-
-        config = function(_, opts)
-            require("conform").setup(opts)
-
-            -- ====================================================
-            -- COMMANDS
-            -- ====================================================
-
-            vim.api.nvim_create_user_command(
-                "FormatDisable",
-                function(args)
-                    if args.bang then
-                        vim.b.disable_autoformat = true
-
-                        vim.notify(
-                            "Autoformat вимкнено для поточного buffer"
-                        )
-                    else
-                        vim.g.disable_autoformat = true
-
-                        vim.notify(
-                            "Autoformat вимкнено глобально"
-                        )
-                    end
-                end,
-                {
-                    desc = "Вимкнути format-on-save",
-                    bang = true,
-                }
-            )
-
-            vim.api.nvim_create_user_command(
-                "FormatEnable",
-                function()
-                    vim.g.disable_autoformat = false
-                    vim.b.disable_autoformat = false
-
-                    vim.notify(
-                        "Autoformat увімкнено"
-                    )
-                end,
-                {
-                    desc = "Увімкнути format-on-save",
-                }
-            )
-        end,
-    },
+				vim.notify("Autoformat увімкнено")
+			end, {
+				desc = "Увімкнути format-on-save",
+			})
+		end,
+	},
 }

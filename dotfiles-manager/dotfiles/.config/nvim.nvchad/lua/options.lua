@@ -1,11 +1,5 @@
 require "nvchad.options"
 
-
--- add yours here!
-
--- local o = vim.o
--- o.cursorlineopt ='both' -- to enable cursorline!
-
 local o = vim.o
 
 -- Кольори
@@ -13,15 +7,15 @@ o.termguicolors = true -- Повна підтримка кольорів (true c
 
 -- Файли та буфери
 o.swapfile = false -- Без swap-файлів
-o.backup = false   -- Без backup-файлів
-o.undofile = true  -- Постійна історія undo
+o.backup = false -- Без backup-файлів
+o.undofile = true -- Постійна історія undo
 
 -- Прокрутка
-o.scrolloff = 5     -- Завжди видно 8 рядків навколо курсора
+o.scrolloff = 5 -- Завжди видно 5 рядків навколо курсора
 o.sidescrolloff = 5 -- Те ж саме по горизонталі
 
 -- Нумерація
-o.number = true         -- Абсолютний номер рядка
+o.number = true -- Абсолютний номер рядка
 o.relativenumber = true -- Відносні номери
 
 -- Миша
@@ -29,20 +23,20 @@ o.mouse = "a" -- Увімкнути мишу
 
 -- Пошук
 o.ignorecase = true -- Ігнорувати регістр
-o.smartcase = true  -- Якщо є великі літери — враховує
-o.hlsearch = false  -- Не підсвічувати всі результати
-o.incsearch = true  -- Пошук "на льоту"
+o.smartcase = true -- Якщо є великі літери — враховує
+o.hlsearch = false -- Не підсвічувати всі результати
+o.incsearch = true -- Пошук "на льоту"
 
 -- Відображення
-o.wrap = false           -- Краще вимкнути (зручніше для коду)
-o.colorcolumn = "100"    -- Ліміти ширини
-o.signcolumn = "yes"     -- Завжди показувати колонку знаків (LSP, git)
+o.wrap = false -- Краще вимкнути (зручніше для коду)
+o.colorcolumn = "100" -- Ліміти ширини
+o.signcolumn = "yes" -- Завжди показувати колонку знаків (LSP, git)
 
 -- Табуляція
-o.tabstop = 4        -- Таб = 4 пробіли
-o.shiftwidth = 4     -- Відступ = 4
+o.tabstop = 4 -- Таб = 4 пробіли
+o.shiftwidth = 4 -- Відступ = 4
 o.softtabstop = 4
-o.expandtab = true   -- Таб → пробіли
+o.expandtab = true -- Таб → пробіли
 o.smartindent = true -- Розумні відступи
 
 -- Буфер обміну
@@ -64,11 +58,12 @@ o.encoding = "utf-8"
 o.fileencoding = "utf-8"
 
 -- Мапінг розкладки (укр/рос → англ)
-o.langmap = "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz"
+o.langmap =
+  "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz"
 
 vim.api.nvim_create_autocmd("TextYankPost", {
-desc = "Highlight when yanking (copying) text",
-callback = function()
+  desc = "Highlight when yanking (copying) text",
+  callback = function()
     vim.hl.on_yank()
-end,
+  end,
 })

@@ -1,7 +1,5 @@
--- ============================================================
 -- KEYMAPS
 -- Базові клавіатурні скорочення
--- ============================================================
 
 local map = vim.keymap.set
 
@@ -9,50 +7,45 @@ map("n", "L", "$", { desc = "Перейти на кінець рядка" })
 map("n", "H", "0", { desc = "Перейти на початок рядка" })
 
 map("n", "%", "ggVG", { desc = "Виділити весь текст в файлі" })
--- enter cmd mode with ";"
+
 map("n", ";", ":", { desc = "CMD enter command mode" })
--- exit insert mode with "jk"
+
 map("i", "jk", "<ESC>", { desc = "Exit insert mode with 'jk'" })
--- save using Ctrl+s
+
 map({ "n", "i", "v" }, "<C-s>", "<cmd> :w <CR>", { desc = "Save using Ctrl+s" })
--- Insert Line Below
+
 map("n", "<C-CR>", "O<ESC>", { desc = "Insert Insert line below UP" })
 map("n", "<CR>", "o<ESC>", { desc = "Insert Insert line below" })
 
 map("n", "<F2>", function()
-    Snacks.explorer()
+	Snacks.explorer()
 end, {
-    desc = "Файловий менеджер",
+	desc = "Файловий менеджер",
 })
 
--- Search Replace
-map("n", "<F4>", ":%s///gc<LEFT><LEFT><LEFT><LEFT>", { desc = "Search Пошук та заміна" })
-map("i", "<F4>", "<ESC>:%s///gc<LEFT><LEFT><LEFT><LEFT>", { desc = "Search Пошук та заміна" })
+map("n", "<F4>", ":%s///gc<LEFT><LEFT><LEFT><LEFT>", { desc = "Пошук та заміна" })
+map("i", "<F4>", "<ESC>:%s///gc<LEFT><LEFT><LEFT><LEFT>", { desc = "Пошук та заміна" })
 
 map("n", "<F5>", ":g/^$/d", { desc = "Видалення абсолютно всіх порожніх рядків" })
 
-map("n", "<F6>", [[:%s/\n\{3,}/\r\r/g]], { desc = "Видалити зайві порожні рядки (залишиться тільки 1)" })
+map(
+	"n",
+	"<F6>",
+	[[:%s/\n\{3,}/\r\r/g]],
+	{ desc = "Видалити зайві порожні рядки (залишиться тільки 1)" }
+)
 
--- Mason install all
-map("n", "<F11>", "<cmd> :MasonInstallAll <CR>", { desc = "Mason install all" })
--- Lazy sync
+map("n", "<F11>", "<cmd> :Mason <CR>", { desc = "Mason install" })
+
 map("n", "<F12>", "<cmd> :Lazy sync <CR>", { desc = "Lazy sync" })
 
-map("n", "<Esc>", "<cmd>nohlsearch<CR>", {
-    desc = "Прибрати підсвічування пошуку",
-})
+map("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Прибрати підсвічування пошуку" })
 
-map("n", "<leader>w", "<cmd>write<CR>", {
-    desc = "Зберегти файл",
-})
+map("n", "<leader>w", "<cmd>write<CR>", { desc = "Зберегти файл" })
 
-map("n", "<leader>q", "<cmd>quit<CR>", {
-    desc = "Закрити вікно",
-})
+map("n", "<leader>q", "<cmd>quit<CR>", { desc = "Закрити вікно" })
 
-map("n", "<leader>Q", "<cmd>qa<CR>", {
-    desc = "Закрити Neovim",
-})
+map("n", "<leader>Q", "<cmd>qa<CR>", { desc = "Закрити Neovim" })
 
 map("n", "<C-h>", "<C-w>h", { desc = "Перейти у вікно ліворуч" })
 map("n", "<C-j>", "<C-w>j", { desc = "Перейти у вікно вниз" })
@@ -70,15 +63,13 @@ map("v", "<", "<gv", { desc = "Зменшити відступ" })
 map("v", ">", ">gv", { desc = "Збільшити відступ" })
 
 map({ "n", "x" }, "j", "v:count == 0 ? 'gj' : 'j'", {
-    expr = true,
-    silent = true,
+	expr = true,
+	silent = true,
 })
 
 map({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", {
-    expr = true,
-    silent = true,
+	expr = true,
+	silent = true,
 })
 
-map("x", "p", [["_dP]], {
-    desc = "Вставити без перезапису регістра",
-})
+map("x", "p", [["_dP]], { desc = "Вставити без перезапису регістра" })

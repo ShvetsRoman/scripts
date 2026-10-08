@@ -1,266 +1,218 @@
--- ============================================================
 -- COMPLETION
 -- blink.cmp
--- Neovim 0.12+
--- ============================================================
 
 return {
-    {
-        "saghen/blink.cmp",
+	{
+		"saghen/blink.cmp",
 
-        version = "1.*",
+		version = "1.*",
 
-        dependencies = {
-            -- Готові snippets для багатьох мов
-            "rafamadriz/friendly-snippets",
-        },
+		dependencies = {
+			-- Готові snippets для багатьох мов
+			"rafamadriz/friendly-snippets",
+		},
 
-        ---@module "blink.cmp"
-        ---@type blink.cmp.Config
-        opts = {
-            -- ====================================================
-            -- KEYMAPS
-            -- ====================================================
+		---@module "blink.cmp"
+		---@type blink.cmp.Config
+		opts = {
+			-- KEYMAPS
+			-- Enter приймає completion.
+			-- Tab / Shift-Tab використовуються для snippets.
+			keymap = {
+				preset = "enter",
 
-            -- Enter приймає completion.
-            -- Tab / Shift-Tab використовуються для snippets.
-            keymap = {
-                preset = "enter",
+				-- Показати completion / documentation
+				["<C-Space>"] = {
+					"show",
+					"show_documentation",
+					"hide_documentation",
+				},
 
-                -- Показати completion / documentation
-                ["<C-Space>"] = {
-                    "show",
-                    "show_documentation",
-                    "hide_documentation",
-                },
+				-- Наступний пункт
+				["<C-n>"] = {
+					"select_next",
+					"fallback",
+				},
 
-                -- Наступний пункт
-                ["<C-n>"] = {
-                    "select_next",
-                    "fallback",
-                },
+				-- Попередній пункт
+				["<C-p>"] = {
+					"select_prev",
+					"fallback",
+				},
 
-                -- Попередній пункт
-                ["<C-p>"] = {
-                    "select_prev",
-                    "fallback",
-                },
+				-- Стрілки
+				["<Down>"] = {
+					"select_next",
+					"fallback",
+				},
 
-                -- Стрілки
-                ["<Down>"] = {
-                    "select_next",
-                    "fallback",
-                },
+				["<Up>"] = {
+					"select_prev",
+					"fallback",
+				},
 
-                ["<Up>"] = {
-                    "select_prev",
-                    "fallback",
-                },
+				-- Закрити completion
+				["<C-e>"] = {
+					"hide",
+					"fallback",
+				},
 
-                -- Закрити completion
-                ["<C-e>"] = {
-                    "hide",
-                    "fallback",
-                },
+				-- Прокручування документації
+				["<C-f>"] = {
+					"scroll_documentation_down",
+					"fallback",
+				},
 
-                -- Прокручування документації
-                ["<C-f>"] = {
-                    "scroll_documentation_down",
-                    "fallback",
-                },
+				["<C-b>"] = {
+					"scroll_documentation_up",
+					"fallback",
+				},
 
-                ["<C-b>"] = {
-                    "scroll_documentation_up",
-                    "fallback",
-                },
+				-- Snippets
+				["<Tab>"] = {
+					"snippet_forward",
+					"fallback",
+				},
 
-                -- Snippets
-                ["<Tab>"] = {
-                    "snippet_forward",
-                    "fallback",
-                },
+				["<S-Tab>"] = {
+					"snippet_backward",
+					"fallback",
+				},
 
-                ["<S-Tab>"] = {
-                    "snippet_backward",
-                    "fallback",
-                },
+				-- Signature help
+				["<C-k>"] = {
+					"show_signature",
+					"hide_signature",
+					"fallback",
+				},
+			},
 
-                -- Signature help
-                ["<C-k>"] = {
-                    "show_signature",
-                    "hide_signature",
-                    "fallback",
-                },
-            },
+			-- APPEARANCE
+			appearance = {
+				nerd_font_variant = "mono",
+			},
 
-            -- ====================================================
-            -- APPEARANCE
-            -- ====================================================
+			-- COMPLETION
+			completion = {
+				-- TRIGGER
+				trigger = {
+					-- Показувати completion під час введення
+					show_on_keyword = true,
 
-            appearance = {
-                nerd_font_variant = "mono",
-            },
+					-- Не запускати новий completion всередині snippet
+					show_in_snippet = false,
+				},
 
-            -- ====================================================
-            -- COMPLETION
-            -- ====================================================
+				-- LIST
+				list = {
+					selection = {
+						-- Не вставляти перший item автоматично
+						preselect = false,
 
-            completion = {
-                -- ------------------------------------------------
-                -- TRIGGER
-                -- ------------------------------------------------
+						-- Не вставляти item до підтвердження
+						auto_insert = false,
+					},
+				},
 
-                trigger = {
-                    -- Показувати completion під час введення
-                    show_on_keyword = true,
+				-- MENU
+				menu = {
+					border = "rounded",
 
-                    -- Не запускати новий completion всередині snippet
-                    show_in_snippet = false,
-                },
+					max_height = 15,
 
-                -- ------------------------------------------------
-                -- LIST
-                -- ------------------------------------------------
+					draw = {
+						columns = {
+							{
+								"kind_icon",
+							},
 
-                list = {
-                    selection = {
-                        -- Не вставляти перший item автоматично
-                        preselect = false,
+							{
+								"label",
+								"label_description",
+								gap = 1,
+							},
 
-                        -- Не вставляти item до підтвердження
-                        auto_insert = false,
-                    },
-                },
+							{
+								"source_name",
+							},
+						},
+					},
+				},
 
-                -- ------------------------------------------------
-                -- MENU
-                -- ------------------------------------------------
+				-- DOCUMENTATION
+				documentation = {
+					auto_show = true,
 
-                menu = {
-                    border = "rounded",
+					auto_show_delay_ms = 250,
 
-                    max_height = 15,
+					window = {
+						border = "rounded",
+					},
+				},
 
-                    draw = {
-                        columns = {
-                            {
-                                "kind_icon",
-                            },
+				-- GHOST TEXT
+				ghost_text = {
+					enabled = false,
+				},
+			},
 
-                            {
-                                "label",
-                                "label_description",
-                                gap = 1,
-                            },
+			-- SIGNATURE HELP
+			signature = {
+				enabled = true,
 
-                            {
-                                "source_name",
-                            },
-                        },
-                    },
-                },
+				window = {
+					border = "rounded",
+				},
+			},
 
-                -- ------------------------------------------------
-                -- DOCUMENTATION
-                -- ------------------------------------------------
+			-- SOURCES
+			sources = {
+				default = {
+					"lsp",
+					"path",
+					"snippets",
+					"buffer",
+				},
 
-                documentation = {
-                    auto_show = true,
+				providers = {
+					-- LSP
+					lsp = {
+						name = "LSP",
 
-                    auto_show_delay_ms = 250,
+						fallbacks = {},
+					},
 
-                    window = {
-                        border = "rounded",
-                    },
-                },
+					-- PATH
+					path = {
+						name = "Path",
+					},
 
-                -- ------------------------------------------------
-                -- GHOST TEXT
-                -- ------------------------------------------------
+					-- SNIPPETS
+					snippets = {
+						name = "Snippets",
 
-                ghost_text = {
-                    enabled = false,
-                },
-            },
+						opts = {
+							friendly_snippets = true,
+						},
+					},
 
-            -- ====================================================
-            -- SIGNATURE HELP
-            -- ====================================================
+					-- BUFFER
+					buffer = {
+						name = "Buffer",
 
-            signature = {
-                enabled = true,
+						min_keyword_length = 3,
+					},
+				},
+			},
 
-                window = {
-                    border = "rounded",
-                },
-            },
+			-- FUZZY MATCHING
+			fuzzy = {
+				implementation = "prefer_rust",
+			},
+		},
 
-            -- ====================================================
-            -- SOURCES
-            -- ====================================================
-
-            sources = {
-                default = {
-                    "lsp",
-                    "path",
-                    "snippets",
-                    "buffer",
-                },
-
-                providers = {
-                    -- --------------------------------------------
-                    -- LSP
-                    -- --------------------------------------------
-
-                    lsp = {
-                        name = "LSP",
-
-                        fallbacks = {},
-                    },
-
-                    -- --------------------------------------------
-                    -- PATH
-                    -- --------------------------------------------
-
-                    path = {
-                        name = "Path",
-                    },
-
-                    -- --------------------------------------------
-                    -- SNIPPETS
-                    -- --------------------------------------------
-
-                    snippets = {
-                        name = "Snippets",
-
-                        opts = {
-                            friendly_snippets = true,
-                        },
-                    },
-
-                    -- --------------------------------------------
-                    -- BUFFER
-                    -- --------------------------------------------
-
-                    buffer = {
-                        name = "Buffer",
-
-                        min_keyword_length = 3,
-                    },
-                },
-            },
-
-            -- ====================================================
-            -- FUZZY MATCHING
-            -- ====================================================
-
-            fuzzy = {
-                implementation = "prefer_rust",
-            },
-        },
-
-        opts_extend = {
-            "sources.default",
-        },
-    },
+		opts_extend = {
+			"sources.default",
+		},
+	},
 }

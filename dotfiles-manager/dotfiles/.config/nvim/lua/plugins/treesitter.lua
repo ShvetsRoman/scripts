@@ -1,246 +1,178 @@
--- ============================================================
 -- TREESITTER
 -- Syntax highlighting + Indent + Folds
--- Neovim 0.12+
--- ============================================================
 
--- ------------------------------------------------------------
 -- PARSERS
--- ------------------------------------------------------------
-
 local parsers = {
-    -- Neovim / Lua
-    "lua",
-    "luadoc",
-    "vim",
-    "vimdoc",
-    "query",
+	-- Neovim / Lua
+	"lua",
+	"luadoc",
+	"vim",
+	"vimdoc",
+	"query",
 
-    -- Shell
-    "bash",
+	-- Shell
+	"bash",
 
-    -- Data / Config
-    "json",
-    -- "jsonc",
-    "yaml",
-    "toml",
+	-- Data / Config
+	"json",
+	-- "jsonc",
+	"yaml",
+	"toml",
 
-    -- Markdown
-    "markdown",
-    "markdown_inline",
+	-- Markdown
+	"markdown",
+	"markdown_inline",
 
-    -- Web
-    "html",
-    "css",
-    "javascript",
-    "typescript",
-    "tsx",
+	-- Web
+	"html",
+	"css",
+	"javascript",
+	"typescript",
+	"tsx",
 
-    -- Docker
-    "dockerfile",
+	-- Docker
+	"dockerfile",
 
-    -- PHP
-    "php",
+	-- PHP
+	"php",
 
-    -- SQL
-    "sql",
+	-- SQL
+	"sql",
 
-    -- Git
-    "git_config",
-    "git_rebase",
-    "gitattributes",
-    "gitcommit",
-    "gitignore",
+	-- Git
+	"git_config",
+	"git_rebase",
+	"gitattributes",
+	"gitcommit",
+	"gitignore",
 
-    -- Інше
-    "regex",
+	-- Інше
+	"regex",
 }
 
--- ------------------------------------------------------------
 -- FILETYPES
--- ------------------------------------------------------------
-
 local filetypes = {
-    -- Neovim / Lua
-    "lua",
-    "vim",
-    "help",
+	-- Neovim / Lua
+	"lua",
+	"vim",
+	"help",
 
-    -- Shell
-    "sh",
-    "bash",
-    "zsh",
+	-- Shell
+	"sh",
+	"bash",
+	"zsh",
 
-    -- Data / Config
-    "json",
-    "jsonc",
-    "yaml",
-    "toml",
+	-- Data / Config
+	"json",
+	"jsonc",
+	"yaml",
+	"toml",
 
-    -- Markdown
-    "markdown",
+	-- Markdown
+	"markdown",
 
-    -- Web
-    "html",
-    "css",
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact",
+	-- Web
+	"html",
+	"css",
+	"javascript",
+	"javascriptreact",
+	"typescript",
+	"typescriptreact",
 
-    -- Docker
-    "dockerfile",
+	-- Docker
+	"dockerfile",
 
-    -- PHP
-    "php",
+	-- PHP
+	"php",
 
-    -- SQL
-    "sql",
+	-- SQL
+	"sql",
 
-    -- Git
-    "gitconfig",
-    "gitrebase",
-    "gitcommit",
+	-- Git
+	"gitconfig",
+	"gitrebase",
+	"gitcommit",
 }
 
--- ============================================================
 -- PLUGIN
--- ============================================================
-
 return {
-    {
-        "nvim-treesitter/nvim-treesitter",
+	{
+		"nvim-treesitter/nvim-treesitter",
 
-        lazy = false,
+		lazy = false,
 
-        build = ":TSUpdate",
+		build = ":TSUpdate",
 
-        config = function()
-            local treesitter = require("nvim-treesitter")
+		config = function()
+			local treesitter = require("nvim-treesitter")
 
-            -- ====================================================
-            -- SETUP
-            -- ====================================================
+			-- SETUP
+			treesitter.setup({
+				install_dir = vim.fn.stdpath("data") .. "/site",
+			})
 
-            treesitter.setup({
-                install_dir = vim.fn.stdpath("data") .. "/site",
-            })
+			-- INSTALL PARSERS
+			treesitter.install(parsers)
 
-            -- ====================================================
-            -- INSTALL PARSERS
-            -- ====================================================
+			-- FILETYPE -> LANGUAGE
+			vim.treesitter.language.register("bash", {
+				"sh",
+				"bash",
+				"zsh",
+			})
 
-            treesitter.install(parsers)
+			vim.treesitter.language.register("javascript", "javascriptreact")
 
-            -- ====================================================
-            -- FILETYPE -> LANGUAGE
-            -- ====================================================
+			vim.treesitter.language.register("tsx", "typescriptreact")
 
-            vim.treesitter.language.register("bash", {
-                "sh",
-                "bash",
-                "zsh",
-            })
+			vim.treesitter.language.register("vimdoc", "help")
 
-            vim.treesitter.language.register(
-                "javascript",
-                "javascriptreact"
-            )
+			-- AUTOCMD GROUP
+			local group = vim.api.nvim_create_augroup("UserTreesitter", {
+				clear = true,
+			})
 
-            vim.treesitter.language.register(
-                "tsx",
-                "typescriptreact"
-            )
+			-- ENABLE TREESITTER
+			vim.api.nvim_create_autocmd("FileType", {
+				group = group,
 
-            vim.treesitter.language.register(
-                "vimdoc",
-                "help"
-            )
+				pattern = filetypes,
 
-            -- ====================================================
-            -- AUTOCMD GROUP
-            -- ====================================================
+				desc = "Увімкнути Treesitter",
 
-            local group = vim.api.nvim_create_augroup(
-                "UserTreesitter",
-                {
-                    clear = true,
-                }
-            )
+				callback = function(event)
+					-- HIGHLIGHTING
+					pcall(vim.treesitter.start, event.buf)
 
-            -- ====================================================
-            -- ENABLE TREESITTER
-            -- ====================================================
+					-- LANGUAGE
+					local filetype = vim.bo[event.buf].filetype
 
-            vim.api.nvim_create_autocmd("FileType", {
-                group = group,
+					local language = vim.treesitter.language.get_lang(filetype)
 
-                pattern = filetypes,
+					if not language then
+						return
+					end
 
-                desc = "Увімкнути Treesitter",
+					-- INDENT
+					local indent_ok, indent_query = pcall(vim.treesitter.query.get, language, "indents")
 
-                callback = function(event)
-                    -- --------------------------------------------
-                    -- HIGHLIGHTING
-                    -- --------------------------------------------
+					if indent_ok and indent_query then
+						vim.bo[event.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+					end
 
-                    pcall(
-                        vim.treesitter.start,
-                        event.buf
-                    )
+					-- FOLDS
+					local folds_ok, folds_query = pcall(vim.treesitter.query.get, language, "folds")
 
-                    -- --------------------------------------------
-                    -- LANGUAGE
-                    -- --------------------------------------------
+					if folds_ok and folds_query then
+						vim.wo.foldmethod = "expr"
 
-                    local filetype =
-                        vim.bo[event.buf].filetype
+						vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 
-                    local language =
-                        vim.treesitter.language.get_lang(filetype)
-
-                    if not language then
-                        return
-                    end
-
-                    -- --------------------------------------------
-                    -- INDENT
-                    -- --------------------------------------------
-
-                    local indent_ok, indent_query =
-                        pcall(
-                            vim.treesitter.query.get,
-                            language,
-                            "indents"
-                        )
-
-                    if indent_ok and indent_query then
-                        vim.bo[event.buf].indentexpr =
-                            "v:lua.require'nvim-treesitter'.indentexpr()"
-                    end
-
-                    -- --------------------------------------------
-                    -- FOLDS
-                    -- --------------------------------------------
-
-                    local folds_ok, folds_query =
-                        pcall(
-                            vim.treesitter.query.get,
-                            language,
-                            "folds"
-                        )
-
-                    if folds_ok and folds_query then
-                        vim.wo.foldmethod = "expr"
-
-                        vim.wo.foldexpr =
-                            "v:lua.vim.treesitter.foldexpr()"
-
-                        vim.wo.foldlevel = 99
-                        vim.wo.foldenable = true
-                    end
-                end,
-            })
-        end,
-    },
+						vim.wo.foldlevel = 99
+						vim.wo.foldenable = true
+					end
+				end,
+			})
+		end,
+	},
 }

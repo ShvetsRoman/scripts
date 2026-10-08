@@ -1,60 +1,74 @@
--- ============================================================
 -- OPTIONS
 -- Базові налаштування Neovim
--- ============================================================
 
 local opt = vim.opt
 
-opt.number = true
-opt.relativenumber = true
-opt.signcolumn = "yes"
-opt.cursorline = true
-opt.numberwidth = 4
-opt.showmode = false
-opt.laststatus = 3
-opt.splitright = true
-opt.splitbelow = true
-opt.scrolloff = 8
-opt.sidescrolloff = 8
+-- НУМЕРАЦІЯ РЯДКІВ ТА ІНТЕРФЕЙС
+opt.number = true -- Показувати абсолютний номер поточного рядка
+opt.relativenumber = true -- Показувати відносні номери інших рядків
+opt.signcolumn = "yes" -- Завжди показувати колонку знаків (LSP, Git, діагностика)
+opt.cursorline = true -- Підсвічувати рядок, на якому знаходиться курсор
+opt.numberwidth = 4 -- Мінімальна ширина колонки номерів рядків
+opt.showmode = false -- Не показувати режим INSERT, NORMAL тощо в командному рядку
+opt.laststatus = 3 -- Використовувати один глобальний statusline для всіх вікон
 
-opt.wrap = false
-opt.breakindent = true
+-- РОЗТАШУВАННЯ ВІКОН ТА ПРОКРУТКА
+opt.splitright = true -- Відкривати нові вертикальні вікна праворуч
+opt.splitbelow = true -- Відкривати нові горизонтальні вікна знизу
+opt.scrolloff = 5 -- Залишати мінімум 5 видимих рядків над і під курсором
+opt.sidescrolloff = 5 -- Залишати мінімум 5 видимих колонок ліворуч і праворуч
 
-opt.tabstop = 4
-opt.shiftwidth = 4
-opt.softtabstop = 4
-opt.expandtab = true
-opt.autoindent = true
-opt.smartindent = true
+-- ПЕРЕНЕСЕННЯ РЯДКІВ
+opt.wrap = false -- Не переносити довгі рядки на наступний екранний рядок
+opt.breakindent = true -- Зберігати відступ під час візуального перенесення рядків
 
-opt.ignorecase = true
-opt.smartcase = true
-opt.incsearch = true
-opt.hlsearch = true
+-- ТАБУЛЯЦІЯ ТА ВІДСТУПИ
+opt.tabstop = 4 -- Відображати символ табуляції шириною 4 пробіли
+opt.shiftwidth = 4 -- Використовувати 4 пробіли для автоматичного відступу
+opt.softtabstop = 4 -- Використовувати крок 4 пробіли під час Tab і Backspace
+opt.expandtab = true -- Вставляти пробіли замість символів табуляції
+opt.autoindent = true -- Копіювати відступ попереднього рядка
+opt.smartindent = true -- Автоматично враховувати структуру коду під час відступів
 
-opt.swapfile = false
-opt.backup = false
-opt.writebackup = false
-opt.undofile = true
+-- ПОШУК
+opt.ignorecase = true -- Ігнорувати регістр символів під час пошуку
+opt.smartcase = true -- Враховувати регістр, якщо запит містить великі літери
+opt.incsearch = true -- Показувати збіги безпосередньо під час введення запиту
+opt.hlsearch = true -- Підсвічувати всі знайдені збіги після пошуку
 
-opt.clipboard = "unnamedplus"
-opt.wildmode = "longest:full,full"
+-- ФАЙЛИ, РЕЗЕРВНІ КОПІЇ ТА ІСТОРІЯ ЗМІН
+opt.swapfile = false -- Не створювати swap-файли для аварійного відновлення
+opt.backup = false -- Не зберігати резервну копію після запису файлу
+opt.writebackup = false -- Не створювати тимчасову резервну копію під час запису
+opt.undofile = true -- Зберігати історію скасування змін між сеансами Neovim
+
+-- БУФЕР ОБМІНУ
+opt.clipboard = "unnamedplus" -- Використовувати системний буфер обміну
+
+-- КОМАНДНИЙ РЯДОК ТА АВТОДОПОВНЕННЯ
+opt.wildmode = "longest:full,full" -- Спочатку доповнювати спільний префікс і показувати повні варіанти, потім циклічно перебирати збіги
 
 opt.completeopt = {
-    "menu",
-    "menuone",
-    "noselect",
+	"menu", -- Показувати меню варіантів автодоповнення
+	"menuone", -- Показувати меню, навіть якщо знайдено лише один варіант
+	"noselect", -- Не вибирати перший варіант автоматично
 }
 
-opt.updatetime = 250
-opt.timeoutlen = 300
+-- ШВИДКОДІЯ ТА КЛАВІАТУРНІ КОМБІНАЦІЇ
+opt.updatetime = 250 -- Час очікування бездіяльності перед подіями оновлення (мс)
+opt.timeoutlen = 300 -- Максимальний час очікування наступної клавіші комбінації (мс)
 
-opt.list = true
+-- ВІДОБРАЖЕННЯ НЕВИДИМИХ СИМВОЛІВ
+opt.list = true -- Показувати спеціальні позначення невидимих символів
+
 opt.listchars = {
-    tab = "» ",
-    trail = "·",
-    nbsp = "␣",
+	tab = "» ", -- Позначати символи табуляції стрілкою »
+	trail = "·", -- Позначати пробіли наприкінці рядка крапкою ·
+	nbsp = "␣", -- Позначати нерозривні пробіли символом ␣
 }
 
-opt.confirm = true
-opt.termguicolors = true
+-- ПІДТВЕРДЖЕННЯ ОПЕРАЦІЙ
+opt.confirm = true -- Запитувати підтвердження при виході або зміні буфера за наявності незбережених змін
+
+-- КОЛЬОРИ
+opt.termguicolors = true -- Увімкнути підтримку 24-бітних кольорів (True Color)
