@@ -22,7 +22,7 @@ return {
 
 		opts = {
 			options = {
-				theme = "nordic",
+				theme = "auto",
 
 				icons_enabled = true,
 
