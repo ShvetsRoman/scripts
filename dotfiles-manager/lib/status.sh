@@ -6,24 +6,25 @@ status_one() {
     local backup_path="$DOTFILES_DIR/$path"
 
     if path_exists_in_home "$path" && ! path_exists_in_backup "$path"; then
-        printf '[NEW]     %s\n' "$path"
+        printf '%b[NEW]     %s %b\n' "$BLUE" "$path" "$NC"
         return 0
     fi
 
     if ! path_exists_in_home "$path" && path_exists_in_backup "$path"; then
-        printf '[MISSING] %s — відсутній у HOME\n' "$path"
+        printf '%b[MISSING] %s — відсутній у HOME %b\n' "$RED" "$path" "$NC"
         return 0
     fi
 
     if ! path_exists_in_home "$path" && ! path_exists_in_backup "$path"; then
-        printf '[MISSING] %s — відсутній всюди\n' "$path"
+        printf '%b[MISSING] %s — відсутній всюди %b\n' "$RED" "$path" "$NC"
+
         return 0
     fi
 
     if paths_differ "$home_path" "$backup_path"; then
-        printf '[CHANGED] %s\n' "$path"
+        printf '%b[CHANGED] %s %b\n' "$YELLOW" "$path" "$NC"
     else
-        printf '[OK]      %s\n' "$path"
+        printf '%b[OK]%b      %s\n' "$GREEN" "$NC" "$path"
     fi
 }
 
