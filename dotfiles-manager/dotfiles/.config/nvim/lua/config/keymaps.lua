@@ -8,6 +8,9 @@ map("n", "H", "0", { desc = "Перейти на початок рядка" })
 
 map("n", "<leader>a", "GVgg", { desc = "Виділити весь текст в файлі" })
 
+map("n", "<leader>/", "gcc", { remap = true, desc = "Comment line" })
+map("v", "<leader>/", "gc", { remap = true, desc = "Comment selection" })
+
 map("n", ";", ":", { desc = "CMD enter command mode" })
 
 map("i", "jk", "<ESC>", { desc = "Exit insert mode with 'jk'" })

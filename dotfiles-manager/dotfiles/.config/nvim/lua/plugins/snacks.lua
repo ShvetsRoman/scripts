@@ -216,7 +216,7 @@ return {
 				desc = "Grep",
 			},
 			{
-				"<leader>/",
+				"<leader>g",
 				function()
 					Snacks.picker.grep()
 				end,

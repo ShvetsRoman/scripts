@@ -32,11 +32,11 @@ generate_secret() {
 
     # Генеруємо символи доти, доки не отримаємо
     # необхідну кількість символів
-    while (( ${#secret} < length )); do
+    while ((${#secret} < length)); do
 
         secret+="$(
             openssl rand -base64 64 |
-            tr -dc "${CHARSET}"
+                tr -dc "${CHARSET}"
         )"
 
     done
