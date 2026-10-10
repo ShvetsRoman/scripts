@@ -432,7 +432,7 @@ format = "[$time]($style)"
 [status]
 disabled = false
 format = "[$symbol $status]($style) "
-symbol = "✘ "
+symbol = "✘"
 success_symbol = ""
 style = "bold red"
 map_symbol = true
