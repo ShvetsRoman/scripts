@@ -63,3 +63,23 @@ api.nvim_create_autocmd("FileType", {
 		})
 	end,
 })
+
+-- відкривати explorer при запуску без файла
+api.nvim_create_autocmd("VimEnter", {
+	group = group,
+	desc = "Відкрити Snacks Explorer при запуску без файла",
+
+	callback = function()
+		-- Якщо Neovim запущено з файлом:
+		-- nvim file.lua
+		-- Explorer не відкриваємо
+		if vim.fn.argc() > 0 then
+			return
+		end
+
+		-- Відкрити Explorer після повного старту Neovim
+		vim.schedule(function()
+			Snacks.explorer()
+		end)
+	end,
+})

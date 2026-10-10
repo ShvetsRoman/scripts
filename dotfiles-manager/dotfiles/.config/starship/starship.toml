@@ -69,12 +69,14 @@ $docker_context\
 ${custom.docker_all}\
 ${custom.docker_partial}\
 ${custom.docker_none}\
-$cmd_duration\
 $line_break\
+$status\
 $character"""
 
 # Модулі праворуч від основного запрошення.
-right_format = "$jobs$time"
+right_format = """
+$cmd_duration\
+$jobs$time"""
 
 # ============================================================
 # 3. КОЛЬОРОВА ПАЛІТРА CATPPUCCIN MOCHA
@@ -338,61 +340,38 @@ format = "via [$symbol$version]($style) "
 # ============================================================
 
 [custom.docker_all]
-
 disabled = false
-
 description = "Усі Docker-контейнери запущені"
-
 when = 'bash "$HOME/.config/starship/docker-status.sh" all >/dev/null'
-
 command = 'bash "$HOME/.config/starship/docker-status.sh" all'
-
 symbol = "  "
-
 style = "bold fg:#a6e3a1"
-
 format = "[$symbol$output]($style) "
-
 
 # ============================================================
 # DOCKER — ЧАСТИНА КОНТЕЙНЕРІВ ЗАПУЩЕНА
 # ============================================================
 
 [custom.docker_partial]
-
 disabled = false
-
 description = "Частина Docker-контейнерів запущена"
-
 when = 'bash "$HOME/.config/starship/docker-status.sh" partial >/dev/null'
-
 command = 'bash "$HOME/.config/starship/docker-status.sh" partial'
-
 symbol = "  "
-
 style = "bold fg:#f9e2af"
-
 format = "[$symbol$output]($style) "
-
 
 # ============================================================
 # DOCKER — УСІ КОНТЕЙНЕРИ ЗУПИНЕНІ
 # ============================================================
 
 [custom.docker_none]
-
 disabled = false
-
 description = "Docker-контейнери зупинені"
-
 when = 'bash "$HOME/.config/starship/docker-status.sh" none >/dev/null'
-
 command = 'bash "$HOME/.config/starship/docker-status.sh" none'
-
 symbol = "  "
-
 style = "bold fg:#f38ba8"
-
 format = "[$symbol$output]($style) "
 
 # ============================================================
@@ -441,6 +420,22 @@ time_format = "%H:%M"
 # Приглушений колір.
 style = "dimmed overlay"
 format = "[$time]($style)"
+
+# ───────────────────────────────────────────────────────────────────────────────
+# STATUS
+# ───────────────────────────────────────────────────────────────────────────────
+# Показує код завершення попередньої команди.
+# Успішна команда:
+#   ➜
+# Помилка:
+#   ✘ 1 ❯
+[status]
+disabled = false
+format = "[$symbol $status]($style) "
+symbol = "✘ "
+success_symbol = ""
+style = "bold red"
+map_symbol = true
 
 # ============================================================
 # 19. СИМВОЛ ВВЕДЕННЯ КОМАНД

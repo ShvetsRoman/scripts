@@ -224,7 +224,7 @@ ignore_timeout = true
 #   ✘ 1 ❯
 [status]
 disabled = false
-format = "[$symbol$status]($style) "
+format = "[$symbol $status]($style) "
 symbol = "✘ "
 success_symbol = ""
 style = "fg:nord11 bold"

@@ -6,7 +6,7 @@ local map = vim.keymap.set
 map("n", "L", "$", { desc = "Перейти на кінець рядка" })
 map("n", "H", "0", { desc = "Перейти на початок рядка" })
 
-map("n", "%", "ggVG", { desc = "Виділити весь текст в файлі" })
+map("n", "<leader>a", "GVgg", { desc = "Виділити весь текст в файлі" })
 
 map("n", ";", ":", { desc = "CMD enter command mode" })
 
