@@ -17,6 +17,7 @@ declare -Ag _RESOLVE_DONE=()
 
 show_help() {
     cat <<'HELP'
+
 Installer Packages V2.0 — Arch Linux
 
 ЗАПУСК
@@ -31,7 +32,7 @@ Installer Packages V2.0 — Arch Linux
   --list-configs               Перелік конфігурацій
   --dry-run                    Попередній перегляд без змін
   --yes, -y                    Підтверджувати встановлення
-  --configs-only              Тільки копіювання конфігів
+  --configs-only               Тільки копіювання конфігів
   --no-configs                 Без копіювання конфігів
   --no-backup                  Без backup перед заміною
   --strict-configs             Помилка, якщо немає source

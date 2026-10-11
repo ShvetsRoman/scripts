@@ -236,7 +236,49 @@ copy_config_path() {
         return $?
     }
 
-    # Окремий логічний блок для кожного конфігу.
+    # Smart Copy: порівнюємо вміст, а не час зміни чи права файлів.
+    # Код 0 — однаково; 1 — є зміни; 2 — помилка порівняння.
+    # Якщо ціль відсутня, конфіг потрібно скопіювати без backup.
+    local compare_rc=1
+    if [[ -e "$target" || -L "$target" ]]; then
+        if [[ "$scope" == home ]]; then
+            if core_compare "$source" "$target"; then
+                compare_rc=0
+            else
+                compare_rc=$?
+            fi
+        elif [[ -d "$source" && ! -L "$source" && -d "$target" && ! -L "$target" ]]; then
+            # Для system-конфігів потрібні права читання цільового каталогу.
+            local system_changes
+            if system_changes="$(sudo rsync -a --checksum --delete --dry-run --itemize-changes \
+                --no-times --no-perms --no-owner --no-group \
+                -- "$source/" "$target/" 2>/dev/null)"; then
+                [[ -n "$system_changes" ]] && compare_rc=1 || compare_rc=0
+            else
+                compare_rc=2
+            fi
+        elif [[ -f "$source" && -f "$target" ]]; then
+            if sudo cmp -s -- "$source" "$target"; then
+                compare_rc=0
+            else
+                # cmp з кодом 2 означає помилку читання.
+                compare_rc=$?
+                [[ "$compare_rc" == 1 ]] || compare_rc=2
+            fi
+        else
+            compare_rc=1
+        fi
+    fi
+
+    if (( compare_rc == 0 )); then
+        log_info "Конфіг: $config_label вже синхронізовано, пропускаю."
+        return 0
+    elif (( compare_rc != 1 )); then
+        log_error "Не вдалося порівняти конфіг: $config_label ($source -> $target)."
+        return 1
+    fi
+
+    # Захисний backup створюється лише за наявності реальних змін.
     echo
     backup_config "$target" "$config_label"
 
@@ -337,7 +379,7 @@ config_matches() {
 
         local diff_output
         if [[ "$scope" == system ]]; then
-            diff_output="$(sudo rsync -a --delete --dry-run --itemize-changes "$source/" "$target/" 2>/dev/null)" || return 2
+            diff_output="$(sudo rsync -a --checksum --delete --dry-run --itemize-changes --no-times --no-perms --no-owner --no-group -- "$source/" "$target/" 2>/dev/null)" || return 2
         else
             core_compare "$source" "$target"; return $?
         fi

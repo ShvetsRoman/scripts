@@ -66,7 +66,7 @@ core_compare() {
 core_sync() {
     local source="$1" target="$2" delete_mode="${3:-false}" dry="${4:-false}"
     shift 4
-    local -a args=(-a --human-readable --itemize-changes)
+    local -a args=(-a)
     local x
     if [[ "$delete_mode" == true ]]; then args+=(--delete); fi
     if [[ "$dry" == true ]]; then args+=(--dry-run); else mkdir -p -- "$(dirname -- "$target")"; fi

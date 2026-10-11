@@ -48,5 +48,6 @@ CONFIG_ITEMS=(
     "kitty|home|.config/kitty|.config/kitty"
     "wezterm|home|.config/wezterm|.config/wezterm"
     "fzf|home|.config/fzf|.config/fzf"
+    "eza|home|.config/eza|.config/eza"
     "superfile|home|.config/superfile|.config/superfile"
 )
