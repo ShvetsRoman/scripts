@@ -1,0 +1,48 @@
+# ============================================================
+# SETUP MANAGER V3.0 — GITIGNORE
+# Зберігаємо вихідний код, конфіги й dotfiles у Git.
+# Ігноруємо згенеровані дані та локальні секрети.
+# ============================================================
+
+# Журнали Setup Manager та Installer
+/log/
+/install-packages/log/
+*.log
+*.log.*
+
+# Захисні резервні копії Installer
+/install-packages/backups/
+
+# Recovery та архіви Dotfiles Manager
+/dotfiles-manager/dotfiles-recovery/
+/dotfiles-manager/dotfiles-archive/
+
+# Архіви, тимчасові файли та діагностика
+*.tar.gz
+*.tgz
+*.zip
+*.tmp
+*.temp
+*.bak
+*.bak.*
+*.swp
+*.swo
+*~
+*.orig
+*.rej
+/debug.log
+
+# Python / IDE / локальні інструменти
+__pycache__/
+.pytest_cache/
+.idea/
+.vscode/
+
+# Секрети та локальні перевизначення
+.env
+.env.*
+!.env.example
+*.local.conf
+
+# УВАГА: каталог /dotfiles-manager/dotfiles/ НЕ ігнорується.
+# Перед комітом перевіряйте, чи немає в ньому токенів/паролів.
