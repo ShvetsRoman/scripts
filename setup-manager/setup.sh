@@ -309,6 +309,7 @@ menu() {
 9) Допомога
 
 0) Вихід
+00) Вихід
 
 EOF
         read -r -p 'Оберіть дію: ' choice || return 0
@@ -322,7 +323,7 @@ EOF
             7) maintenance ;;
             8) run_tests || log WARN 'Частина тестів не пройшла' ;;
             9) usage ;;
-            0) return 0 ;;
+            0|00) return 0 ;;
             *) log WARN 'Невідомий пункт меню' ;;
         esac
     done

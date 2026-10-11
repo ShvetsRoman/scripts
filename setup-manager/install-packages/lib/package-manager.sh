@@ -8,33 +8,48 @@ package_installed() {
     pacman -Q "$1" >/dev/null 2>&1
 }
 
+# Перевірка доступності у локальній базі синхронізації Pacman.
+# Команда нічого не встановлює і не оновлює базу пакетів.
+pacman_package_exists() {
+    pacman -Si -- "$1" >/dev/null 2>&1
+}
+
+# Перевірка AUR через paru (потребує доступу до AUR).
+aur_package_exists() {
+    paru -Si --aur -- "$1" >/dev/null 2>&1
+}
+
 install_pacman() {
     local packages=("$@")
     ((${#packages[@]})) || return 0
 
-    local missing=()
+    local -a available=()
     local package
 
     for package in "${packages[@]}"; do
         if package_installed "$package"; then
             log_info "$package вже встановлено."
+        elif pacman_package_exists "$package"; then
+            available+=("$package")
         else
-            missing+=("$package")
+            log_warn "Пакет '$package' не знайдено в репозиторіях Pacman; пропускаю. Перевір назву та актуальність бази пакетів (pacman -Sy не запускається автоматично)."
         fi
     done
 
-    if ((${#missing[@]} == 0)); then
-        log_ok "Усі pacman-пакети вже встановлені."
+    if ((${#available[@]} == 0)); then
+        log_info "Немає доступних pacman-пакетів для встановлення."
         return 0
     fi
 
     echo
     log_step "Встановлення pacman-пакетів:"
-    printf '  - %s\n' "${missing[@]}"
+    printf '  - %s\n' "${available[@]}"
 
-    local args=(sudo pacman -S --needed)
-    [[ "$ASSUME_YES" == true ]] && args+=(--noconfirm)
-    args+=("${missing[@]}")
+    local -a args=(sudo pacman -S --needed)
+    if [[ "${ASSUME_YES:-false}" == true ]]; then
+        args+=(--noconfirm)
+    fi
+    args+=("${available[@]}")
 
     run_cmd "${args[@]}"
 }
@@ -104,31 +119,57 @@ install_paru() {
     local packages=("$@")
     ((${#packages[@]})) || return 0
 
-    local missing=()
+    local -a pending=()
+    local -a available=()
     local package
 
     for package in "${packages[@]}"; do
         if package_installed "$package"; then
             log_info "$package вже встановлено."
         else
-            missing+=("$package")
+            pending+=("$package")
         fi
     done
 
-    if ((${#missing[@]} == 0)); then
+    if ((${#pending[@]} == 0)); then
         log_ok "Усі AUR-пакети вже встановлені."
         return 0
     fi
 
-    ensure_paru
+    # Якщо paru відсутній, у dry-run не намагаємося встановлювати
+    # його та не стверджуємо, що пакети перевірені.
+    ensure_paru || return 1
+    if ! command -v paru >/dev/null 2>&1; then
+        if [[ "${DRY_RUN:-false}" == true ]]; then
+            log_warn "paru відсутній: у dry-run неможливо перевірити доступність AUR-пакетів."
+            return 0
+        fi
+        log_error "Неможливо перевірити AUR: paru не знайдено."
+        return 1
+    fi
+
+    for package in "${pending[@]}"; do
+        if aur_package_exists "$package"; then
+            available+=("$package")
+        else
+            log_warn "AUR-пакет '$package' не знайдено або AUR недоступний; пропускаю."
+        fi
+    done
+
+    if ((${#available[@]} == 0)); then
+        log_info "Немає доступних AUR-пакетів для встановлення."
+        return 0
+    fi
 
     echo
     log_step "Встановлення AUR-пакетів:"
-    printf '  - %s\n' "${missing[@]}"
+    printf '  - %s\n' "${available[@]}"
 
-    local args=(paru -S --needed)
-    [[ "$ASSUME_YES" == true ]] && args+=(--noconfirm)
-    args+=("${missing[@]}")
+    local -a args=(paru -S --needed)
+    if [[ "${ASSUME_YES:-false}" == true ]]; then
+        args+=(--noconfirm)
+    fi
+    args+=("${available[@]}")
 
     run_cmd "${args[@]}"
 }

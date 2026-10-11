@@ -79,6 +79,7 @@ bash "$ROOT/tests/test-ui-streams.sh"
 # Усі заголовки інтерактивних меню через print_header
 bash "$ROOT/tests/test-menu-headers.sh"
 bash "$ROOT/tests/test-menu-navigation.sh"
+bash "$ROOT/tests/test-package-availability.sh"
 
 if command -v shellcheck >/dev/null 2>&1; then
     bash "$ROOT/tests/test-shellcheck.sh"

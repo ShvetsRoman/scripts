@@ -26,7 +26,6 @@ PACMAN_PACKAGES=(
 
 # Пакети AUR (через paru).
 AUR_PACKAGES=(
-
 )
 
 # Зовнішні програми: ID|TYPE|URL|CHECK_COMMAND[|DEST|EXEC_REL].

@@ -12,8 +12,6 @@ MODULE_POST_HOOK=""
 # Пакети офіційних репозиторіїв Arch Linux.
 PACMAN_PACKAGES=(
     ark
-    packagekit-qt5
-    libappindicator-gtk2
     colord-kde
     kaccounts-integration
     kaccounts-providers
