@@ -19,7 +19,7 @@ _ui_color_enabled() {
     case "$mode" in
         always) return 0 ;;
         never) return 1 ;;
-        auto|'') [[ -t "$fd" ]] ;;
+        auto | '') [[ -t "$fd" ]] ;;
         *) [[ -t "$fd" ]] ;;
     esac
 }
@@ -34,8 +34,14 @@ if _ui_color_enabled 1; then
     BOLD=$'\033[1m'
     NC=$'\033[0m'
 else
-    RED=''; GREEN=''; YELLOW=''; BLUE=''
-    MAGENTA=''; CYAN=''; BOLD=''; NC=''
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    MAGENTA=''
+    CYAN=''
+    BOLD=''
+    NC=''
 fi
 
 if _ui_color_enabled 2; then
@@ -43,7 +49,9 @@ if _ui_color_enabled 2; then
     _UI_STDERR_YELLOW=$'\033[1;33m'
     _UI_STDERR_NC=$'\033[0m'
 else
-    _UI_STDERR_RED=''; _UI_STDERR_YELLOW=''; _UI_STDERR_NC=''
+    _UI_STDERR_RED=''
+    _UI_STDERR_YELLOW=''
+    _UI_STDERR_NC=''
 fi
 
 _ui_emit() {
@@ -94,6 +102,6 @@ log_debug() {
 
 print_header() {
     printf '\n%s%s============================================%s\n' "$CYAN" "$BOLD" "$NC"
-    printf '%s%s %s%s\n' "$CYAN" "$BOLD" "$*" "$NC"
-    printf '%s%s============================================%s\n\n' "$CYAN" "$BOLD" "$NC"
+    printf '%s%s           %s%s\n' "$CYAN" "$BOLD" "$*" "$NC"
+    printf '%s%s============================================%s\n' "$CYAN" "$BOLD" "$NC"
 }

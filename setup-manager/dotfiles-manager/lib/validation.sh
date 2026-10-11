@@ -20,7 +20,6 @@ validate_backup_paths() {
 
     echo
     log_ok "Конфігурація шляхів перевірена."
-    echo
 }
 
 is_managed_path() {
