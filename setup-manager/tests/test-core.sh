@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
-# Інтеграційні тести спільного ядра без зміни справжнього HOME.
 set -Eeuo pipefail
-ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../config/setup.conf
+source "$ROOT_DIR/config/setup.conf"
+# shellcheck source=../lib/ui.sh
+source "$ROOT_DIR/lib/ui.sh"
 # shellcheck source=../lib/core.sh
-source "$ROOT/lib/core.sh"
-tmp="$(mktemp -d)"
-trap 'rm -rf -- "$tmp"' EXIT
-mkdir -p "$tmp/src/sub" "$tmp/repo"
-printf 'alpha\n' >"$tmp/src/sub/test"
-core_snapshot dotfiles "$tmp/src" "$tmp/repo" false >/dev/null
-core_compare "$tmp/src" "$tmp/repo"
-printf 'beta\n' >"$tmp/repo/sub/test"
-if core_compare "$tmp/src" "$tmp/repo"; then echo '[FAIL] Diff'; exit 1; fi
-core_snapshot recovery "$tmp/repo" "$tmp/recovery" false
-cmp -s "$tmp/repo/sub/test" "$tmp/recovery/sub/test"
-core_sync "$tmp/src" "$tmp/repo" true false >/dev/null
-core_compare "$tmp/src" "$tmp/repo"
-core_snapshot installer "$tmp/repo" "$tmp/installer-backup" false
-core_compare "$tmp/repo" "$tmp/installer-backup"
-printf '[PASS] Core sync / compare / installer / recovery / dotfiles\n'
+source "$ROOT_DIR/lib/core.sh"
+TMP_TEST="$(mktemp -d)"
+trap 'rm -rf -- "${TMP_TEST:?}"' EXIT
+mkdir -p "$TMP_TEST/a" "$TMP_TEST/b"
+printf 'same\n' > "$TMP_TEST/a/file"
+cp -- "$TMP_TEST/a/file" "$TMP_TEST/b/file"
+touch -t 202001010101 "$TMP_TEST/b/file"
+core_compare "$TMP_TEST/a" "$TMP_TEST/b" || { printf '[FAIL] однаковий вміст\n' >&2; exit 1; }
+printf 'different\n' > "$TMP_TEST/b/file"
+if core_compare "$TMP_TEST/a" "$TMP_TEST/b"; then printf '[FAIL] зміни не знайдені\n' >&2; exit 1; fi
+DRY_RUN=true
+core_copy "$TMP_TEST/a" "$TMP_TEST/new" >/dev/null
+[[ ! -e "$TMP_TEST/new" ]] || { printf '[FAIL] dry-run змінив файли\n' >&2; exit 1; }
+DRY_RUN=false
+core_copy "$TMP_TEST/a" "$TMP_TEST/new"
+core_compare "$TMP_TEST/a" "$TMP_TEST/new" || { printf '[FAIL] копіювання\n' >&2; exit 1; }
+if core_safe_relative '../escape'; then printf '[FAIL] path traversal\n' >&2; exit 1; fi
+printf '[PASS] Compare, copy, dry-run, path validation\n'

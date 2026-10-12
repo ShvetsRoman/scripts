@@ -1,91 +1,39 @@
 #!/usr/bin/env bash
-# Локальні регресійні тести без встановлення програм і запису в $HOME.
 set -Eeuo pipefail
-ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-pass() { printf '[PASS] %s\n' "$1"; }
-fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
-if bash -n "$ROOT/setup.sh"; then
-    pass 'Синтаксис setup.sh'
-else
-    fail 'Синтаксис'
-fi
-if bash "$ROOT/setup.sh" --help | grep -q 'Smart Setup'; then
-    pass 'Довідка'
-else
-    fail 'Довідка'
-fi
-if [[ -f "$ROOT/install-packages/modules/cli.sh" ]]; then
-    pass 'Модулі'
-else
-    fail 'Модулі'
-fi
-if [[ -f "$ROOT/dotfiles-manager/config/dotfiles.conf" ]]; then
-    pass 'Окремий реєстр dotfiles'
-else
-    fail 'Реєстр'
-fi
-if [[ -f "$ROOT/install-packages/config/installer.conf" ]]; then
-    pass 'Окремий реєстр installer'
-else
-    fail 'Реєстр'
-fi
-if bash "$ROOT/setup.sh" smart --dry-run no_such_module >/dev/null 2>&1; then
-    fail 'Валідація невідомих модулів'
-else
-    pass 'Валідація невідомих модулів'
-fi
-if bash "$ROOT/setup.sh" status not_a_component >/dev/null 2>&1; then
-    fail 'Валідація підсистем'
-else
-    pass 'Валідація підсистем'
-fi
-
-if bash "$ROOT/tests/test-core.sh"; then
-    pass "Спільний backup/restore core"
-else
-    fail "Unified core"
-fi
-
-if bash "$ROOT/tests/test-output.sh"; then
-    pass "Формат виводу та dry-run"
-else
-    fail "Вивід dry-run"
-fi
-
-if bash "$ROOT/tests/test-module-messages.sh"; then
-    pass "Заголовки модулів та джерела пакетів"
-else
-    fail "Вивід модулів"
-fi
-
-bash "$ROOT/tests/test-config-paths.sh"
-
-bash "$ROOT/tests/test-doctor-format.sh"
-
-bash "$ROOT/tests/test-maintenance.sh"
-
-bash "$ROOT/tests/test-smart-no-backup.sh"
-
-bash "$ROOT/tests/test-comparison.sh"
-
-# Спільні кольори та API логування
-if bash "$ROOT/tests/test-unified-ui.sh"; then
-    pass "Спільний UI"
-else
-    fail "Спільний UI"
-fi
-bash "$ROOT/tests/test-ui-streams.sh"
-
-# Усі заголовки інтерактивних меню через print_header
-bash "$ROOT/tests/test-menu-headers.sh"
-bash "$ROOT/tests/test-menu-navigation.sh"
-bash "$ROOT/tests/test-package-availability.sh"
-bash "$ROOT/tests/test-smart-copy.sh"
-
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+pass() { printf '[PASS] %s\n' "$*"; }
+fail() { printf '[FAIL] %s\n' "$*" >&2; exit 1; }
+while IFS= read -r -d '' file; do bash -n "$file" || fail "Синтаксис $file"; done < <(find "$ROOT_DIR" -name '*.sh' -type f -print0)
+pass 'Синтаксис Bash'
+expected_version="$(bash -c 'source "$1/config/setup.conf"; printf "%s" "$SETUP_VERSION"' bash "$ROOT_DIR")"
+[[ -n "$expected_version" && "$(bash "$ROOT_DIR/setup.sh" --version)" == "$expected_version" ]] || fail 'Номер версії'
+pass 'Версія з конфігурації'
+[[ "$(bash "$ROOT_DIR/setup.sh" packages --list | wc -l)" -eq 12 ]] || fail '12 модулів'
+pass 'Реєстр пакетів'
+bash "$ROOT_DIR/setup.sh" dotfiles --help | grep -q './setup.sh dotfiles' || fail 'Допомога dotfiles'
+pass 'Єдина точка входу'
+bash "$ROOT_DIR/setup.sh" packages --dry-run invalid-module >/dev/null 2>&1 && fail 'Валідація'
+pass 'Невідомі модулі відхиляються'
+[[ ! -e "$ROOT_DIR/.gitignore" ]] || fail '.gitignore повинен бути рівнем вище'
+pass '.gitignore поза каталогом Setup Manager'
+bash "$ROOT_DIR/tests/test-core.sh" || fail 'Файлове ядро'
+pass 'Файлове ядро'
+bash "$ROOT_DIR/tests/test-configs.sh" || fail 'Конфігурації'
+pass 'Smart Copy конфігів'
+bash "$ROOT_DIR/tests/test-dotfiles-status.sh" || fail 'Dotfiles Status'
+bash "$ROOT_DIR/tests/test-dotfiles-sync.sh" || fail 'Dotfiles Sync'
+bash "$ROOT_DIR/tests/test-sync-delete.sh" || fail 'Sync Delete'
+pass 'Sync Delete'
+bash "$ROOT_DIR/tests/test-maintenance.sh" || fail "Maintenance"
+bash "$ROOT_DIR/tests/test-menus.sh" || fail "Меню"
+pass "Maintenance"
+bash "$ROOT_DIR/tests/test-features.sh" || fail 'Розширені модулі'
+bash "$ROOT_DIR/tests/test-archive-collision.sh" || fail "Колізії архівів"
+bash "$ROOT_DIR/tests/test-safe-update-archive.sh" || fail "Безпечне оновлення й архіви"
+bash "$ROOT_DIR/tests/test-empty-lists.sh" || fail "Порожні списки" 
 if command -v shellcheck >/dev/null 2>&1; then
-    bash "$ROOT/tests/test-shellcheck.sh"
-else
-    printf '[WARN] ShellCheck пропущено — не встановлений\n'
-fi
-
-printf '\n[PASS] Усі тести Setup Manager пройдено\n'
+    mapfile -d '' -t files < <(find "$ROOT_DIR" -name '*.sh' -type f -print0)
+    shellcheck -x --source-path=SCRIPTDIR -S style "${files[@]}" || fail 'ShellCheck'
+    pass 'ShellCheck'
+else printf '[SKIP] ShellCheck не встановлено\n'; fi
+printf '\n[PASS] Усі перевірки завершені\n'
