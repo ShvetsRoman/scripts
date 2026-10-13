@@ -54,7 +54,6 @@ Backup з довільного місця:
   ./setup.sh sources list
   ./setup.sh sources doctor
   ./setup.sh sources scan
-  ./setup.sh sources seed
   ./setup.sh sources add MODE SRC DST
   ./setup.sh sources remove DST
 
@@ -97,10 +96,9 @@ cli_dispatch() {
                 list)   sources_list ;;
                 doctor) sources_doctor ;;
                 scan)   sources_scan ;;
-                seed)   sources_seed ;;
                 add)    shift; [[ $# -ge 3 ]] || { log error 'sources add MODE SRC DST'; return 2; }; sources_add "$1" "$2" "$3" ;;
                 remove) shift; [[ -n "${1:-}" ]] || { log error 'sources remove DST'; return 2; }; sources_remove "$1" ;;
-                *) log error 'sources list|doctor|scan|seed|add|remove'; return 2 ;;
+                *) log error 'sources list|doctor|scan|add|remove'; return 2 ;;
             esac ;;
         archive)     archive_main "$@" ;;
         recovery)    recovery_main "$@" ;;

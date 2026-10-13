@@ -31,7 +31,6 @@
 Програма читає ЛИШЕ цей файл. Ніяких евристик під час backup.
 Команди scan і seed — лише допомагають редагувати файл вручну.
 
-## Категорії, які ніколи не додаються автоматично
 
 .ssh, .gnupg, .wireguard, .pki, .cache, .cargo, .npm, .zsh_history,
 .bash_history, .config/google-chrome, Downloads, Videos, Pictures,

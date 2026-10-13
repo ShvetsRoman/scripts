@@ -35,38 +35,67 @@ pkgs_install() {
 pkg_run_module() (
     local id="$1"
     registry_valid "$id" || { log error "Немає: $id"; return 1; }
-
-    # Завантажує модуль і автоматично збирає hooks.
     hook_collect "$(registry_dir)/$id.sh"
-    header "Модуль: $MODULE_ID — $MODULE_TITLE"
 
+    printf '\n'
+    header "Install module: $MODULE_TITLE"
+
+    # ─── Pacman ───────────────────────────────────────────────────────────
     if [[ "${CONFIGS_ONLY:-false}" != true ]]; then
+        stage "INFO встановлюються пакети Pacman"
         pkgs_install pacman "${PACMAN_PACKAGES[@]}" || return 1
-        pkgs_install aur    "${AUR_PACKAGES[@]}"    || return 1
+    fi
+
+    # ─── AUR ──────────────────────────────────────────────────────────────
+    if [[ "${CONFIGS_ONLY:-false}" != true ]]; then
+        stage "INFO встановлюються пакети AUR"
+        pkgs_install aur "${AUR_PACKAGES[@]}" || return 1
+    fi
+
+    # ─── GitHub ───────────────────────────────────────────────────────────
+    if [[ "${CONFIGS_ONLY:-false}" != true && ${#GITHUB_ITEMS[@]} -gt 0 ]]; then
+        stage "INFO встановлюються пакети GitHub"
         local item name kind url cmd
         for item in "${GITHUB_ITEMS[@]}"; do
             IFS='|' read -r name kind url cmd _ <<< "$item"
-            if [[ "$kind" != script ]]; then log warn "$name: тип $kind"
-            elif command -v "$cmd" >/dev/null; then log info "$name вже є"
-            else log warn "$name ($url): сторонні скрипти вимкнено"; fi
+            if [[ "$kind" != script ]]; then
+                log warn "$name: тип $kind"
+            elif command -v "$cmd" >/dev/null; then
+                log info "$name вже є"
+            else
+                log warn "$name ($url): сторонні скрипти вимкнено"
+            fi
         done
     fi
 
+    # ─── Конфіги ──────────────────────────────────────────────────────────
     if [[ "${NO_CONFIGS:-false}" != true ]]; then
+        stage "INFO копіюються конфіги"
         configs_apply "${CONFIG_ITEMS[@]}" || return 1
     fi
 
+    # ─── Hooks ────────────────────────────────────────────────────────────
     if [[ "${CONFIGS_ONLY:-false}" != true ]]; then
-        if [[ "${DRY_RUN:-false}" == true ]]; then
-            local h
-            for h in $(hooks_list "$id"); do
-                log info "[DRY-RUN] hook: $h"
-            done
-        else
-            hooks_run "$id" || return 1
+        local h
+        local -a hlist=()
+        for h in $(hooks_list "$id"); do
+            hlist+=("$h")
+        done
+
+        if ((${#hlist[@]})); then
+            stage "INFO обробляється HOOK"
+            if [[ "${DRY_RUN:-false}" == true ]]; then
+                for h in "${hlist[@]}"; do
+                    log info "hook: $h"
+                done
+            else
+                hooks_run "$id" || return 1
+            fi
         fi
     fi
-    log ok "Готово: $MODULE_ID"
+
+    printf '\n'
+    log ok "Модуль: $MODULE_TITLE встановлено"
 )
 
 # packages_main — вхідна точка Installer.
@@ -96,6 +125,13 @@ packages_main() {
     ((${#ids[@]})) || { packages_help; return 2; }
     local id
     for id in "${ids[@]}"; do registry_valid "$id" || { log error "Немає: $id"; return 2; }; done
+
+    clear 2>/dev/null || true
+    local -a titles=()
+    for id in "${ids[@]}"; do
+        titles+=("$(registry_title "$id")")
+    done
+    header "Install: ${titles[*]}"
     for id in "${ids[@]}"; do pkg_run_module "$id" || return 1; done
 }
 

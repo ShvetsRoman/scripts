@@ -54,6 +54,7 @@ menu_run() {
                 continue
             fi
             if declare -F "menu_action_$key" >/dev/null; then
+                clear 2>/dev/null || true
                 "menu_action_$key" || true
                 printf '\n%s── Enter, щоб продовжити ──%s' "$C_HEAD" "$C_OFF"
                 read -r _ || true
@@ -119,7 +120,7 @@ menu_action_dotfiles_backup_changed() {
         h="$(sources_abs "$S_MODE" "$S_SRC")"
         r="$ROOT_DIR/dotfiles/$S_DST"
         [[ -e "$h" || -L "$h" ]] || continue
-        fs_compare "$h" "$r" 2>/dev/null || changed+=("$S_DST")
+        fs_compare "$h" "$r" 2>/dev/null || changed+=("$S_NAME")
     done
     ((${#changed[@]})) || { log info 'Немає змінених.'; return 0; }
     sync_run backup "${changed[@]}"
@@ -141,7 +142,7 @@ menu_action_dotfiles_restore_changed() {
         h="$(sources_abs "$S_MODE" "$S_SRC")"
         r="$ROOT_DIR/dotfiles/$S_DST"
         [[ -e "$r" || -L "$r" ]] || continue
-        fs_compare "$h" "$r" 2>/dev/null || changed+=("$S_DST")
+        fs_compare "$h" "$r" 2>/dev/null || changed+=("$S_NAME")
     done
     ((${#changed[@]})) || { log info 'Немає змінених.'; return 0; }
     sync_run restore "${changed[@]}"
@@ -157,15 +158,15 @@ menu_action_dotfiles_diff() {
 
 menu_action_dotfiles_backup_src() {
     local s r
-    read -r -p 'SRC (абс): ' s || return 0
-    read -r -p 'REPO_SUB: ' r || return 0
+    read -r -p 'SRC (абс, напр. /etc/nginx): ' s || return 0
+    read -r -p 'REPO_SUB (/ у кінці = каталог): ' r || return 0
     [[ -n "$s" && -n "$r" ]] && sync_backup_src "$s" "$r"
 }
 
 menu_action_dotfiles_restore_src() {
     local r t
-    read -r -p 'REPO_SUB: ' r || return 0
-    read -r -p 'TARGET (порожньо=HOME/REPO_SUB): ' t || return 0
+    read -r -p 'REPO_SUB (напр. .zshrc): ' r || return 0
+    read -r -p 'TARGET (/ у кінці = каталог): ' t || return 0
     [[ -n "$r" ]] && sync_restore_src "$r" "${t:-$HOME/$r}"
 }
 
@@ -175,16 +176,6 @@ menu_action_dotfiles_restore_src() {
 menu_action_sources_list()   { sources_list; }
 menu_action_sources_doctor() { sources_doctor; }
 menu_action_sources_scan()   { sources_scan; }
-menu_action_sources_seed()   { sources_seed; }
-
-menu_action_sources_add() {
-    local m s d
-    read -r -p 'mode (home|abs): ' m || return 0
-    read -r -p 'SRC: ' s || return 0
-    read -r -p 'DST: ' d || return 0
-    [[ -n "$m" && -n "$s" && -n "$d" ]] && sources_add "$m" "$s" "$d"
-}
-
 menu_action_sources_remove() {
     local d
     read -r -p 'DST: ' d || return 0
@@ -254,7 +245,6 @@ SOURCES_MENU=(
     "sources_list|List|Показати реєстр"
     "sources_doctor|Doctor|Перевірити існування src/dst"
     "sources_scan|Scan|Що є у \$HOME (dry)"
-    "sources_seed|Seed|Додати групи файлів"
     "sources_add|Add|Додати один шлях"
     "sources_remove|Remove|Видалити шлях"
 )

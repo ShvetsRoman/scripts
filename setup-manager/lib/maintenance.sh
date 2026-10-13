@@ -25,6 +25,8 @@ safe_dir() {
 
 # maintenance_usage — du/df для ключових каталогів.
 maintenance_usage() {
+    clear 2>/dev/null || true
+    header '▤  disk usage'
     du -sh -- "$ROOT_DIR/backups" "$ROOT_DIR/archives" "$ROOT_DIR/logs" "$ROOT_DIR/dotfiles" 2>/dev/null || true
     df -h -- "$ROOT_DIR"
 }
@@ -34,6 +36,8 @@ maintenance_usage() {
 # DRY_RUN=true → лише показує.
 # Захищається від symlink і виходу за межі base.
 maintenance_cleanup() {
+    clear 2>/dev/null || true
+    header "✕  cleanup: ${1:-}"
     local type="${1:-}"
     local age="${SETUP_KEEP_DAYS:-30}"
     [[ "$age" =~ ^[0-9]+$ ]] && (( age >= 1 && age <= 3650 )) \

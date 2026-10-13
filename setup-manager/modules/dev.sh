@@ -4,7 +4,16 @@
 MODULE_ID="dev"
 MODULE_TITLE="Development"
 MODULE_ORDER=50
-PACMAN_PACKAGES=(gcc make cmake python python-pip nodejs npm shellcheck)
+PACMAN_PACKAGES=(
+    gcc
+    make
+    cmake
+    python
+    python-pip
+    nodejs
+    npm
+    shellcheck
+)
 AUR_PACKAGES=()
 GITHUB_ITEMS=()
 CONFIG_ITEMS=()

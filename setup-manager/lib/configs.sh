@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# Конфіги модулів.
+# Застосування CONFIG_ITEMS модуля.
+# Формат entry: "name" — ім'я з sources.conf.
 
-# configs_apply — застосовує CONFIG_ITEMS модуля.
-# Кожен entry: "id|scope|rel_src|rel_dst".
-# Використовує apply, тому логіка та сама, що для dotfiles.
 configs_apply() {
     local -a entries=("$@")
     ((${#entries[@]})) || { log info 'Конфігів немає.'; return 0; }
@@ -12,21 +10,30 @@ configs_apply() {
         log error '--sync-delete несумісний з --no-backup'; return 2
     fi
 
-    local entry id scope rel_src rel_dst from to st
+    local entry id from to st
     for entry in "${entries[@]}"; do
-        IFS='|' read -r id scope rel_src rel_dst <<< "$entry"
-        [[ "$scope" == home ]] || { log warn "Конфіг $id: не home, пропущено"; continue; }
-        path_ok_rel "$rel_src" || { log error "$id: src"; return 1; }
-        path_ok_rel "$rel_dst" || { log error "$id: dst"; return 1; }
+        id="$entry"
 
-        from="$ROOT_DIR/dotfiles/$rel_src"
-        to="$HOME/$rel_dst"
+        if ! sources_find "$id"; then
+            log warn "Конфіг '$id' не знайдено у sources.conf, пропущено"
+            continue
+        fi
+
+        [[ "$S_MODE" == home ]] || {
+            log warn "Конфіг $id: mode=$S_MODE, не підтримується"
+            continue
+        }
+
+        local norm_dst="${S_DST#/}"; norm_dst="${norm_dst//\/\//\/}"
+        from="$ROOT_DIR/dotfiles/$norm_dst"
+        to="$HOME/$S_SRC"
 
         [[ -e "$from" || -L "$from" ]] || {
             log warn "Конфіг $id: немає $from"
             [[ "${STRICT_CONFIGS:-false}" == true ]] && return 1
             continue
         }
+
         if [[ -L "$to" && -d "$from" ]] || [[ -L "$from" && -d "$to" ]]; then
             log error "Небезпечна зміна типу: $id"; return 1
         fi

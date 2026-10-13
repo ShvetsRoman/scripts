@@ -28,7 +28,6 @@
     ./setup.sh sources list
     ./setup.sh sources doctor
     ./setup.sh sources scan
-    ./setup.sh sources seed
     ./setup.sh sources add home .zshrc .zshrc
     ./setup.sh sources add abs /etc/nginx nginx-conf
     ./setup.sh sources remove .zshrc

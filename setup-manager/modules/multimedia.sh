@@ -4,7 +4,12 @@
 MODULE_ID="multimedia"
 MODULE_TITLE="Multimedia"
 MODULE_ORDER=120
-PACMAN_PACKAGES=(vlc ffmpeg ffmpegthumbnailer vlc-plugins-all)
+PACMAN_PACKAGES=(
+    vlc
+    ffmpeg
+    ffmpegthumbnailer
+    vlc-plugins-all
+)
 AUR_PACKAGES=(deadbeef)
 GITHUB_ITEMS=()
 CONFIG_ITEMS=()

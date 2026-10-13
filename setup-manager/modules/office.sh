@@ -4,7 +4,10 @@
 MODULE_ID="office"
 MODULE_TITLE="Office"
 MODULE_ORDER=80
-PACMAN_PACKAGES=(libreoffice-still libreoffice-still-uk)
+PACMAN_PACKAGES=(
+    libreoffice-still
+    libreoffice-still-uk
+)
 AUR_PACKAGES=()
 GITHUB_ITEMS=()
 CONFIG_ITEMS=()

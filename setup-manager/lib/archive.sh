@@ -13,7 +13,9 @@ archive_valid_name() {
 # archive_list — список архівів (новіші першими).
 # Аргумент --quiet пригнічує log_info (для парсингу).
 archive_list() {
+    clear 2>/dev/null || true
     local quiet=false
+    if [[ "${1:-}" != --quiet ]]; then header '■  archive list'; fi
     [[ "${1:-}" == --quiet ]] && quiet=true
     local dir; dir="$(archive_dir)"
     [[ -d "$dir" ]] || { $quiet || log info 'Архівів немає.'; return 0; }
@@ -35,6 +37,8 @@ archive_verify() {
 # archive_create — створює новий архів dotfiles/.
 # Унікальність забезпечує mktemp + ln: колізія навіть у межах секунди неможлива.
 archive_create() {
+    clear 2>/dev/null || true
+    header '■  archive create'
     local prefix="${SETUP_ARCHIVE_PREFIX:-dotfiles-backup}"
     [[ "$prefix" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || { log error "Префікс: $prefix"; return 2; }
     local ts; ts="$(date +%Y-%m-%d_%H-%M-%S)"
@@ -55,6 +59,8 @@ archive_create() {
 # archive_restore — замінює dotfiles/ вмістом архіву.
 # Перед заміною створює захисний архів поточного стану.
 archive_restore() {
+    clear 2>/dev/null || true
+header "■  archive restore: $1"
     local name="$1"
     archive_valid_name "$name" || { log error "Ім’я: $name"; return 2; }
     local file="$ROOT_DIR/archives/$name"

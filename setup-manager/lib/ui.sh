@@ -34,6 +34,13 @@ log() {
         state) color="$C_HEAD"; stream=stdout; label="$1"; shift ;;
         *)     color='';        stream=stdout; label="$level" ;;
     esac
+
+    # A. У dry-run міняємо мітку info/ok/step на DRY-RUN (error/warn/state — без змін).
+    if [[ "${DRY_RUN:-false}" == true ]]; then
+        case "$level" in
+            info|ok|step) label=DRY-RUN ;;
+        esac
+    fi
     if [[ "$stream" == stderr ]]; then
         printf '%s[%s]%s %s\n' "$color" "$label" "$C_ERR_OFF" "$*" >&2
     else
@@ -55,4 +62,8 @@ log_step()  { log step  "$@"; }
 log_state() { local s="$1"; shift; log state "$s" "$@"; }
 
 # header — заголовок блоку виводу.
-header() { printf '\n%s=== %s ===%s\n' "$C_HEAD" "$*" "$C_OFF"; }
+header() { printf '%s=== %s ===%s\n' "$C_HEAD" "$*" "$C_OFF"; }
+
+# stage — заголовок етапу без порожнього рядка після.
+stage() { printf '%s── %s ──%s
+' "$C_STEP" "$*" "$C_OFF"; }

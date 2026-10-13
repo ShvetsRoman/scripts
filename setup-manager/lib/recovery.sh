@@ -11,6 +11,8 @@ recovery_valid_id() {
 
 # recovery_list — список ID (новіші першими).
 recovery_list() {
+    clear 2>/dev/null || true
+    header '♻  recovery list'
     local dir; dir="$(recovery_dir)"
     [[ -d "$dir" ]] || { log info 'Recovery-копій немає.'; return 0; }
     local -a snaps=()
@@ -22,6 +24,8 @@ recovery_list() {
 # recovery_restore — відновлює вміст знімка у $HOME.
 # Кожен файл повертається через apply (з новим захистом).
 recovery_restore() {
+    clear 2>/dev/null || true
+    header '♻  recovery restore'
     local id="$1"
     recovery_valid_id "$id" || { log error "ID: $id"; return 2; }
     local src; src="$(recovery_dir)/$id"
@@ -40,6 +44,8 @@ recovery_restore() {
 
 # recovery_delete — видаляє знімок.
 recovery_delete() {
+    clear 2>/dev/null || true
+    header '♻  recovery delete'
     local id="$1"
     recovery_valid_id "$id" || return 2
     local dir; dir="$(recovery_dir)/$id"

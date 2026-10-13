@@ -6,7 +6,6 @@
 
     ./setup.sh                    # інтерактивне меню
     ./setup.sh sources scan       # подивитись, що є у $HOME
-    ./setup.sh sources seed       # додати групи файлів
     ./setup.sh sources doctor     # перевірити існування
     ./setup.sh dotfiles backup    # Enter = усі
 
