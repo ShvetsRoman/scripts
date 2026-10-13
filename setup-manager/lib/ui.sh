@@ -1,49 +1,58 @@
 #!/usr/bin/env bash
-# Один UI для всіх команд. Пишемо журнал без ANSI-кодів.
-_ui_color() {
+# Єдине логування.
+
+# _ui_tty — чи підтримує потік $1 кольори.
+# Враховує NO_COLOR, TERM=dumb, SETUP_COLOR=always|never|auto.
+_ui_tty() {
     [[ -z "${NO_COLOR:-}" && "${TERM:-dumb}" != dumb ]] || return 1
     case "${SETUP_COLOR:-auto}" in
         always) return 0 ;;
-        never) return 1 ;;
-        *) [[ -t "$1" ]] ;;
+        never)  return 1 ;;
+        *)      [[ -t "$1" ]] ;;
     esac
 }
-_UI_OUT_NC='' _UI_ERR_NC=''
-if _ui_color 1; then
-    BLUE=$'\033[0;34m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; MAGENTA=$'\033[0;35m'; CYAN=$'\033[0;36m'; NC=$'\033[0m'
-else BLUE=''; GREEN=''; YELLOW=''; MAGENTA=''; CYAN=''; NC=''; fi
-if _ui_color 2; then ERROR_COLOR=$'\033[0;31m'; ERROR_NC=$'\033[0m'; else ERROR_COLOR=''; ERROR_NC=''; fi
-_ui_emit() {
-    local level="$1" color="$2" stream="$3"; shift 3
-    local message="$*"
+
+if _ui_tty 1; then
+    C_INFO=$'\033[0;34m'; C_OK=$'\033[0;32m'; C_WARN=$'\033[1;33m'
+    C_STEP=$'\033[0;35m'; C_HEAD=$'\033[0;36m'; C_OFF=$'\033[0m'
+else C_INFO=''; C_OK=''; C_WARN=''; C_STEP=''; C_HEAD=''; C_OFF=''; fi
+if _ui_tty 2; then C_ERR=$'\033[0;31m'; C_ERR_OFF=$'\033[0m'; else C_ERR=''; C_ERR_OFF=''; fi
+
+# log — єдина функція логування.
+# Аргументи: $1 — рівень (info/ok/warn/step/error/state), далі — текст.
+# Пише у stdout (info/ok/warn/step/state) або stderr (error).
+# Дублює у SETUP_LOG_FILE без ANSI-кодів.
+log() {
+    local level="$1"; shift
+    local color stream label
+    case "$level" in
+        info)  color="$C_INFO"; stream=stdout; label=INFO ;;
+        ok)    color="$C_OK";   stream=stdout; label=OK ;;
+        warn)  color="$C_WARN"; stream=stdout; label=WARN ;;
+        step)  color="$C_STEP"; stream=stdout; label=STEP ;;
+        error) color="$C_ERR";  stream=stderr; label=ERROR ;;
+        state) color="$C_HEAD"; stream=stdout; label="$1"; shift ;;
+        *)     color='';        stream=stdout; label="$level" ;;
+    esac
     if [[ "$stream" == stderr ]]; then
-        printf '%s[%s]%s %s\n' "$color" "$level" "$ERROR_NC" "$message" >&2
+        printf '%s[%s]%s %s\n' "$color" "$label" "$C_ERR_OFF" "$*" >&2
     else
-        printf '%s[%s]%s %s\n' "$color" "$level" "$NC" "$message"
+        printf '%s[%s]%s %s\n' "$color" "$label" "$C_OFF" "$*"
     fi
     if [[ -n "${SETUP_LOG_FILE:-}" ]]; then
-        if ! printf '[%s] %s\n' "$level" "$message" >> "$SETUP_LOG_FILE"; then
-            printf '[WARN] Запис до журналу не вдався.\n' >&2
-        fi
+        printf '[%s] %s\n' "$label" "$*" >> "$SETUP_LOG_FILE" 2>/dev/null || true
     fi
 }
-log_info()  { _ui_emit INFO "$BLUE" stdout "$@"; }
-log_ok()    { _ui_emit OK "$GREEN" stdout "$@"; }
-log_warn()  { _ui_emit WARN "$YELLOW" stdout "$@"; }
-log_error() { _ui_emit ERROR "$ERROR_COLOR" stderr "$@"; }
-log_step()  { _ui_emit STEP "$MAGENTA" stdout "$@"; }
-log_debug() { if [[ "${SETUP_VERBOSE:-false}" == true ]]; then _ui_emit DEBUG "$CYAN" stdout "$@"; fi; }
-print_header() { printf '\n%s=== %s ===%s\n' "$CYAN" "$*" "$NC"; }
 
-# Статуси порівняння: лише один префікс, без дублювання [OK] [OK].
-log_state() {
-    local state="$1" color
-    shift
-    case "$state" in
-        OK) color="$GREEN" ;;
-        CHANGED|DEL) color="$YELLOW" ;;
-        NEW) color="$BLUE" ;;
-        *) log_error "Невідомий статус: $state"; return 2 ;;
-    esac
-    _ui_emit "$state" "$color" stdout "$@"
-}
+# log_info / log_ok / log_warn / log_step / log_error — обгортки для читабельності.
+log_info()  { log info  "$@"; }
+log_ok()    { log ok    "$@"; }
+log_warn()  { log warn  "$@"; }
+log_error() { log error "$@"; }
+log_step()  { log step  "$@"; }
+
+# log_state — статус порівняння: OK / CHANGED / NEW / DEL / MISSING.
+log_state() { local s="$1"; shift; log state "$s" "$@"; }
+
+# header — заголовок блоку виводу.
+header() { printf '\n%s=== %s ===%s\n' "$C_HEAD" "$*" "$C_OFF"; }

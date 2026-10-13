@@ -20,6 +20,8 @@ else
     eval "$(starship init zsh)"
 fi
 
+setopt INTERACTIVE_COMMENTS
+
 #-----------------------------
 # Alias
 #-----------------------------

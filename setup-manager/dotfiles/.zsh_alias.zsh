@@ -5,9 +5,9 @@ alias lt='eza -l -g -a --tree --level=2 --header --group-directories-first --ico
 
 # ping color + 4
 if [ -f /usr/bin/grc ]; then
-  alias ping='grc --colour=auto ping -c 4'
+    alias ping='grc --colour=auto ping -c 4'
 else
-  alias ping='ping -c 4'
+    alias ping='ping -c 4'
 fi
 
 # MC & US
@@ -70,8 +70,8 @@ alias nza='${EDITOR} ~/.zsh_alias.zsh'
 
 # utils
 alias rcp='rsync -avPh'
-alias cp='cp -uv'	# перезаписати файл, якщо він був змінений + вивід
-alias mv='mv -iv'	# втвід інформації про кожен файл який обробляє mv
+alias cp='cp -uv' # перезаписати файл, якщо він був змінений + вивід
+alias mv='mv -iv' # втвід інформації про кожен файл який обробляє mv
 alias rm='rm -Ivfr'
 alias md='mkdir -pv'
 alias mkdir='mkdir -pv'
@@ -117,21 +117,21 @@ alias ga='git add .'
 # alias gitc='git commit -m "add"'
 # alias gc='git commit -m "add"'
 gc() {
-  if [[ -z "$1" ]] ; then
-    com="add"
-  else
-    com="$@"
-  fi
-  git commit -m "$com"
+    if [[ -z "$1" ]]; then
+        com="add"
+    else
+        com="$@"
+    fi
+    git commit -m "$com"
 }
 
 gtc() {
-  if [[ -z "$1" ]] ; then
-    com="add"
-  else
-    com="$@"
-  fi
-  git commit -m "$com"
+    if [[ -z "$1" ]]; then
+        com="add"
+    else
+        com="$@"
+    fi
+    git commit -m "$com"
 }
 
 alias gitp='git push'
@@ -215,65 +215,65 @@ bindkey -M vicmd '\e\e' sudo-command-line
 bindkey -M viins '\e\e' sudo-command-line
 
 # mkcd newdir cd newdir
-mkcd () {
-  mkdir -p -- "$1" && cd -P -- "$1"
+mkcd() {
+    mkdir -p -- "$1" && cd -P -- "$1"
 }
 
 # mknf newdir + newfilename
-mknf () {
-	mkdir -p -- "$1" && touch -- "$1"/"$2" && nvim -- "$1"/"$2"
+mknf() {
+    mkdir -p -- "$1" && touch -- "$1"/"$2" && nvim -- "$1"/"$2"
 }
 
 # Щоб розпакувати архів не вказуючи тип розпакувальника ex ім'я_архіву.bz2 папка для розпакування (опціонально)
-ex () {
-  color_red() { echo -e "\033[31m$1\033[0m"; }
-  color_yellow() { echo -e "\033[33m$1\033[0m"; }
-  color_green() { echo -e "\033[32m$1\033[0m"; }
-  if [[ -f $1 ]] ; then
-    if [[ -z $2 ]] ; then
-      name_dir=${1/.*}
-      mkdir -p $name_dir
+ex() {
+    color_red() { echo -e "\033[31m$1\033[0m"; }
+    color_yellow() { echo -e "\033[33m$1\033[0m"; }
+    color_green() { echo -e "\033[32m$1\033[0m"; }
+    if [[ -f $1 ]]; then
+        if [[ -z $2 ]]; then
+            name_dir=${1/.*/}
+            mkdir -p $name_dir
+        else
+            name_dir=$2
+            mkdir -p $name_dir
+        fi
+        case $1 in
+            *.tar.bz2) tar xvjf $1 -C $name_dir ;;
+            *.tar.gz) tar xvzf $1 -C $name_dir ;;
+            *.tar.xz) tar xvjf $1 -C $name_dir ;;
+            *.bz2) tar xvjf $1 -C $name_dir ;;
+            *.tar) tar xvf $1 -C $name_dir ;;
+            *.tbz2) tar xvjf $1 -C $name_dir ;;
+            *.tgz) tar xvzf $1 -C $name_dir ;;
+            *.rar) unrar e $1 $name_dir ;;
+            *.zip) unzip $1 -d $name_dir ;;
+            *.7z) 7z x $1 -o $name_dir ;;
+            *) color_red "$1 Невідомий метод стиснення файлів" ;;
+        esac
+        color_green "$1 розпакований у $name_dir"
     else
-      name_dir=$2
-      mkdir -p $name_dir
+        color_red "$1 не є архівом!!!"
     fi
-    case $1 in
-     *.tar.bz2) tar xvjf $1 -C $name_dir   ;;
-     *.tar.gz)  tar xvzf $1 -C $name_dir   ;;
-     *.tar.xz)  tar xvjf $1 -C $name_dir   ;;
-     *.bz2)     tar xvjf $1 -C $name_dir   ;;
-     *.tar)     tar xvf $1 -C $name_dir    ;;
-     *.tbz2)    tar xvjf $1 -C $name_dir   ;;
-     *.tgz)     tar xvzf $1 -C $name_dir   ;;
-     *.rar)     unrar e $1 $name_dir       ;;
-     *.zip)     unzip $1 -d $name_dir      ;;
-     *.7z)      7z x $1 -o $name_dir       ;;
-     *) color_red "$1 Невідомий метод стиснення файлів";;
-    esac
-    color_green "$1 розпакований у $name_dir"
-  else
-    color_red "$1 не є архівом!!!"
-  fi
 }
 
 # Упаковка в архів командою pk метод стиснення /що/ми/пакуємо
-pk () {
-  color_red() { echo -e "\033[31m$1\033[0m"; }
-  color_yellow() { echo -e "\033[33m$1\033[0m"; }
-  color_green() { echo -e "\033[32m$1\033[0m"; }
-  if [ $2 ] ; then
-    fp="${2%%.*}"
-    case $1 in
-      tbz) tar cjvf $fp.tar.bz2 $2 && color_green "Був створений архів з назвою $fp.tar.bz2" ;;
-      tgz) tar czvf $fp.tar.gz $2 && color_green "Був створений архів з назвою $fp.tar.gz" ;;
-      tar) tar cpvf $fp.tar $2 && color_green "Був створений архів з назвою $fp.tar" ;;
-      bz) bzip $fp && color_green "Був створений архів з назвою $fp.bz" ;;
-      gz) gzip -c -9 -n $fp > $2.gz && color_green "Був створений архів з назвою $fp.gz" ;;
-      zip) zip -r $fp.zip $2 && color_green "Був створений архів з назвою $fp.zip" ;;
-      7z) 7z a $fp.7z $2 && color_green "Був створений архів з назвою $fp.7z" ;;
-      *) color_red "$2 не може бути упакований за допомогою pk, вкажіть правильний метод стиснення\n(tbz, tgz, tar, bz, gz, zip, 7z)" ;;
-    esac
-  else
-    color_red "$1 не може бути упакований за допомогою pk, вкажіть метод стиснення\n(tbz, tgz, tar, bz, gz, zip, 7z)"
-  fi
+pk() {
+    color_red() { echo -e "\033[31m$1\033[0m"; }
+    color_yellow() { echo -e "\033[33m$1\033[0m"; }
+    color_green() { echo -e "\033[32m$1\033[0m"; }
+    if [ $2 ]; then
+        fp="${2%%.*}"
+        case $1 in
+            tbz) tar cjvf $fp.tar.bz2 $2 && color_green "Був створений архів з назвою $fp.tar.bz2" ;;
+            tgz) tar czvf $fp.tar.gz $2 && color_green "Був створений архів з назвою $fp.tar.gz" ;;
+            tar) tar cpvf $fp.tar $2 && color_green "Був створений архів з назвою $fp.tar" ;;
+            bz) bzip $fp && color_green "Був створений архів з назвою $fp.bz" ;;
+            gz) gzip -c -9 -n $fp >$2.gz && color_green "Був створений архів з назвою $fp.gz" ;;
+            zip) zip -r $fp.zip $2 && color_green "Був створений архів з назвою $fp.zip" ;;
+            7z) 7z a $fp.7z $2 && color_green "Був створений архів з назвою $fp.7z" ;;
+            *) color_red "$2 не може бути упакований за допомогою pk, вкажіть правильний метод стиснення\n(tbz, tgz, tar, bz, gz, zip, 7z)" ;;
+        esac
+    else
+        color_red "$1 не може бути упакований за допомогою pk, вкажіть метод стиснення\n(tbz, tgz, tar, bz, gz, zip, 7z)"
+    fi
 }

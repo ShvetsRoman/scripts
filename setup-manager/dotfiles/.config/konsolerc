@@ -1,0 +1,22 @@
+MenuBar=Disabled
+
+[Desktop Entry]
+DefaultProfile=zsh.profile
+
+[General]
+ConfigVersion=1
+
+[MainWindow]
+ToolBarsMovable=Enabled
+
+[MainWindow][Toolbar sessionToolbar]
+ToolButtonStyle=IconOnly
+
+[Notification Messages]
+CloseAllTabs=true
+
+[Toolbar sessionToolbar]
+ToolButtonStyle=IconOnly
+
+[UiSettings]
+ColorScheme=McMojave

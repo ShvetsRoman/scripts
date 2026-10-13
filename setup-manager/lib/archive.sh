@@ -1,90 +1,86 @@
 #!/usr/bin/env bash
-# Архіви містять лише дерево dotfiles/; запис — через тимчасовий файл.
-archive_root() { printf '%s/archives' "$ROOT_DIR"; }
-archive_valid_name() { [[ "$1" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*\.tar\.gz$ && "$1" != *..* ]]; }
-archive_list() {
-    local dir
-    dir="$(archive_root)"
-    if [[ ! -d "$dir" ]]; then
-        log_info 'Архівів немає.'
-        return 0
-    fi
-    local -a archives=()
-    mapfile -t archives < <(find "$dir" -maxdepth 1 -type f -name '*.tar.gz' -printf '%f\n' | sort -r)
-    if ((${#archives[@]} == 0)); then
-        log_info 'Архівів немає.'
-        return 0
-    fi
-    printf '%s\n' "${archives[@]}"
-}
-archive_create() {
-    local prefix name dest tmp token timestamp
-    prefix="${SETUP_ARCHIVE_PREFIX:-dotfiles-backup}"
-    if [[ ! "$prefix" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]]; then
-        log_error "Некоректний префікс архіву: $prefix"
-        return 2
-    fi
-    timestamp="$(date +%Y-%m-%d_%H-%M-%S)"
-    if [[ "${DRY_RUN:-false}" == true ]]; then
-        log_info "[DRY-RUN] Створення нового архіву: $(archive_root)/${prefix}_${timestamp}_UNIQUE.tar.gz"
-        return 0
-    fi
-    mkdir -p -- "$(archive_root)" || return 1
-    tmp="$(mktemp "$(archive_root)/.creating.XXXXXXXX")" || return 1
-    if ! tar -C "$ROOT_DIR" -czf "$tmp" dotfiles; then
-        rm -f -- "$tmp"
-        return 1
-    fi
-    # Унікальність забезпечує mktemp, а ln не дозволяє перезаписати архів,
-    # навіть якщо архів із таким ім'ям з'явиться під час виконання.
-    token="${tmp##*.creating.}"
-    name="${prefix}_${timestamp}_${token}.tar.gz"
-    dest="$(archive_root)/$name"
-    if ! ln -- "$tmp" "$dest"; then
-        rm -f -- "$tmp"
-        log_error "Не вдалося зберегти новий архів: $dest"
-        return 1
-    fi
-    rm -f -- "$tmp"
-    log_ok "Архів створено: $dest"
+# Архіви.
+
+# archive_dir — каталог архівів.
+archive_dir() { printf '%s/archives' "$ROOT_DIR"; }
+
+# archive_valid_name — чи ім’я архіву безпечне.
+# Дозволяє лише [a-zA-Z0-9._-]+.tar.gz без '..'.
+archive_valid_name() {
+    [[ "$1" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*\.tar\.gz$ && "$1" != *..* ]]
 }
 
-archive_safe_helper() {
-    cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && printf "%s/tools/archive_safe.py" "$PWD"
+# archive_list — список архівів (новіші першими).
+# Аргумент --quiet пригнічує log_info (для парсингу).
+archive_list() {
+    local quiet=false
+    [[ "${1:-}" == --quiet ]] && quiet=true
+    local dir; dir="$(archive_dir)"
+    [[ -d "$dir" ]] || { $quiet || log info 'Архівів немає.'; return 0; }
+    local -a files=()
+    mapfile -t files < <(find "$dir" -maxdepth 1 -type f -name '*.tar.gz' -printf '%f\n' | sort -r)
+    ((${#files[@]})) || { $quiet || log info 'Архівів немає.'; return 0; }
+    printf '%s\n' "${files[@]}"
 }
+
+# _archive_helper — шлях до python3-утиліти перевірки архівів.
+_archive_helper() { printf '%s/tools/archive_safe.py' "$ROOT_DIR"; }
+
+# archive_verify — перевіряє архів через archive_safe.py verify.
 archive_verify() {
-    command -v python3 >/dev/null || { log_error 'Для безпечного відновлення потрібен python3'; return 1; }
-    python3 "$(archive_safe_helper)" verify "$1"
+    command -v python3 >/dev/null || { log error 'Потрібен python3'; return 1; }
+    python3 "$(_archive_helper)" verify "$1"
 }
+
+# archive_create — створює новий архів dotfiles/.
+# Унікальність забезпечує mktemp + ln: колізія навіть у межах секунди неможлива.
+archive_create() {
+    local prefix="${SETUP_ARCHIVE_PREFIX:-dotfiles-backup}"
+    [[ "$prefix" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || { log error "Префікс: $prefix"; return 2; }
+    local ts; ts="$(date +%Y-%m-%d_%H-%M-%S)"
+    local dir; dir="$(archive_dir)"
+    if [[ "${DRY_RUN:-false}" == true ]]; then
+        log info "[DRY-RUN] $dir/${prefix}_${ts}_UNIQUE.tar.gz"; return 0
+    fi
+    mkdir -p -- "$dir" || return 1
+    local tmp; tmp="$(mktemp "$dir/.creating.XXXXXXXX")" || return 1
+    tar -C "$ROOT_DIR" --exclude='.git' -czf "$tmp" dotfiles || { rm -f -- "$tmp"; return 1; }
+    local token="${tmp##*.creating.}"
+    local dest="$dir/${prefix}_${ts}_${token}.tar.gz"
+    ln -- "$tmp" "$dest" || { rm -f -- "$tmp"; log error "ln: $dest"; return 1; }
+    rm -f -- "$tmp"
+    log ok "Архів: $dest"
+}
+
+# archive_restore — замінює dotfiles/ вмістом архіву.
+# Перед заміною створює захисний архів поточного стану.
 archive_restore() {
-    local name="$1" file tmp
-    archive_valid_name "$name" || { log_error "Некоректне ім’я архіву"; return 2; }
-    file="$(archive_root)/$name"
-    [[ -f "$file" && ! -L "$file" ]] || return 1
-    archive_verify "$file" || { log_error 'Архів містить небезпечні або пошкоджені записи'; return 1; }
-    if [[ "${DRY_RUN:-false}" == true ]]; then log_info "[DRY-RUN] Відновлення архіву: $name"; return 0; fi
-    setup_confirm "Замінити сховище dotfiles з архіву $name?" || return 0
-    # Перед відновленням завжди створюємо захисний архів поточного сховища.
+    local name="$1"
+    archive_valid_name "$name" || { log error "Ім’я: $name"; return 2; }
+    local file="$ROOT_DIR/archives/$name"
+    [[ -f "$file" && ! -L "$file" ]] || { log error "Немає: $file"; return 1; }
+    archive_verify "$file" || { log error 'Небезпечний архів'; return 1; }
+    [[ "${DRY_RUN:-false}" == true ]] && { log info "[DRY-RUN] restore: $name"; return 0; }
+    setup_confirm "Замінити dotfiles з $name?" || return 0
     archive_create || return 1
-    tmp="$(mktemp -d "$ROOT_DIR/.restore.XXXXXXXX")" || return 1
-    if ! python3 "$(archive_safe_helper)" extract "$file" "$tmp"; then rm -rf -- "$tmp"; return 1; fi
+    local tmp; tmp="$(mktemp -d "$ROOT_DIR/.restore.XXXXXXXX")" || return 1
+    python3 "$(_archive_helper)" extract "$file" "$tmp" || { rm -rf -- "$tmp"; return 1; }
     [[ -d "$tmp/dotfiles" ]] || { rm -rf -- "$tmp"; return 1; }
-    # Захист від підміни файлів шляхом символьних посилань перевірений вище.
     mv -- "$ROOT_DIR/dotfiles" "$tmp/previous" || { rm -rf -- "$tmp"; return 1; }
     if ! mv -- "$tmp/dotfiles" "$ROOT_DIR/dotfiles"; then
-        mv -- "$tmp/previous" "$ROOT_DIR/dotfiles" || :
-        rm -rf -- "$tmp"
-        return 1
+        mv -- "$tmp/previous" "$ROOT_DIR/dotfiles" || true
+        rm -rf -- "$tmp"; return 1
     fi
     rm -rf -- "$tmp"
-    log_ok "Сховище dotfiles відновлено з архіву: $name"
+    log ok "Відновлено: $name"
 }
+
+# archive_main — диспетчер підкоманд archive.
 archive_main() {
-    local action="${1:-list}" name="${2:-}"
-    case "$action" in
+    case "${1:-list}" in
         list) archive_list ;;
         create) archive_create ;;
-        restore) [[ -n "$name" ]] || { log_error 'Вкажи назву архіву'; return 2; }; archive_restore "$name" ;;
-        *) log_error 'archive create|list|restore ІМЯ'; return 2 ;;
+        restore) [[ -n "${2:-}" ]] || { log error 'Потрібне ім’я'; return 2; }; archive_restore "$2" ;;
+        *) log error 'archive list|create|restore NAME'; return 2 ;;
     esac
 }

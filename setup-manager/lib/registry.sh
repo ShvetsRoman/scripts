@@ -1,21 +1,41 @@
 #!/usr/bin/env bash
-# Декларативні модулі завантажуються у власних підпроцесах через функції.
-registry_files() {
-    find "$ROOT_DIR/modules" -maxdepth 1 -type f -name '*.sh' -print | sort
-}
+# Реєстр модулів.
+
+# registry_dir — каталог з модулями.
+registry_dir() { printf '%s/modules' "$ROOT_DIR"; }
+
+# registry_ids — список id модулів (без .sh), відсортований.
 registry_ids() {
-    local file
-    while IFS= read -r file; do basename "$file" .sh; done < <(registry_files)
+    find "$(registry_dir)" -maxdepth 1 -type f -name '*.sh' -printf '%f\n' \
+        | sed 's/\.sh$//' | sort
 }
+
+# registry_valid — чи існує модуль з таким id і чи правильний формат.
 registry_valid() {
     local id="$1"
-    [[ "$id" =~ ^[a-z][a-z0-9_-]*$ && -f "$ROOT_DIR/modules/$id.sh" ]]
+    [[ "$id" =~ ^[a-z][a-z0-9_-]*$ && -f "$(registry_dir)/$id.sh" ]]
 }
+
+# _REG_TITLE — кеш заголовків (щоб не робити source N×M разів у меню).
+declare -A _REG_TITLE=()
+
+# registry_title — читає MODULE_TITLE з модуля (кешує).
+registry_title() {
+    local id="$1"
+    if [[ -z "${_REG_TITLE[$id]:-}" ]]; then
+        _REG_TITLE[$id]="$(
+            # shellcheck disable=SC1090
+            source "$(registry_dir)/$id.sh"
+            printf '%s' "${MODULE_TITLE:-$id}"
+        )"
+    fi
+    printf '%s' "${_REG_TITLE[$id]}"
+}
+
+# registry_show — таблиця id + title усіх модулів.
 registry_show() {
-    local f
-    while IFS= read -r f; do
-        ( # Декларативні модулі визначаються під час виконання.
-          # shellcheck disable=SC1090
-          source "$f"; printf '%-15s %s\n' "$MODULE_ID" "$MODULE_TITLE" )
-    done < <(registry_files)
+    local id
+    while IFS= read -r id; do
+        printf '%-15s %s\n' "$id" "$(registry_title "$id")"
+    done < <(registry_ids)
 }

@@ -1,29 +1,50 @@
 #!/usr/bin/env bash
-# Точкові hooks, виконуються тільки після успішного встановлення пакунків.
-hook_docker() {
-    local user="${SUDO_USER:-$USER}"
-    if ! getent group docker >/dev/null; then log_warn 'Група docker відсутня'; return 0; fi
-    if id -nG "$user" | tr ' ' '\n' | grep -qx docker; then
-        log_info "Користувач $user уже в групі docker"
-        return 0
+# Динамічний реєстр hooks.
+
+declare -gA HOOKS_REGISTRY=()
+
+# hook_collect — завантажує модуль і збирає функції hook_* у реєстр.
+hook_collect() {
+    local file="$1"
+    [[ -f "$file" ]] || return 1
+
+    local -A before=()
+    while IFS= read -r fn; do
+        before["$fn"]=1
+    done < <(declare -F | awk '{print $3}')
+
+    # shellcheck disable=SC1090
+    source "$file"
+
+    local id="${MODULE_ID:-$(basename "$file" .sh)}"
+
+    local -a found=()
+    local fn
+    while IFS= read -r fn; do
+        [[ "$fn" == hook_* ]] || continue
+        [[ -n "${before[$fn]:-}" ]] && continue
+        found+=("$fn")
+    done < <(declare -F | awk '{print $3}')
+
+    if ((${#found[@]})); then
+        mapfile -t found < <(printf '%s\n' "${found[@]}" | sort)
+        HOOKS_REGISTRY["$id"]="${found[*]}"
     fi
-    if [[ "${DRY_RUN:-false}" == true ]]; then log_info "[DRY-RUN] sudo usermod -aG docker $user"; return 0; fi
-    sudo usermod -aG docker "$user"
-    log_warn 'Для застосування групи docker потрібно повторно увійти в сесію'
 }
-hook_shell() {
-    local user="${SUDO_USER:-$USER}" shell_path current
-    shell_path="$(command -v zsh || :)"
-    [[ -n "$shell_path" ]] || { log_warn 'Zsh не встановлено'; return 0; }
-    current="$(getent passwd "$user" | cut -d: -f7)"
-    [[ "$current" != "$shell_path" ]] || { log_info 'Zsh уже є стандартною оболонкою'; return 0; }
-    if [[ "${DRY_RUN:-false}" == true ]]; then log_info "[DRY-RUN] chsh -s $shell_path $user"; return 0; fi
-    # Установка оболонки користувача, root не змінюється автоматично.
-    chsh -s "$shell_path" "$user"
+
+# hooks_list — для id повертає список hooks.
+hooks_list() {
+    printf '%s' "${HOOKS_REGISTRY[${1:-}]:-}"
 }
+
+# hooks_run — виконує всі hooks модуля.
 hooks_run() {
-    case "$1" in
-        docker) hook_docker ;;
-        shell) hook_shell ;;
-    esac
+    local id="$1"
+    local list; list="$(hooks_list "$id")"
+    [[ -n "$list" ]] || return 0
+    local hook
+    for hook in $list; do
+        log step "Hook $id → $hook"
+        "$hook" || { log warn "Hook $hook: помилка"; return 1; }
+    done
 }
