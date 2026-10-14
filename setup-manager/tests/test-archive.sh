@@ -33,7 +33,7 @@ mapfile -t both < <(find "$ROOT_DIR/archives" -maxdepth 1 -name '*.tar.gz' -type
 archive_restore "$(basename "$first")" >/dev/null
 [[ "$(cat "$ROOT_DIR/dotfiles/.config/app/config")" == v1 ]] || { printf '[FAIL] restore\n' >&2; exit 1; }
 
-if archive_restore "../etc" 2>/dev/null; then printf '[FAIL] traversal\n' >&2; exit 1; fi
+if archive_restore "../etc" >/dev/null 2>&1; then printf '[FAIL] traversal\n' >&2; exit 1; fi
 
 # Не публікувати архів, який validator не зможе прочитати (symlink).
 ln -s /etc/passwd "$ROOT_DIR/dotfiles/unsafe-link"

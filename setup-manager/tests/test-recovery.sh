@@ -35,5 +35,5 @@ if recovery_restore 2025-01-01_12-00-00_1234 >/dev/null 2>&1; then
 fi
 recovery_delete "$id" >/dev/null
 [[ ! -d "$ROOT_DIR/backups/recovery/$id" ]] || { echo '[FAIL] delete' >&2; exit 1; }
-if recovery_restore '../bad' 2>/dev/null; then echo '[FAIL] traversal' >&2; exit 1; fi
+if recovery_restore '../bad' >/dev/null 2>&1; then echo '[FAIL] traversal' >&2; exit 1; fi
 printf '[PASS] test-recovery\n'

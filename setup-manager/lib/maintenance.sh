@@ -97,7 +97,7 @@ maintenance_rotate() {
     setup_confirm "Видалити ${#obsolete[@]} старих backup?" || return 0
     for item in "${obsolete[@]}"; do
         path_ok_abs "$base/$item" && [[ -d "$base/$item" && ! -L "$base/$item" ]] || return 2
-        rm -rf -- "$base/$item" || return 1
+        rm -rf -- "${base:?}/${item:?}" || return 1
     done
     log ok "Rotate $type: видалено ${#obsolete[@]}"
 }

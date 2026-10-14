@@ -7,6 +7,10 @@ tmp="$(mktemp -d)"; trap 'rm -rf -- "$tmp"' EXIT
 export HOME="$tmp/home" SETUP_NO_CLEAR=true
 mkdir -p "$HOME/.config/nvim" "$tmp/repo/config" "$tmp/repo/dotfiles/.config/nvim" "$tmp/repo/dotfiles/.config/orphan"
 cp -a "$PROJECT_DIR"/. "$tmp/repo/"
+# Ізоляція: робочі dotfiles можуть вже містити .zshrc та інші реальні файли.
+# Створюємо чистий набір лише у тимчасовій копії репозиторію.
+rm -rf -- "$tmp/repo/dotfiles"
+mkdir -p -- "$tmp/repo/dotfiles/.config/nvim" "$tmp/repo/dotfiles/.config/orphan"
 printf 'zsh | home | .zshrc | .zshrc | dotfiles\n' > "$tmp/repo/config/sources.conf"
 printf 'nvim | home | .config/nvim | .config/nvim | dotfiles\n' >> "$tmp/repo/config/sources.conf"
 printf 'same | home | .same | .same | dotfiles\n' >> "$tmp/repo/config/sources.conf"

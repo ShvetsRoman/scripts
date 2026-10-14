@@ -8,6 +8,9 @@ trap 'rm -rf -- "$tmp"' EXIT
 export HOME="$tmp/home" SETUP_NO_CLEAR=true
 cp -a -- "$PROJECT_DIR" "$tmp/setup-manager"
 repo="$tmp/setup-manager"
+# Не допускаємо впливу користувацьких dotfiles на тестові лічильники.
+rm -rf -- "$repo/dotfiles"
+mkdir -p -- "$repo/dotfiles"
 mkdir -p "$HOME/.config/nvim/home-dir/deep" \
          "$repo/dotfiles/.config/nvim/repo-dir/deep" \
          "$repo/dotfiles/.config/untracked"
