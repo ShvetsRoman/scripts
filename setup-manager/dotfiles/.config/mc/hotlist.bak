@@ -1,3 +1,0 @@
-ENTRY "Home_pc" URL "/home/roman/"
-ENTRY "Serv" URL "/sftp://serv/home/serv/"
-ENTRY "Work_serv" URL "/sftp://work_serv/home/cbm"
