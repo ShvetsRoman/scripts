@@ -9,17 +9,27 @@ readonly ROOT_DIR
 
 # shellcheck source=config/setup.conf
 source "$ROOT_DIR/config/setup.conf"
+# shellcheck source=lib/version.sh
+source "$ROOT_DIR/lib/version.sh"
 
-for lib in ui path fs apply sources sources_seed sync registry packages configs hooks \
+for lib in ui path lock fs apply backups sources sources_seed sync registry packages configs hooks \
            archive recovery maintenance doctor update menu cli; do
     # shellcheck source=/dev/null
     source "$ROOT_DIR/lib/$lib.sh"
 done
 
 DRY_RUN=false
+for _setup_arg in "$@"; do
+    [[ "$_setup_arg" == --dry-run ]] && DRY_RUN=true
+done
+unset _setup_arg
+
+# Унікальний ID запуску для аудиту; не створює файлів у --dry-run.
+SETUP_RUN_ID="$(date +%Y%m%dT%H%M%S)-$$"
+export SETUP_RUN_ID
 
 # Журнал за замовчуванням.
-if [[ -z "${SETUP_LOG_FILE:-}" && -w "$ROOT_DIR" ]]; then
+if [[ "${DRY_RUN:-false}" != true && -z "${SETUP_LOG_FILE:-}" && -w "$ROOT_DIR" ]]; then
     SETUP_LOG_FILE="$ROOT_DIR/logs/setup-$(date +%Y%m%d).log"
     mkdir -p -- "$(dirname -- "$SETUP_LOG_FILE")"
     : >> "$SETUP_LOG_FILE" || SETUP_LOG_FILE=''

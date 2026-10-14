@@ -23,7 +23,7 @@ setup_confirm() { return 0; }
 DRY_RUN=false; SETUP_BACKUP_ENABLED=true
 
 cat > "$ROOT_DIR/config/sources.conf" <<'CONF'
-home | .zshrc | .zshrc | dotfiles
+zsh | home | .zshrc | .zshrc | dotfiles
 CONF
 printf 'content\n' > "$HOME/.zshrc"
 
@@ -36,7 +36,7 @@ sync_run backup >/dev/null
 printf 'new\n' > "$HOME/.zshrc"
 sync_run backup >/dev/null
 [[ "$(cat "$ROOT_DIR/dotfiles/.zshrc")" == new ]] || { printf '[FAIL] update\n' >&2; exit 1; }
-old="$(find "$ROOT_DIR/backups/dotfiles" -type f -name .zshrc -print -quit)"
+old="$(find "$ROOT_DIR/backups/dotfiles" -type f -name zsh -print -quit)"
 [[ -n "$old" && "$(cat "$old")" == content ]] || { printf '[FAIL] backup old\n' >&2; exit 1; }
 
 printf 'local\n' > "$HOME/.zshrc"
@@ -47,6 +47,6 @@ sync_run backup >/dev/null
 sync_status >/dev/null || { printf '[FAIL] status\n' >&2; exit 1; }
 
 printf 'changed\n' > "$HOME/.zshrc"
-if sync_diff >/dev/null 2>&1; then printf '[FAIL] diff\n' >&2; exit 1; fi
+sync_diff >/dev/null || { printf '[FAIL] diff повернув помилку для звичайних змін\n' >&2; exit 1; }
 
 printf '[PASS] test-sync\n'

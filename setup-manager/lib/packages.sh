@@ -110,7 +110,10 @@ packages_main() {
             --no-configs) NO_CONFIGS=true ;;
             --configs-only) CONFIGS_ONLY=true ;;
             --sync-delete) SYNC_DELETE=true ;;
-            --strict-configs) STRICT_CONFIGS=true ;;
+            --strict-configs)
+                # Значення читає configs_apply() у lib/configs.sh.
+                # shellcheck disable=SC2034
+                STRICT_CONFIGS=true ;;
             --list|list) registry_show; return 0 ;;
             --help|-h|help) packages_help; return 0 ;;
             all) mapfile -t ids < <(registry_ids) ;;
@@ -126,7 +129,7 @@ packages_main() {
     local id
     for id in "${ids[@]}"; do registry_valid "$id" || { log error "Немає: $id"; return 2; }; done
 
-    clear 2>/dev/null || true
+    ui_clear
     local -a titles=()
     for id in "${ids[@]}"; do
         titles+=("$(registry_title "$id")")

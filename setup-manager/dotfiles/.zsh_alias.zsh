@@ -1,10 +1,17 @@
 # ls > eza + icons
-alias l='eza -l -g --header --group-directories-first --icons --git'
-alias la='eza -l -g -a --header --group-directories-first --icons --git'
-alias lt='eza -l -g -a --tree --level=2 --header --group-directories-first --icons --git'
+if command -v eza >/dev/null 2>&1; then
+    # Каталог конфігурації
+    export EZA_CONFIG_DIR="$HOME/.config/eza"
+    # Псевдоніми
+    alias l='eza -lgh --icons=always --color=always --group-directories-first'
+    alias la='eza -lgah --icons=always --color=always --group-directories-first'
+    alias ls='eza  --icons=always --color=always --group-directories-first'
+    alias lsa='eza -a --icons=always --color=always --group-directories-first'
+    alias lt='eza -lga --tree --level=2 --icons=always --color=always --group-directories-first'
+fi
 
 # ping color + 4
-if [ -f /usr/bin/grc ]; then
+if command -v grc >/dev/null 2>&1; then
     alias ping='grc --colour=auto ping -c 4'
 else
     alias ping='ping -c 4'
@@ -12,9 +19,6 @@ fi
 
 # MC & US
 alias mc="LANG=C.UTF-8 LC_ALL=C.UTF-8 mc"
-
-# cat > bat
-alias cat='bat'
 
 # yazi
 alias y='yazi'

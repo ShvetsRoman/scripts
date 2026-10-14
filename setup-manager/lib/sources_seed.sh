@@ -53,7 +53,7 @@ _scan_classify() {
 
 # sources_scan — dry-run перегляд $HOME, без запису.
 sources_scan() {
-    sources_load
+    sources_load || return 2
     local -A in_registry=()
     local row
     for row in "${SRC_ROWS[@]}"; do

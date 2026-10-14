@@ -20,11 +20,11 @@ apply "$tmp/missing" "$tmp/dst" dotfiles "missing" >/dev/null
 
 printf 'hello\n' > "$tmp/src"
 apply "$tmp/src" "$tmp/dst" dotfiles "test" >/dev/null
-(( $? == 1 )) || { printf '[FAIL] copy\n' >&2; exit 1; }
+[[ "$APPLY_RESULT" == changed ]] || { printf '[FAIL] changed state\n' >&2; exit 1; }
 [[ "$(cat "$tmp/dst")" == hello ]] || { printf '[FAIL] content\n' >&2; exit 1; }
 
 apply "$tmp/src" "$tmp/dst" dotfiles "test" >/dev/null
-(( $? == 0 )) || { printf '[FAIL] idempotent\n' >&2; exit 1; }
+[[ "$APPLY_RESULT" == unchanged ]] || { printf '[FAIL] idempotent\n' >&2; exit 1; }
 
 printf 'world\n' > "$tmp/src"
 apply "$tmp/src" "$tmp/dst" dotfiles "test" >/dev/null

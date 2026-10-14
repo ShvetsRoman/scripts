@@ -1,37 +1,22 @@
-# Формат config/sources.conf
+# Реєстр `config/sources.conf`
 
-Один рядок = одне джерело. Поля розділені символом вертикальної риски.
+Формат рядка: `name | mode | src | dst | group`.
 
-    mode | src | dst | group
+- `name`: унікальний ID `[A-Za-z0-9._-]+`;
+- `mode`: `home` (src відносно `$HOME`), `abs` або `system` (src абсолютний);
+- `src`: шлях до оригінального файлу чи каталогу;
+- `dst`: безпечний відносний шлях усередині `dotfiles/`;
+- `group`: безпечний ID групи для backups (типово `dotfiles`).
 
-Поля:
+```text
+zsh | home | .zshrc | .zshrc | dotfiles
+nvim | home | .config/nvim | .config/nvim | dotfiles
+samba | system | /etc/samba/smb.conf | etc/samba/smb.conf | dotfiles
+```
 
-  mode   home (src відносно $HOME) або abs (src абсолютний)
-  src    шлях-джерело
-  dst    шлях у dotfiles/<dst>
-  group  підкаталог backups/<group>/ (dotfiles або recovery)
+Додавання: `./setup.sh sources add NAME MODE SRC DST [GROUP]`.
+Для сумісності також приймається `sources add MODE SRC DST` (NAME = basename DST).
+Видалення: `./setup.sh sources remove NAME`.
+Перегляд: `./setup.sh sources list`, `sources doctor`, `sources scan`.
 
-Пробіли навколо полів ігноруються. Рядки, що починаються з # — коментарі.
-
-## Приклади
-
-    home | .zshrc          | .zshrc          | dotfiles
-    home | .config/nvim    | .config/nvim    | dotfiles
-    abs  | /etc/nginx      | nginx-conf      | dotfiles
-
-## Правила безпеки
-
-  src при mode=home — має бути відносним і без ..
-  src при mode=abs  — має бути абсолютним і без symlink у батьках
-  dst               — має бути відносним без ..
-  Дублікат dst      — заборонено
-
-## Runtime
-
-Програма читає ЛИШЕ цей файл. Ніяких евристик під час backup.
-Команди scan і seed — лише допомагають редагувати файл вручну.
-
-
-.ssh, .gnupg, .wireguard, .pki, .cache, .cargo, .npm, .zsh_history,
-.bash_history, .config/google-chrome, Downloads, Videos, Pictures,
-Documents, Music, .steam, .lmstudio.
+Валідація виконується при читанні реєстру: рівно 5 полів, безпечний синтаксис шляхів, унікальні NAME/DST. Файлові symlink у джерелах для копіювання поки не підтримуються.

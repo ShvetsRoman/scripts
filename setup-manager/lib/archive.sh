@@ -13,7 +13,7 @@ archive_valid_name() {
 # archive_list — список архівів (новіші першими).
 # Аргумент --quiet пригнічує log_info (для парсингу).
 archive_list() {
-    clear 2>/dev/null || true
+    ui_clear
     local quiet=false
     if [[ "${1:-}" != --quiet ]]; then header '■  archive list'; fi
     [[ "${1:-}" == --quiet ]] && quiet=true
@@ -37,7 +37,7 @@ archive_verify() {
 # archive_create — створює новий архів dotfiles/.
 # Унікальність забезпечує mktemp + ln: колізія навіть у межах секунди неможлива.
 archive_create() {
-    clear 2>/dev/null || true
+    ui_clear
     header '■  archive create'
     local prefix="${SETUP_ARCHIVE_PREFIX:-dotfiles-backup}"
     [[ "$prefix" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || { log error "Префікс: $prefix"; return 2; }
@@ -49,6 +49,11 @@ archive_create() {
     mkdir -p -- "$dir" || return 1
     local tmp; tmp="$(mktemp "$dir/.creating.XXXXXXXX")" || return 1
     tar -C "$ROOT_DIR" --exclude='.git' -czf "$tmp" dotfiles || { rm -f -- "$tmp"; return 1; }
+    archive_verify "$tmp" || {
+        rm -f -- "$tmp"
+        log error 'Архів не пройшов перевірку (symlink та hardlink наразі не підтримуються)'
+        return 1
+    }
     local token="${tmp##*.creating.}"
     local dest="$dir/${prefix}_${ts}_${token}.tar.gz"
     ln -- "$tmp" "$dest" || { rm -f -- "$tmp"; log error "ln: $dest"; return 1; }
@@ -59,11 +64,13 @@ archive_create() {
 # archive_restore — замінює dotfiles/ вмістом архіву.
 # Перед заміною створює захисний архів поточного стану.
 archive_restore() {
-    clear 2>/dev/null || true
+    ui_clear
 header "■  archive restore: $1"
     local name="$1"
     archive_valid_name "$name" || { log error "Ім’я: $name"; return 2; }
     local file="$ROOT_DIR/archives/$name"
+    path_ok_abs "$file" || { log error 'Небезпечний шлях архіву'; return 2; }
+    path_ok_abs "$ROOT_DIR/dotfiles" || { log error 'Небезпечний dotfiles'; return 2; }
     [[ -f "$file" && ! -L "$file" ]] || { log error "Немає: $file"; return 1; }
     archive_verify "$file" || { log error 'Небезпечний архів'; return 1; }
     [[ "${DRY_RUN:-false}" == true ]] && { log info "[DRY-RUN] restore: $name"; return 0; }
@@ -86,7 +93,7 @@ archive_main() {
     case "${1:-list}" in
         list) archive_list ;;
         create) archive_create ;;
-        restore) [[ -n "${2:-}" ]] || { log error 'Потрібне ім’я'; return 2; }; archive_restore "$2" ;;
+        restore) [[ -n "${2:-}" ]] || { log error "Потрібне ім’я"; return 2; }; archive_restore "$2" ;;
         *) log error 'archive list|create|restore NAME'; return 2 ;;
     esac
 }

@@ -10,12 +10,17 @@ configs_apply() {
         log error '--sync-delete несумісний з --no-backup'; return 2
     fi
 
+    sources_load || return 2
     local entry id from to st
     for entry in "${entries[@]}"; do
         id="$entry"
 
-        if ! sources_find "$id"; then
+        st=0
+        sources_find "$id" || st=$?
+        if (( st == 2 )); then return 2; fi
+        if (( st == 1 )); then
             log warn "Конфіг '$id' не знайдено у sources.conf, пропущено"
+            [[ "${STRICT_CONFIGS:-false}" == true ]] && return 1
             continue
         fi
 
@@ -40,7 +45,7 @@ configs_apply() {
 
         st=0
         apply "$from" "$to" installer "$id" || st=$?
-        if (( st == 2 )); then
+        if (( st != 0 )); then
             log error "Конфіг $id: помилка apply"
             return 1
         fi

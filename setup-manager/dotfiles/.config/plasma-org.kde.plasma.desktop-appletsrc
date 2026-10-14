@@ -354,7 +354,7 @@ immutability=1
 plugin=org.kde.plasma.kvitals
 
 [Containments][152][Applets][185][Configuration]
-popupHeight=397
+popupHeight=268
 popupWidth=324
 
 [Containments][152][Applets][185][Configuration][ConfigDialog]

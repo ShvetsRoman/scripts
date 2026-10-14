@@ -24,15 +24,24 @@ archive_create >/dev/null
 mapfile -t files < <(find "$ROOT_DIR/archives" -maxdepth 1 -name '*.tar.gz' -type f)
 ((${#files[@]} == 1)) || { printf '[FAIL] create\n' >&2; exit 1; }
 
+first="${files[0]}"
 printf 'v2\n' > "$ROOT_DIR/dotfiles/.config/app/config"
 archive_create >/dev/null
 mapfile -t both < <(find "$ROOT_DIR/archives" -maxdepth 1 -name '*.tar.gz' -type f)
 ((${#both[@]} == 2)) || { printf '[FAIL] колізія\n' >&2; exit 1; }
 
-first="$(ls -1t "$ROOT_DIR/archives"/*.tar.gz | tail -n1)"
 archive_restore "$(basename "$first")" >/dev/null
 [[ "$(cat "$ROOT_DIR/dotfiles/.config/app/config")" == v1 ]] || { printf '[FAIL] restore\n' >&2; exit 1; }
 
 if archive_restore "../etc" 2>/dev/null; then printf '[FAIL] traversal\n' >&2; exit 1; fi
+
+# Не публікувати архів, який validator не зможе прочитати (symlink).
+ln -s /etc/passwd "$ROOT_DIR/dotfiles/unsafe-link"
+before="$(find "$ROOT_DIR/archives" -type f -name '*.tar.gz' | wc -l)"
+if archive_create >/dev/null 2>&1; then
+    echo '[FAIL] archive with symlink should be rejected' >&2; exit 1
+fi
+after="$(find "$ROOT_DIR/archives" -type f -name '*.tar.gz' | wc -l)"
+[[ "$before" == "$after" ]] || { echo '[FAIL] invalid archive was published' >&2; exit 1; }
 
 printf '[PASS] test-archive\n'

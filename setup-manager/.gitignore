@@ -9,3 +9,5 @@ logs/*.gz
 .DS_Store
 Thumbs.db
 *~
+
+.setup-manager.lock

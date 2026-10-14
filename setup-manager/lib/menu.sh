@@ -8,6 +8,14 @@
 # Движок
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Лише дії, що змінюють дані, потребують ексклюзивного доступу.
+menu_is_mutating() {
+    case "${1:-}" in
+        all|dotfiles_backup|dotfiles_backup_changed|dotfiles_backup_src|        dotfiles_restore|dotfiles_restore_changed|dotfiles_restore_src|        sources_add|sources_remove|archive_create|archive_restore|        recovery_restore|recovery_delete|cleanup_logs|cleanup_installer|        cleanup_dotfiles|cleanup_recovery|rotate_dotfiles) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # menu_run TITLE ITEMS...
 # menu_run TITLE --provider FUNC
 menu_run() {
@@ -18,7 +26,7 @@ menu_run() {
     fi
 
     while :; do
-        clear 2>/dev/null || true
+        ui_clear
         printf '\n%s========== %s ==========%s\n\n' "$C_HEAD" "$title" "$C_OFF"
 
         local -a items=()
@@ -54,8 +62,20 @@ menu_run() {
                 continue
             fi
             if declare -F "menu_action_$key" >/dev/null; then
-                clear 2>/dev/null || true
-                "menu_action_$key" || true
+                ui_clear
+                local rc=0
+                if menu_is_mutating "$key"; then
+                    setup_with_lock "menu_action_$key" || rc=$?
+                else
+                    "menu_action_$key" || rc=$?
+                fi
+                (( rc == 0 )) || log error "Дія $key завершилась із кодом $rc"
+                printf '\n%s── Enter, щоб продовжити ──%s' "$C_HEAD" "$C_OFF"
+                read -r _ || true
+            elif [[ "$title" == INSTALLER ]] && registry_valid "$key"; then
+                local rc=0
+                setup_with_lock packages_main "$key" || rc=$?
+                (( rc == 0 )) || log error "Модуль $key завершився із кодом $rc"
                 printf '\n%s── Enter, щоб продовжити ──%s' "$C_HEAD" "$C_OFF"
                 read -r _ || true
             else
@@ -98,7 +118,7 @@ menu_sub_maintenance() { menu_run 'MAINTENANCE' "${MAINTENANCE_MENU[@]}"; }
 # ─────────────────────────────────────────────────────────────────────────────
 menu_action_status() { sync_status; }
 menu_action_doctor() { doctor_main; }
-menu_action_tests()  { bash "$ROOT_DIR/tests/run-tests.sh"; }
+menu_action_tests()  { SETUP_TEST_MODE=true bash "$ROOT_DIR/tests/run-tests.sh"; }
 menu_action_help()   { cli_help; }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -111,19 +131,8 @@ menu_action_dotfiles_backup() {
 }
 
 menu_action_dotfiles_backup_changed() {
-    local -a changed=()
-    local row
-    sources_load
-    for row in "${SRC_ROWS[@]}"; do
-        sources_parse "$row"
-        local h r
-        h="$(sources_abs "$S_MODE" "$S_SRC")"
-        r="$ROOT_DIR/dotfiles/$S_DST"
-        [[ -e "$h" || -L "$h" ]] || continue
-        fs_compare "$h" "$r" 2>/dev/null || changed+=("$S_NAME")
-    done
-    ((${#changed[@]})) || { log info 'Немає змінених.'; return 0; }
-    sync_run backup "${changed[@]}"
+    # Однакова логіка для меню та CLI.
+    sync_run backup --changed
 }
 
 menu_action_dotfiles_restore() {
@@ -135,7 +144,7 @@ menu_action_dotfiles_restore() {
 menu_action_dotfiles_restore_changed() {
     local -a changed=()
     local row
-    sources_load
+    sources_load || return 2
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
         local h r
@@ -149,6 +158,9 @@ menu_action_dotfiles_restore_changed() {
 }
 
 menu_action_dotfiles_status() { sync_status; }
+menu_action_dotfiles_verify() { sync_verify; }
+menu_action_dotfiles_plan_backup() { sync_plan backup; }
+menu_action_dotfiles_plan_restore() { sync_plan restore; }
 
 menu_action_dotfiles_diff() {
     local p
@@ -175,10 +187,21 @@ menu_action_dotfiles_restore_src() {
 # ─────────────────────────────────────────────────────────────────────────────
 menu_action_sources_list()   { sources_list; }
 menu_action_sources_doctor() { sources_doctor; }
+menu_action_sources_validate() { sources_validate; }
 menu_action_sources_scan()   { sources_scan; }
+menu_action_sources_add() {
+    local name mode src dst group
+    read -r -p 'NAME: ' name || return 0
+    read -r -p 'MODE (home|abs|system): ' mode || return 0
+    read -r -p 'SRC: ' src || return 0
+    read -r -p 'DST (в dotfiles): ' dst || return 0
+    read -r -p 'GROUP [dotfiles]: ' group || return 0
+    [[ -n "$name" && -n "$mode" && -n "$src" && -n "$dst" ]] || return 0
+    sources_add "$name" "$mode" "$src" "$dst" "${group:-dotfiles}"
+}
 menu_action_sources_remove() {
     local d
-    read -r -p 'DST: ' d || return 0
+    read -r -p 'NAME: ' d || return 0
     [[ -n "$d" ]] && sources_remove "$d"
 }
 
@@ -198,11 +221,22 @@ menu_action_archive_restore() {
 # Recovery
 # ─────────────────────────────────────────────────────────────────────────────
 menu_action_recovery_list()    { recovery_list; }
+menu_action_recovery_verify() {
+    local id
+    read -r -p 'ID: ' id || return 0
+    [[ -n "$id" ]] && recovery_verify "$id"
+}
 
 menu_action_recovery_restore() {
     local i
     read -r -p 'ID: ' i || return 0
     [[ -n "$i" ]] && recovery_restore "$i"
+}
+
+menu_action_recovery_plan() {
+    local i
+    read -r -p 'ID: ' i || return 0
+    [[ -n "$i" ]] && recovery_plan "$i"
 }
 
 menu_action_recovery_delete() {
@@ -219,6 +253,12 @@ menu_action_cleanup_installer() { maintenance_cleanup installer; }
 menu_action_cleanup_dotfiles()  { maintenance_cleanup dotfiles; }
 menu_action_cleanup_recovery()  { maintenance_cleanup recovery; }
 menu_action_disk()              { maintenance_usage; }
+
+menu_action_rotate_dotfiles() {
+    local keep
+    read -r -p 'Скільки копій залишити? (1..9999): ' keep || return 0
+    maintenance_rotate dotfiles "$keep"
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Installer all
@@ -237,6 +277,9 @@ DOTFILES_MENU=(
     "dotfiles_restore_src|Restore SRC|У довільне місце"
     "dotfiles_status|Status|Стан"
     "dotfiles_diff|Diff|Відмінності"
+    "dotfiles_verify|Verify|Перевірка відповідності"
+    "dotfiles_plan_backup|Plan Backup|План резервного копіювання"
+    "dotfiles_plan_restore|Plan Restore|План відновлення"
     "sources|Sources|Реєстр джерел"
     "archive|Archive|Архіви dotfiles"
     "recovery|Recovery|Захисні копії"
@@ -244,6 +287,7 @@ DOTFILES_MENU=(
 SOURCES_MENU=(
     "sources_list|List|Показати реєстр"
     "sources_doctor|Doctor|Перевірити існування src/dst"
+    "sources_validate|Validate|Перевірити схему реєстру"
     "sources_scan|Scan|Що є у \$HOME (dry)"
     "sources_add|Add|Додати один шлях"
     "sources_remove|Remove|Видалити шлях"
@@ -255,6 +299,8 @@ ARCHIVE_MENU=(
 )
 RECOVERY_MENU=(
     "recovery_list|List|Показати копії"
+    "recovery_verify|Verify|Перевірити цілісність"
+    "recovery_plan|Plan|Показати, що відновиться"
     "recovery_restore|Restore|Відновити"
     "recovery_delete|Delete|Видалити"
 )
@@ -263,11 +309,14 @@ MAINTENANCE_MENU=(
     "archive_list|Archive List|Архіви"
     "archive_restore|Archive Restore|Відновити"
     "recovery_list|Recovery List|Копії"
+    "recovery_verify|Recovery Verify|Перевірка цілісності"
+    "recovery_plan|Recovery Plan|Перегляд плану"
     "recovery_restore|Recovery Restore|Відновити"
     "recovery_delete|Recovery Delete|Видалити"
     "cleanup_logs|Logs Cleanup|Журнали"
     "cleanup_installer|Installer Cleanup|Installer"
     "cleanup_dotfiles|Dotfiles Cleanup|Dotfiles"
+    "rotate_dotfiles|Backup Rotation|Залишити N найновіших dotfiles backup"
     "cleanup_recovery|Recovery Cleanup|Recovery"
     "disk|Disk Usage|Диск"
 )

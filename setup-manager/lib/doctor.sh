@@ -10,6 +10,10 @@ doctor_main() {
         if command -v "$cmd" >/dev/null; then log ok "$cmd"; else log error "Немає: $cmd"; errors=$((errors+1)); fi
     done
     if command -v paru >/dev/null; then log ok 'paru'; else log warn 'paru відсутній'; warnings=$((warnings+1)); fi
+    if ! sources_validate; then
+        log error 'sources.conf має помилки'
+        errors=$((errors+1))
+    fi
     while IFS= read -r _; do count=$((count+1)); done < <(registry_ids)
     printf '\nМодулів: %s, помилок: %s, попереджень: %s\n' "$count" "$errors" "$warnings"
     (( errors == 0 ))

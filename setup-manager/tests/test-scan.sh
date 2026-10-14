@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Тести seed.
+# Тести dry-run scan/classify.
 set -Eeuo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../lib/ui.sh
@@ -13,7 +13,7 @@ source "$ROOT_DIR/lib/sources_seed.sh"
 
 check() {
     local path="$1" want="$2" got
-    got="$(_seed_classify "$path")"
+    got="$(_scan_classify "$path")"
     [[ "$got" == "$want" ]] || { printf '[FAIL] %s: got=%s want=%s\n' "$path" "$got" "$want" >&2; exit 1; }
 }
 
@@ -37,4 +37,4 @@ check "Videos"             skip
 check ".config/somenewtool"    ask
 check ".config/unknown-1"      ask
 
-printf '[PASS] test-seed\n'
+printf '[PASS] test-scan\n'

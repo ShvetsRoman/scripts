@@ -12,11 +12,25 @@ _ui_tty() {
     esac
 }
 
-if _ui_tty 1; then
-    C_INFO=$'\033[0;34m'; C_OK=$'\033[0;32m'; C_WARN=$'\033[1;33m'
-    C_STEP=$'\033[0;35m'; C_HEAD=$'\033[0;36m'; C_OFF=$'\033[0m'
-else C_INFO=''; C_OK=''; C_WARN=''; C_STEP=''; C_HEAD=''; C_OFF=''; fi
-if _ui_tty 2; then C_ERR=$'\033[0;31m'; C_ERR_OFF=$'\033[0m'; else C_ERR=''; C_ERR_OFF=''; fi
+# Ініціалізуємо палітру після обробки --no-color у cli_parse().
+# Для tty — кольори, для pipe/redirect і NO_COLOR — звичайний текст.
+ui_init_colors() {
+    if _ui_tty 1; then
+        C_INFO=$'\033[0;34m'; C_OK=$'\033[0;32m'; C_WARN=$'\033[1;33m'
+        C_STEP=$'\033[0;35m'; C_HEAD=$'\033[0;36m'; C_OFF=$'\033[0m'
+        C_NEW=$'\033[1;36m'; C_CHANGED=$'\033[1;33m'; C_DEL=$'\033[1;31m'
+        C_SKIP=$'\033[0;90m'
+    else
+        C_INFO=''; C_OK=''; C_WARN=''; C_STEP=''; C_HEAD=''; C_OFF=''
+        C_NEW=''; C_CHANGED=''; C_DEL=''; C_SKIP=''
+    fi
+    if _ui_tty 2; then
+        C_ERR=$'\033[0;31m'; C_ERR_OFF=$'\033[0m'
+    else
+        C_ERR=''; C_ERR_OFF=''
+    fi
+}
+ui_init_colors
 
 # log — єдина функція логування.
 # Аргументи: $1 — рівень (info/ok/warn/step/error/state), далі — текст.
@@ -31,7 +45,16 @@ log() {
         warn)  color="$C_WARN"; stream=stdout; label=WARN ;;
         step)  color="$C_STEP"; stream=stdout; label=STEP ;;
         error) color="$C_ERR";  stream=stderr; label=ERROR ;;
-        state) color="$C_HEAD"; stream=stdout; label="$1"; shift ;;
+        state)
+            stream=stdout; label="$1"; shift
+            case "$label" in
+                OK)                  color="$C_OK" ;;
+                NEW|COPY)            color="$C_NEW" ;;
+                CHANGED|UPDATE)      color="$C_CHANGED" ;;
+                DEL|DELETE|MISSING)  color="$C_DEL" ;;
+                SKIP|KEEP_EXTRA)     color="$C_SKIP" ;;
+                *)                   color="$C_HEAD" ;;
+            esac ;;
         *)     color='';        stream=stdout; label="$level" ;;
     esac
 
@@ -47,7 +70,9 @@ log() {
         printf '%s[%s]%s %s\n' "$color" "$label" "$C_OFF" "$*"
     fi
     if [[ -n "${SETUP_LOG_FILE:-}" ]]; then
-        printf '[%s] %s\n' "$label" "$*" >> "$SETUP_LOG_FILE" 2>/dev/null || true
+        printf '[%s] [pid=%s] [run=%s] [%s] %s\n' \
+            "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$$" "${SETUP_RUN_ID:-manual}" \
+            "$label" "$*" >> "$SETUP_LOG_FILE" 2>/dev/null || true
     fi
 }
 
@@ -67,3 +92,26 @@ header() { printf '%s=== %s ===%s\n' "$C_HEAD" "$*" "$C_OFF"; }
 # stage — заголовок етапу без порожнього рядка після.
 stage() { printf '%s── %s ──%s
 ' "$C_STEP" "$*" "$C_OFF"; }
+
+# Очищення екрана лише в інтерактивних сценаріях, але не під час тестів.
+ui_clear() {
+    [[ "${SETUP_TEST_MODE:-false}" == true || "${SETUP_NO_CLEAR:-false}" == true ]] && return 0
+    clear 2>/dev/null || true
+}
+
+# Перегляд журналу поточного дня (без змін файлів).
+logs_main() {
+    local action="${1:-path}" file="${SETUP_LOG_FILE:-$ROOT_DIR/logs/setup-$(date +%Y%m%d).log}"
+    case "$action" in
+        path) printf '%s\n' "$file" ;;
+        tail)
+            local n="${2:-50}"
+            [[ "$n" =~ ^[0-9]{1,4}$ ]] && (( 10#$n > 0 )) || {
+                log error 'N повинно бути цілим числом від 1 до 9999'; return 2;
+            }
+            path_ok_abs "$file" || { log error 'Небезпечний log-файл'; return 2; }
+            [[ -f "$file" ]] || { log info 'Журнал порожній'; return 0; }
+            tail -n "$((10#$n))" -- "$file" ;;
+        *) log error 'logs path|tail [N]'; return 2 ;;
+    esac
+}

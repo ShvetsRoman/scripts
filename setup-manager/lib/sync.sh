@@ -3,11 +3,32 @@
 
 sync_run() {
     local mode="$1"; shift
+    local changed_only=false
+    if [[ "$mode" == backup && "${1:-}" == --changed ]]; then
+        changed_only=true
+        shift
+    fi
     local -a filter=("$@")
 
-    clear 2>/dev/null || true
-    sources_load
+    ui_clear
+    sources_load || return 2
     ((${#SRC_ROWS[@]})) || { log info 'Реєстр порожній.'; return 0; }
+
+    # Невідомі фільтри — помилка, а не хибний успіх без дій.
+    local filter_item known check_row
+    for filter_item in "${filter[@]}"; do
+        known=false
+        for check_row in "${SRC_ROWS[@]}"; do
+            sources_parse "$check_row"
+            if [[ "$filter_item" == "$S_NAME" || "$filter_item" == "$S_SRC" || "$filter_item" == "$S_DST" ]]; then
+                known=true; break
+            fi
+        done
+        if [[ "$known" == false ]]; then
+            log error "Немає шляху в реєстрі: $filter_item"
+            return 2
+        fi
+    done
 
     # Заголовок із назвою операції.
     local title
@@ -21,7 +42,8 @@ sync_run() {
     fi
     header "$title"
 
-    local row changed=0 skipped=0 failed=0
+    fs_guard_delete || return 2
+    local row changed=0 unchanged=0 missing=0 failed=0
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
 
@@ -46,24 +68,54 @@ sync_run() {
             group="recovery"
         fi
 
-        local st=0
-        apply "$src" "$dst" "$group" "$S_NAME" || st=$?
-        case "$st" in
-            0) ((skipped+=1)) ;;
-            1) ((changed+=1)) ;;
-            *) ((failed+=1)) ;;
-        esac
+        # Backup Changed не торкається записів без змін і не створює
+        # для них захисних копій. Зміни визначаються за вмістом (rsync -c).
+        # Без --sync-delete зайві файли в dotfiles не є зміною.
+        if [[ "$changed_only" == true ]]; then
+            if [[ ! -e "$src" && ! -L "$src" ]]; then
+                log warn "[MISSING] $S_NAME: $src"
+                ((missing+=1))
+                continue
+            fi
+            if ! path_ok_abs "$src" || ! path_ok_abs "$dst" ||
+               ! fs_no_nested_links "$src" ||
+               { [[ -d "$dst" ]] && ! fs_no_nested_links "$dst"; }; then
+                log error "$S_NAME — небезпечний шлях"
+                ((failed+=1))
+                continue
+            fi
+            local cmp_rc=0
+            if [[ "${SYNC_DELETE:-false}" == true ]]; then
+                fs_compare "$src" "$dst" || cmp_rc=$?
+            else
+                fs_compare_copy "$src" "$dst" || cmp_rc=$?
+            fi
+            case "$cmp_rc" in
+                0) log_state SKIP "$S_NAME — без змін"; ((unchanged+=1)); continue ;;
+                1) ;; # Є відмінності — передаємо apply(), який знову перевірить безпеку.
+                *) log error "$S_NAME — неможливо порівняти"; ((failed+=1)); continue ;;
+            esac
+        fi
+
+        if apply "$src" "$dst" "$group" "$S_NAME"; then
+            case "$APPLY_RESULT" in
+                changed) ((changed+=1)) ;;
+                unchanged) ((unchanged+=1)) ;;
+                *) ((missing+=1)) ;;
+            esac
+        else
+            ((failed+=1))
+        fi
     done
 
-    local summary="оновлено $changed, пропущено $skipped"
-    (( failed )) && summary+=", помилок $failed"
+    local summary="оновлено $changed, без змін $unchanged, відсутніх $missing, помилок $failed"
 
     printf '\n'
     if (( failed )); then
         log error "$mode: $summary"
         return 1
     fi
-    if (( changed == 0 && skipped > 0 )); then
+    if (( changed == 0 && unchanged > 0 && missing == 0 )); then
         log info "$mode: нічого не змінилось ($summary)"
     else
         log ok "$mode: $summary"
@@ -72,156 +124,388 @@ sync_run() {
 
 # sync_backup_src — ad-hoc backup у репо.
 sync_backup_src() {
-    local src="$1" repo_sub="$2"
+    local src="$1" repo_sub="$2" dst
     path_ok_abs "$src" || { log error "SRC: $src"; return 2; }
     path_ok_rel "$repo_sub" || { log error "REPO_SUB: $repo_sub"; return 2; }
-
-    repo_sub="${repo_sub#/}"
-    repo_sub="${repo_sub//\/\//\/}"
-    local dst="$ROOT_DIR/dotfiles/$repo_sub"
-
+    dst="$ROOT_DIR/dotfiles/$repo_sub"
     if [[ "$repo_sub" == */ ]]; then
-        mkdir -p -- "$dst" || { log error "Не вдалося створити $dst"; return 2; }
-        dst="${dst%/}/$(basename "$src")"
+        dst="${dst%/}/$(basename -- "$src")"
     elif [[ -d "$dst" && -f "$src" ]]; then
-        dst="$dst/$(basename "$src")"
+        dst="$dst/$(basename -- "$src")"
     fi
-
-    local st=0
-    apply "$src" "$dst" dotfiles "$repo_sub" || st=$?
-    return "$st"
+    apply "$src" "$dst" dotfiles "$repo_sub"
 }
 
-# sync_restore_src — ad-hoc restore з репо.
 sync_restore_src() {
-    local repo_sub="$1" target="$2"
+    local repo_sub="$1" target="$2" src
     path_ok_rel "$repo_sub" || { log error "REPO_SUB: $repo_sub"; return 2; }
     path_ok_abs "$target" || { log error "TARGET: $target"; return 2; }
-
-    repo_sub="${repo_sub#/}"
-    repo_sub="${repo_sub//\/\//\/}"
-    local src="$ROOT_DIR/dotfiles/$repo_sub"
-
+    src="$ROOT_DIR/dotfiles/$repo_sub"
     if [[ "$target" == */ ]]; then
-        mkdir -p -- "$target" || { log error "Не вдалося створити $target"; return 2; }
-        target="${target%/}/$(basename "$src")"
+        target="${target%/}/$(basename -- "$src")"
     elif [[ -d "$target" ]]; then
-        target="$target/$(basename "$src")"
+        target="$target/$(basename -- "$src")"
     fi
-
-    local st=0
-    apply "$src" "$target" recovery "$repo_sub" || st=$?
-    return "$st"
+    apply "$src" "$target" recovery "$repo_sub"
 }
 
-sync_status() {
-    clear 2>/dev/null || true
-    sources_load
-    clear 2>/dev/null || true
-    header '✦  status    HOME ↔ dotfiles' 
-    local status=0 row
+# Для каталогу показуємо саме відсутні файли/підкаталоги.
+# HOME-only => NEW (потрібен backup), dotfiles-only => DEL (потрібен restore).
+# Не виводимо всі вкладені елементи, якщо відсутній цілий підкаталог.
+sync_report_missing_side() {
+    local from="$1" to="$2" state="$3" name="$4" count_var="${5:-}"
+    local path rel parent known note
+    case "$state" in
+        NEW) note='є в HOME, немає в dotfiles' ;;
+        DEL) note='є в dotfiles, немає в HOME' ;;
+        *)   note='відсутній на іншому боці' ;;
+    esac
+    local -a missing_dirs=()
+    [[ -d "$from" && -d "$to" ]] || return 0
+    while IFS= read -r -d '' path; do
+        rel="${path#"$from"/}"
+        [[ -e "$to/$rel" || -L "$to/$rel" ]] && continue
+        known=false
+        for parent in "${missing_dirs[@]}"; do
+            if [[ "$rel" == "$parent/"* ]]; then
+                known=true; break
+            fi
+        done
+        [[ "$known" == true ]] && continue
+        if [[ -d "$path" ]]; then
+            missing_dirs+=("$rel")
+            log_state "$state" "$name/$rel/ — $note"
+        else
+            log_state "$state" "$name/$rel — $note"
+        fi
+        # У status/diff/verify лічильники можуть бути локальними у викликача.
+        # Bash nameref оновлює саме цей лічильник, без subshell чи втрати значення.
+        if [[ -n "$count_var" ]]; then
+            local -n count_ref="$count_var"
+            ((count_ref+=1))
+        fi
+    done < <(find -P "$from" -mindepth 1 -print0)
+}
+
+sync_report_nested_missing() {
+    local home="$1" repo="$2" name="$3"
+    local new_count="${4:-}" del_count="${5:-}"
+    [[ -d "$home" && -d "$repo" ]] || return 0
+    sync_report_missing_side "$home" "$repo" NEW "$name" "$new_count"
+    sync_report_missing_side "$repo" "$home" DEL "$name" "$del_count"
+}
+
+# Елементи поза sources.conf не мають однозначного шляху в HOME:
+# показуємо їх як UNTRACKED, а не приписуємо хибний шлях призначення.
+sync_report_untracked() {
+    local count_var="${1:-}"
+    local path rel row tracked parent
+    local -a paths=() untracked_dirs=()
+    local dotroot="$ROOT_DIR/dotfiles"
+    [[ -d "$dotroot" ]] || return 0
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
-        local h r rc
-        h="$(sources_abs "$S_MODE" "$S_SRC")"
-        local nd="${S_DST#/}"; nd="${nd//\/\//\/}"
-        r="$ROOT_DIR/dotfiles/$nd"
-        if [[ ! -e "$h" && ! -L "$h" && ! -e "$r" && ! -L "$r" ]]; then
-            log warn "[MISSING] $S_NAME"; status=1; continue
+        paths+=("$S_DST")
+    done
+    while IFS= read -r -d '' path; do
+        rel="${path#"$dotroot"/}"
+        case "$rel" in
+            .git|.git/*|.gitkeep|*/.gitkeep) continue ;;
+        esac
+        tracked=false
+        for parent in "${paths[@]}"; do
+            if [[ "$rel" == "$parent" || "$rel" == "$parent/"* || "$parent" == "$rel/"* ]]; then
+                tracked=true; break
+            fi
+        done
+        [[ "$tracked" == true ]] && continue
+        for parent in "${untracked_dirs[@]}"; do
+            if [[ "$rel" == "$parent/"* ]]; then
+                tracked=true; break
+            fi
+        done
+        [[ "$tracked" == true ]] && continue
+        [[ -d "$path" ]] && untracked_dirs+=("$rel")
+        log_state UNTRACKED "$rel — є в dotfiles, немає запису в sources.conf"
+        if [[ -n "$count_var" ]]; then
+            local -n count_ref="$count_var"
+            ((count_ref+=1))
         fi
-        if [[ ! -e "$h" && ! -L "$h" ]]; then
-            log_state DEL "$S_NAME — нема в HOME"; status=1; continue
+    done < <(find -P "$dotroot" -mindepth 1 -print0)
+}
+
+# Відмінність або відсутність — це стан, не помилка: код 0.
+# Код 2 — некоректний запит / неможливе порівняння.
+sync_status() {
+    local -a filters=("$@")
+    ui_clear
+    sources_load || return 2
+    sync_validate_filter "${filters[@]}" || return 2
+    header '✦  status    HOME ↔ dotfiles'
+    local row home repo rc failed=0 equal=0 changed=0 only_home=0 only_repo=0 missing=0 untracked=0
+    for row in "${SRC_ROWS[@]}"; do
+        sources_parse "$row"
+        sync_row_selected "${filters[@]}" || continue
+        home="$(sources_abs "$S_MODE" "$S_SRC")"
+        repo="$ROOT_DIR/dotfiles/$S_DST"
+        if [[ ! -e "$home" && ! -L "$home" && ! -e "$repo" && ! -L "$repo" ]]; then
+            log_state MISSING "$S_NAME — немає ні в HOME, ні в dotfiles"
+            ((missing+=1)); continue
         fi
-        if [[ ! -e "$r" && ! -L "$r" ]]; then
-            log_state NEW "$S_NAME — нема в dotfiles"; status=1; continue
+        if [[ ! -e "$home" && ! -L "$home" ]]; then
+            log_state DEL "$S_NAME — є в dotfiles, немає в HOME"
+            ((only_repo+=1)); continue
+        fi
+        if [[ ! -e "$repo" && ! -L "$repo" ]]; then
+            log_state NEW "$S_NAME — є в HOME, немає в dotfiles"
+            ((only_home+=1)); continue
+        fi
+        if ! path_ok_abs "$home" || ! path_ok_abs "$repo" ||
+           ! fs_no_nested_links "$home" || ! fs_no_nested_links "$repo"; then
+            log error "$S_NAME — небезпечний шлях"
+            ((failed+=1)); continue
         fi
         rc=0
-        fs_compare "$h" "$r" || rc=$?
-        if (( rc == 0 )); then
-            log_state OK "$S_NAME"
-        elif (( rc == 1 )); then
-            log_state CHANGED "$S_NAME"; status=1
-        else
-            log error "$S_NAME — помилка порівняння"; status=1
-        fi
+        fs_compare "$home" "$repo" || rc=$?
+        case "$rc" in
+            0) log_state OK "$S_NAME"; ((equal+=1)) ;;
+            1) log_state CHANGED "$S_NAME — є відмінності між HOME і dotfiles"; ((changed+=1))
+               sync_report_nested_missing "$home" "$repo" "$S_NAME" only_home only_repo ;;
+            *) log error "$S_NAME — помилка порівняння"; ((failed+=1)) ;;
+        esac
     done
-    return "$status"
+    if ((${#filters[@]} == 0)); then
+        sync_report_untracked untracked
+    fi
+    printf '\n'
+    log info "Status: однакових $equal, змінених $changed, тільки в HOME $only_home, тільки в dotfiles $only_repo, відсутніх $missing, поза реєстром $untracked, помилок $failed"
+    ((failed == 0)) || return 2
+    return 0
 }
 
 sync_diff() {
     local -a filter=("$@")
-    clear 2>/dev/null || true
-    sources_load
-
+    ui_clear
+    sources_load || return 2
+    sync_validate_filter "${filter[@]}" || return 2
     local title='⌥  diff      dotfiles → HOME'
     ((${#filter[@]})) && title+="  [${filter[*]}]"
     header "$title"
 
-    local row total=0 changed=0 missing=0
+    local row total=0 changed=0 missing=0 failed=0 only_home=0 only_repo=0
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
-        if ((${#filter[@]})); then
-            local matched=false f
-            for f in "${filter[@]}"; do
-                [[ "$S_NAME" == "$f" || "$S_SRC" == "$f" || "$S_DST" == "$f" ]] && matched=true
-            done
-            $matched || continue
-        fi
+        sync_row_selected "${filter[@]}" || continue
         ((total+=1))
-
-        local hp rp out rc
+        local hp rp out rc diff_rc
         hp="$(sources_abs "$S_MODE" "$S_SRC")"
-        local nd="${S_DST#/}"; nd="${nd//\/\//\/}"
-        rp="$ROOT_DIR/dotfiles/$nd"
-
+        rp="$ROOT_DIR/dotfiles/$S_DST"
         if [[ ! -e "$hp" && ! -L "$hp" && ! -e "$rp" && ! -L "$rp" ]]; then
-            log warn "[MISSING] $S_NAME"
+            log_state MISSING "$S_NAME — немає ні в HOME, ні в dotfiles"
             ((missing+=1)); continue
         fi
-
+        if [[ ! -e "$hp" && ! -L "$hp" ]]; then
+            log_state DEL "$S_NAME — є в dotfiles, немає в HOME"
+            ((only_repo+=1)); continue
+        fi
+        if [[ ! -e "$rp" && ! -L "$rp" ]]; then
+            log_state NEW "$S_NAME — є в HOME, немає в dotfiles"
+            ((only_home+=1)); continue
+        fi
+        if ! path_ok_abs "$hp" || ! path_ok_abs "$rp" ||
+           ! fs_no_nested_links "$hp" || ! fs_no_nested_links "$rp"; then
+            log error "$S_NAME — небезпечний шлях"
+            ((failed+=1)); continue
+        fi
         rc=0
         fs_compare "$hp" "$rp" || rc=$?
-        if (( rc == 0 )); then
-            continue
+        case "$rc" in
+            0) continue ;;
+            1) ((changed+=1)); log_state CHANGED "$S_NAME — є відмінності між HOME і dotfiles" ;;
+            *) log error "$S_NAME — помилка порівняння"; ((failed+=1)); continue ;;
+        esac
+        sync_report_nested_missing "$hp" "$rp" "$S_NAME" only_home only_repo
+        local color_opt=--color=never
+        _ui_tty 1 && color_opt=--color=always
+        diff_rc=0
+        if command -v git >/dev/null 2>&1; then
+            out="$(git --no-pager diff --no-index "$color_opt" -- "$rp" "$hp" 2>&1)" || diff_rc=$?
+        elif diff --color=always /dev/null /dev/null >/dev/null 2>&1; then
+            out="$(diff "$color_opt" -ruN -- "$rp" "$hp" 2>&1)" || diff_rc=$?
+        else
+            out="$(diff -ruN -- "$rp" "$hp" 2>&1)" || diff_rc=$?
         fi
-        if (( rc == 2 )); then
-            log error "$S_NAME — помилка порівняння"
-            continue
+        if (( diff_rc > 1 )); then
+            log error "diff: $S_NAME"
+            ((failed+=1)); continue
         fi
-        ((changed+=1))
-
-        if [[ -e "$hp" && -e "$rp" ]]; then
-            if command -v git >/dev/null 2>&1; then
-                out="$(git --no-pager diff --no-index --color=always -- "$rp" "$hp" 2>&1)" || rc=$?
-            elif diff --color=always /dev/null /dev/null >/dev/null 2>&1; then
-                out="$(diff --color=always -ruN -- "$rp" "$hp" 2>&1)" || rc=$?
-            else
-                out="$(diff -ruN -- "$rp" "$hp" 2>&1)" || rc=$?
-            fi
-            if (( rc > 1 )); then
-                log error "diff: $S_NAME"; continue
-            fi
-            header "Diff: $S_NAME (dotfiles → HOME)"
-            if [[ -n "$out" ]]; then
-                printf '%s\n' "$out"
-            else
-                log warn "$S_NAME — метадані різні, вміст однаковий"
-            fi
-        elif [[ ! -e "$hp" ]]; then
-            header "Diff: $S_NAME"
-            log warn "$S_NAME — немає в HOME"
-        elif [[ ! -e "$rp" ]]; then
-            header "Diff: $S_NAME"
-            log warn "$S_NAME — немає в dotfiles"
+        header "Diff: $S_NAME (dotfiles → HOME)"
+        if [[ -n "$out" ]]; then
+            printf '%s\n' "$out"
+        else
+            log warn "$S_NAME — метадані різні, вміст однаковий"
         fi
     done
-
-    if (( changed == 0 && missing == 0 )); then
-        printf '\n'
-        log ok "Diff: усе синхронізовано ($total)"
-        return 0
-    fi
     printf '\n'
-    log warn "Diff: відрізняються $changed, відсутні $missing (з $total)"
+    log info "Diff: змінених $changed, тільки в HOME $only_home, тільки в dotfiles $only_repo, відсутніх $missing, помилок $failed (з $total записів)"
+    ((failed == 0)) || return 2
+    return 0
+}
+
+# Спільна перевірка фільтрів. На відміну від diff, невідомий фільтр — помилка.
+sync_validate_filter() {
+    local f row matched
+    for f in "$@"; do
+        matched=false
+        for row in "${SRC_ROWS[@]}"; do
+            sources_parse "$row"
+            if [[ "$f" == "$S_NAME" || "$f" == "$S_SRC" || "$f" == "$S_DST" ]]; then
+                matched=true
+                break
+            fi
+        done
+        if [[ "$matched" != true ]]; then
+            log error "Немає шляху в реєстрі: $f"
+            return 2
+        fi
+    done
+}
+
+sync_row_selected() {
+    local f
+    (($# == 0)) && return 0
+    for f in "$@"; do
+        [[ "$f" == "$S_NAME" || "$f" == "$S_SRC" || "$f" == "$S_DST" ]] && return 0
+    done
     return 1
+}
+
+# verify: лише читання. Розбіжності — нормальний результат (код 0),
+# помилки порівняння або невідомі фільтри — код 2.
+sync_verify() {
+    local -a filters=("$@")
+    sources_load || return 2
+    sync_validate_filter "${filters[@]}" || return 2
+    header '✓  verify    HOME ↔ dotfiles (без змін)'
+    local row home repo rc total=0 equal=0 changed=0 missing=0 failed=0 only_home=0 only_repo=0
+    for row in "${SRC_ROWS[@]}"; do
+        sources_parse "$row"
+        sync_row_selected "${filters[@]}" || continue
+        ((total+=1))
+        home="$(sources_abs "$S_MODE" "$S_SRC")"
+        repo="$ROOT_DIR/dotfiles/$S_DST"
+        if [[ ! -e "$home" && ! -L "$home" && ! -e "$repo" && ! -L "$repo" ]]; then
+            log_state MISSING "$S_NAME — немає ні в HOME, ні в dotfiles"
+            ((missing+=1)); continue
+        fi
+        if [[ ! -e "$home" && ! -L "$home" ]]; then
+            log_state DEL "$S_NAME — є в dotfiles, немає в HOME"
+            ((only_repo+=1)); continue
+        fi
+        if [[ ! -e "$repo" && ! -L "$repo" ]]; then
+            log_state NEW "$S_NAME — є в HOME, немає в dotfiles"
+            ((only_home+=1)); continue
+        fi
+        if ! path_ok_abs "$home" || ! path_ok_abs "$repo" ||
+           ! fs_no_nested_links "$home" || ! fs_no_nested_links "$repo"; then
+            log error "$S_NAME — небезпечний шлях"
+            ((failed+=1)); continue
+        fi
+        rc=0
+        fs_compare "$home" "$repo" || rc=$?
+        case "$rc" in
+            0) log_state OK "$S_NAME"; ((equal+=1)) ;;
+            1) log_state CHANGED "$S_NAME — є відмінності між HOME і dotfiles"; ((changed+=1))
+               sync_report_nested_missing "$home" "$repo" "$S_NAME" only_home only_repo ;;
+            *) log error "$S_NAME — помилка порівняння"; ((failed+=1)) ;;
+        esac
+    done
+    printf '\n'
+    log info "Verify: записів $total, однакових $equal, змінених $changed, тільки в HOME $only_home, тільки в dotfiles $only_repo, відсутніх $missing, помилок $failed"
+    ((failed == 0)) || return 2
+    return 0
+}
+
+# plan: без запису, перераховує заплановані операції з урахуванням sync-delete.
+sync_plan() {
+    local mode="${1:-}"; (($#)) && shift
+    [[ "$mode" == backup || "$mode" == restore ]] || {
+        log error 'Використання: dotfiles plan backup|restore [ШЛЯХ...]'
+        return 2
+    }
+    local -a filters=("$@")
+    sources_load || return 2
+    sync_validate_filter "${filters[@]}" || return 2
+    header "◇  plan $mode (лише читання)"
+    local row src dst cmp_rc copied=0 updated=0 skipped=0 missing=0 failed=0 total=0
+    local count_delete=0 extras
+    for row in "${SRC_ROWS[@]}"; do
+        sources_parse "$row"
+        sync_row_selected "${filters[@]}" || continue
+        ((total+=1))
+        if [[ "$mode" == backup ]]; then
+            src="$(sources_abs "$S_MODE" "$S_SRC")"
+            dst="$ROOT_DIR/dotfiles/$S_DST"
+        else
+            src="$ROOT_DIR/dotfiles/$S_DST"
+            dst="$(sources_abs "$S_MODE" "$S_SRC")"
+        fi
+        if [[ ! -e "$src" && ! -L "$src" ]]; then
+            log warn "[MISSING] $S_NAME — немає джерела $src"
+            ((missing+=1)); continue
+        fi
+        if ! path_ok_abs "$src" || ! path_ok_abs "$dst" ||
+           ! fs_no_nested_links "$src" ||
+           { [[ -d "$dst" ]] && ! fs_no_nested_links "$dst"; }; then
+            log error "[ERROR] $S_NAME — небезпечний шлях"
+            ((failed+=1)); continue
+        fi
+        if [[ -e "$dst" && "${SYNC_DELETE:-false}" == true ]]; then
+            cmp_rc=0
+            fs_compare "$src" "$dst" || cmp_rc=$?
+        else
+            cmp_rc=0
+            fs_compare_copy "$src" "$dst" || cmp_rc=$?
+        fi
+        case "$cmp_rc" in
+            0)
+                if [[ -d "$src" && -d "$dst" && "${SYNC_DELETE:-false}" != true ]]; then
+                    extras="$(fs_extras "$src" "$dst")"
+                    if [[ -n "$extras" ]]; then
+                        log_state KEEP_EXTRA "$S_NAME — зайві файли залишаться у призначенні"
+                        ((skipped+=1))
+                        continue
+                    fi
+                fi
+                log_state SKIP "$S_NAME — без змін"
+                ((skipped+=1)) ;;
+            1)
+                if [[ -e "$dst" ]]; then
+                    if [[ -d "$src" && ! -d "$dst" ]] || [[ -f "$src" && ! -f "$dst" ]]; then
+                        log error "[ERROR] $S_NAME — конфлікт типів"
+                        ((failed+=1)); continue
+                    fi
+                    log_state UPDATE "$S_NAME — $src → $dst"
+                    ((updated+=1))
+                    if [[ "${SYNC_DELETE:-false}" == true ]]; then
+                        extras="$(fs_extras "$src" "$dst")"
+                        if [[ -n "$extras" ]]; then
+                            log warn '  [DELETE] зайві файли в призначенні:'
+                            printf '%s\n' "$extras"
+                            ((count_delete+=1))
+                        fi
+                    fi
+                else
+                    log_state COPY "$S_NAME — $src → $dst"
+                    ((copied+=1))
+                fi ;;
+            *) log error "[ERROR] $S_NAME — порівняння"; ((failed+=1)) ;;
+        esac
+    done
+    printf '\n'
+    log info "Plan: усього $total, створити $copied, оновити $updated, без змін $skipped, відсутніх $missing, помилок $failed"
+    if (( count_delete )); then
+        log warn "Sync-delete: $count_delete призначень містять зайві файли — перед реальною операцією зроби backup"
+    fi
+    (( failed == 0 ))
 }
