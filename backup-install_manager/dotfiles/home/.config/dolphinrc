@@ -1,0 +1,55 @@
+[CompactMode]
+MaximumTextWidthIndex=2
+
+[ContentDisplay]
+ElidingMode=Right
+UsePermissionsFormat=CombinedFormat
+UseShortRelativeDates=false
+
+[ContextMenu]
+ShowCopyToOtherSplitView=false
+ShowDuplicateHere=false
+ShowMoveToOtherSplitView=false
+ShowOpenInNewWindow=false
+ShowOpenInSplitView=false
+ShowViewMode=false
+
+[ExtractDialog]
+1745x1091 screen: Height=690
+1745x1091 screen: Width=1163
+
+[General]
+BrowseThroughArchives=true
+ConfirmClosingMultipleTabs=false
+DoubleClickViewAction=none
+RememberOpenedTabs=false
+ShowSelectionToggle=false
+ShowStatusBar=FullWidth
+TabStyle=FixedSize
+UseTabForSwitchingSplitView=true
+Version=202
+ViewPropsTimestamp=2025,12,5,19,27,45.23
+
+[InformationPanel]
+dateFormat=ShortFormat
+
+[KFileDialog Settings]
+Places Icons Auto-resize=false
+Places Icons Static Size=22
+
+[MainWindow]
+MenuBar=Disabled
+
+[MainWindow][Toolbar mainToolBar]
+IconSize=16
+ToolButtonStyle=IconOnly
+
+[PreviewSettings]
+Plugins=glycin-image-rs,imagethumbnail,glycin-heif,exrthumbnail,jpegthumbnail,glycin-jxl,windowsimagethumbnail,glycin-svg,svgthumbnail,opendocumentthumbnail,directorythumbnail,djvuthumbnail,cursorthumbnail,fontthumbnail
+
+[Toolbar mainToolBar]
+IconSize=16
+ToolButtonStyle=IconOnly
+
+[UiSettings]
+ColorScheme=Nordic

@@ -1,0 +1,17 @@
+backups/
+archives/
+logs/*.log
+logs/*.gz
+*.bak.*
+*.updating-*
+.restore.*
+.update-*
+.DS_Store
+Thumbs.db
+*~
+*.uuid
+
+.setup-manager.lock
+
+*.pyc
+__pycache__/
