@@ -115,6 +115,7 @@ LookAndFeelPackage=Nordic_2026-09-26
 ShowDeleteCommand=true
 contrast=4
 frameContrast=0.2
+widgetStyle=kvantum-dark
 
 [KFileDialog Settings]
 Allow Expansion=false

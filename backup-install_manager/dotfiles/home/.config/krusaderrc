@@ -142,7 +142,7 @@ Command Execution Mode=3
 NewFolder Completion list=Foto_2006-2019:1
 NewFolder History list=Foto_2006-2019
 PopularUrls=file:///home/roman/,file:///home/roman/Documents/setup-manager/dotfiles/home/.config/,file:///home/roman/Documents/setup-manager/dotfiles/system/,file:///home/roman/Documents/setup-manager/dotfiles/home/,file:///home/roman/00_setup/scripts_bash/setup-manager/dotfiles/,file:///home/roman/00_setup/scripts_bash/setup-manager/dotfiles/etc/,file:///home/roman/Documents/setup-manager/dotfiles/,file:///home/roman/00_setup/scripts_bash/setup-manager/dotfiles/etc/samba/,file:///home/roman/00_setup/scripts_bash/setup-manager/,file:///home/roman/00_setup/scripts_bash/,file:///home/roman/Documents/setup-manager/,file:///home/roman/Documents/,file:///home/roman/00_setup/,tar:/home/roman/01 – Основи програми Blender для початківців.mp4.tar.gz/,file:///home/roman/Videos/blender/,file:///home/roman/Videos/,file:///home/roman/00_setup/os/,file:///home/roman/00_setup/family/,file:///home/roman/00_setup/family/foto/,file:///,file:///proc/,file:///home/roman/01_project/rust/rust-server-manager/target/,file:///home/roman/01_project/rust/rust-server-manager/target/debug/,file:///home/roman/01_project/rust/rust-server-manager/,file:///home/roman/01_project/rust/,file:///home/roman/01_project/python/ai-video/,file:///home/roman/01_project/python/ai-video/venv/,file:///home/roman/01_project/python/,file:///home/roman/01_project/gimp/,file:///home/roman/01_project/gimp/Sasha/
-PopularUrlsRank=18,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+PopularUrlsRank=38,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 Start Position=0,0
 Start Size=1456,905
 cmdline history=
@@ -158,7 +158,7 @@ Show Cmd Line=false
 Show FN Keys=true
 Show Terminal Emulator=false
 Splitter Sizes=728,727
-State=\x00\x00\x00\xff\x00\x00\x00\x00\xfd\x00\x00\x00\x00\x00\x00\x05\xb0\x00\x00\x03D\x00\x00\x00\x04\x00\x00\x00\x04\x00\x00\x00\x08\x00\x00\x00\x08\xfc\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x16\x00m\x00a\x00i\x00n\x00T\x00o\x00o\x00l\x00B\x00a\x00r\x01\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c\x00a\x00c\x00t\x00i\x00o\x00n\x00s\x00T\x00o\x00o\x00l\x00B\x00a\x00r\x00\x00\x00\x03\x1f\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00j\x00o\x00b\x00T\x00o\x00o\x00l\x00B\x00a\x00r\x00\x00\x00\x03/\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00
+State=\x00\x00\x00\xff\x00\x00\x00\x00\xfd\x00\x00\x00\x00\x00\x00\x05\xb0\x00\x00\x03F\x00\x00\x00\x04\x00\x00\x00\x04\x00\x00\x00\x08\x00\x00\x00\x08\xfc\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x16\x00m\x00a\x00i\x00n\x00T\x00o\x00o\x00l\x00B\x00a\x00r\x01\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c\x00a\x00c\x00t\x00i\x00o\x00n\x00s\x00T\x00o\x00o\x00l\x00B\x00a\x00r\x00\x00\x00\x03\x1f\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00j\x00o\x00b\x00T\x00o\x00o\x00l\x00B\x00a\x00r\x00\x00\x00\x03/\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00
 Terminal Emulator Splitter Sizes=100,100
 Vertical Mode=false
 
