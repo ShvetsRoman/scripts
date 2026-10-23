@@ -1,4 +1,4 @@
-/ip firewall address-list add list=trusted_admins address=192.168.88.11 comment="Admin PC"
+/ip firewall address-list add list=trusted_admins address=192.168.88.0/24 comment="LAN PC"
 
 /ip firewall filter
 # Добавляем новое правило в самое начало (position 0)

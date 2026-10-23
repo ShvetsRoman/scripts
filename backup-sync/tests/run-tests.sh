@@ -29,6 +29,10 @@ required=(
     "lib/rsync.sh"
     "lib/verify.sh"
     "lib/cleanup.sh"
+    "lib/remote_lock.sh"
+    "tests/functional.sh"
+    "tests/lint.sh"
+    ".shellcheckrc"
 )
 
 for rel in "${required[@]}"; do
@@ -40,42 +44,36 @@ for rel in "${required[@]}"; do
     fi
 done
 
+printf '\n== ShellCheck ==\n'
 if command -v shellcheck >/dev/null 2>&1; then
-    printf '\n== ShellCheck ==\n'
-    if command -v shellcheck >/dev/null 2>&1; then
-        if (
-            cd "$ROOT_DIR"
-            shellcheck -x \
-                backup-sync.sh \
-                tests/run-tests.sh
-        ); then
-            printf '[PASS] ShellCheck\n'
-        else
-            printf '[FAIL] ShellCheck\n'
-            fail=1
-        fi
+    # lib/*.sh НЕ перевіряються окремо: змінні з globals.sh «не використовуються» в ньому самому
+    # (SC2034), бо потрібні іншим файлам. lint.sh іде від backup-sync.sh через `source`-директиви.
+    if "$ROOT_DIR/tests/lint.sh"; then
+        printf '[PASS] ShellCheck\n'
+    else
+        printf '[FAIL] ShellCheck\n'
+        fail=1
+    fi
 else
-    printf '[SKIP] ShellCheck не встановлений.\n'
-fi
-else
-    printf '\n[SKIP] ShellCheck не встановлений.\n'
-fi
-
-printf '\n== VERIFY summary ==\n'
-if grep -q 'CHANGED :' "$ROOT_DIR/lib/rsync.sh" && \
-   grep -q 'VERIFY завершено: знайдено відмінності.' "$ROOT_DIR/lib/rsync.sh" && \
-   grep -q 'CHANGED_DIRS' "$ROOT_DIR/lib/verify.sh"; then
-    printf '[PASS] VERIFY має окремий CHANGED стан\n'
-else
-    printf '[FAIL] VERIFY CHANGED summary не знайдено\n'
-    fail=1
+    printf '[SKIP] ShellCheck не встановлений (tests/lint.sh запустіть там, де він є).\n'
 fi
 
 printf '\n== CLI flags ==\n'
-if "$ROOT_DIR/backup-sync.sh" --help | grep -q -- '--no-space-check'; then
-    printf '[PASS] --no-space-check у help\n'
+help_text="$("$ROOT_DIR/backup-sync.sh" --help)"
+for flag in --no-space-check --max-delete --allow-empty; do
+    if grep -q -- "$flag" <<<"$help_text"; then
+        printf '[PASS] %s у help\n' "$flag"
+    else
+        printf '[FAIL] %s відсутній у help\n' "$flag"
+        fail=1
+    fi
+done
+
+printf '\n== Functional (заглушки ssh/rsync) ==\n'
+if "$ROOT_DIR/tests/functional.sh"; then
+    printf '[PASS] functional.sh\n'
 else
-    printf '[FAIL] --no-space-check відсутній у help\n'
+    printf '[FAIL] functional.sh\n'
     fail=1
 fi
 
