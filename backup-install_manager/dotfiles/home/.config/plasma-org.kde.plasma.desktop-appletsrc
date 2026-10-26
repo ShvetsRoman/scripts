@@ -46,7 +46,7 @@ DialogWidth=1062
 [Containments][138][General]
 changedPositions={"desktop:/backup-sync":["1745x1091","0","14"],"desktop:/backup-sync-v2.5.tar.gz":["1745x1091","0","15"],"desktop:/test":["1745x1091","0","0"]}
 lastResolution=1745x1091
-positions={"1745x1091":["1","16","desktop:/setup-manager","0","4","desktop:/KV","0","4","desktop:/chrome-dakpodcappfkondcgbmonmndfnnhngjl-Default.desktop","0","0","desktop:/backup-install_setup-manager.tar.gz","0","2","desktop:/config","0","3","desktop:/backup-sync","0","14","desktop:/backup-sync-v2.3.tar.gz","0","4","desktop:/backup-install_manager","0","1","desktop:/backup-sync-v2.5.tar.gz","0","15","desktop:/hooks","0","2","desktop:/dotfiles","0","1","desktop:/backup-install_setup-manager","0","1","desktop:/test","0","0","desktop:/setup-manager.tar.gz","0","5","desktop:/backup-install_manager.tar.gz","0","2"],"1800x1125":["1","16"]}
+positions={"1745x1091":["1","16","desktop:/dotfiles","0","1","desktop:/backup-sync-v2.3.tar.gz","0","4","desktop:/backup-install_manager.tar.gz","0","2","desktop:/backup-sync-v2.5.tar.gz","0","15","desktop:/setup-manager","0","4","desktop:/KV","0","4","desktop:/test","0","0","desktop:/setup-manager.tar.gz","0","5","desktop:/backup-sync","0","14","desktop:/hooks","0","2","desktop:/backup-install_setup-manager.tar.gz","0","2","desktop:/chrome-dakpodcappfkondcgbmonmndfnnhngjl-Default.desktop","0","0","desktop:/backup-install_setup-manager","0","1","desktop:/config","0","3","desktop:/backup-install_manager","0","1"],"1800x1125":["1","16"]}
 previewPlugins=kraorathumbnail,imagethumbnail,glycin-heif,exrthumbnail,glycin-image-rs,jpegthumbnail,glycin-jxl,windowsimagethumbnail,glycin-svg,svgthumbnail,directorythumbnail,ffmpegthumbnailer,ffmpegthumbs
 previews=false
 sortMode=-1
@@ -211,8 +211,8 @@ immutability=1
 plugin=org.kde.plasma.shutdownorswitch
 
 [Containments][152][Applets][153][Configuration]
-popupHeight=197
-popupWidth=288
+popupHeight=149
+popupWidth=240
 
 [Containments][152][Applets][153][Configuration][ConfigDialog]
 DialogHeight=630
@@ -358,8 +358,8 @@ immutability=1
 plugin=org.kde.plasma.kvitals
 
 [Containments][152][Applets][185][Configuration]
-popupHeight=351
-popupWidth=444
+popupHeight=423
+popupWidth=516
 
 [Containments][152][Applets][185][Configuration][ConfigDialog]
 DialogHeight=1025

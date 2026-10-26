@@ -23,6 +23,7 @@ BrowseThroughArchives=true
 ConfirmClosingMultipleTabs=false
 DoubleClickViewAction=none
 RememberOpenedTabs=false
+ShowFullPath=true
 ShowSelectionToggle=false
 ShowStatusBar=FullWidth
 TabStyle=FixedSize

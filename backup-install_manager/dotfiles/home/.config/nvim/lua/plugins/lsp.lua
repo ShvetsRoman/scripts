@@ -67,7 +67,7 @@ return {
 
 			vim.api.nvim_create_autocmd("LspAttach", {
 				group = group,
-				desc = "Налаштування LSP для buffer",
+				desc = "Налаштування LSP для буфера",
 				callback = function(event)
 					local bufnr = event.buf
 
@@ -79,25 +79,27 @@ return {
 						})
 					end
 
-					map("n", "gd", vim.lsp.buf.definition, "LSP: Definition")
-					map("n", "gD", vim.lsp.buf.declaration, "LSP: Declaration")
-					map("n", "gr", vim.lsp.buf.references, "LSP: References")
-					map("n", "gi", vim.lsp.buf.implementation, "LSP: Implementation")
-					map("n", "gt", vim.lsp.buf.type_definition, "LSP: Type definition")
-					map("n", "K", vim.lsp.buf.hover, "LSP: Hover")
-					map("i", "<C-k>", vim.lsp.buf.signature_help, "LSP: Signature help")
-					map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "LSP: Code action")
-					map("n", "<leader>rn", vim.lsp.buf.rename, "LSP: Rename")
-					map("n", "<leader>ls", vim.lsp.buf.document_symbol, "LSP: Document symbols")
-					map("n", "<leader>lS", vim.lsp.buf.workspace_symbol, "LSP: Workspace symbols")
-					map("n", "<leader>ld", vim.diagnostic.open_float, "LSP: Diagnostic")
-					map("n", "<leader>lq", vim.diagnostic.setloclist, "LSP: Diagnostic list")
+					map("n", "gd", vim.lsp.buf.definition, "LSP: Перейти до визначення")
+					map("n", "gD", vim.lsp.buf.declaration, "LSP: Перейти до оголошення")
+					map("n", "gr", vim.lsp.buf.references, "LSP: Знайти використання")
+					map("n", "gi", vim.lsp.buf.implementation, "LSP: Перейти до реалізації")
+					map("n", "gt", vim.lsp.buf.type_definition, "LSP: Перейти до визначення типу")
+					map("n", "K", vim.lsp.buf.hover, "LSP: Показати документацію")
+					-- Ctrl+K у режимі Insert належить Blink.cmp.
+					-- Для ручного виклику LSP Signature Help використовуємо Space lk у Normal.
+					map("n", "<leader>lk", vim.lsp.buf.signature_help, "LSP: Показати сигнатуру функції")
+					map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "LSP: Дії з кодом")
+					map("n", "<leader>rn", vim.lsp.buf.rename, "LSP: Перейменувати символ")
+					map("n", "<leader>ls", vim.lsp.buf.document_symbol, "LSP: Символи документа")
+					map("n", "<leader>lS", vim.lsp.buf.workspace_symbol, "LSP: Символи робочого простору")
+					map("n", "<leader>ld", vim.diagnostic.open_float, "LSP: Показати діагностику")
+					map("n", "<leader>lq", vim.diagnostic.setloclist, "LSP: Список діагностики")
 					map("n", "]d", function()
 						vim.diagnostic.jump({ count = 1, float = true })
-					end, "Diagnostic: Next")
+					end, "Діагностика: наступне повідомлення")
 					map("n", "[d", function()
 						vim.diagnostic.jump({ count = -1, float = true })
-					end, "Diagnostic: Previous")
+					end, "Діагностика: попереднє повідомлення")
 				end,
 			})
 

@@ -1,4 +1,4 @@
--- COMPLETION
+-- АВТОДОПОВНЕННЯ
 -- blink.cmp
 
 return {
@@ -8,20 +8,20 @@ return {
 		version = "1.*",
 
 		dependencies = {
-			-- Готові snippets для багатьох мов
+			-- Готові сніпетів для багатьох мов
 			"rafamadriz/friendly-snippets",
 		},
 
 		---@module "blink.cmp"
 		---@type blink.cmp.Config
 		opts = {
-			-- KEYMAPS
-			-- Enter приймає completion.
-			-- Tab / Shift-Tab використовуються для snippets.
+			-- КЛАВІШІ
+			-- Enter приймає автодоповнення.
+			-- Tab / Shift-Tab використовуються для сніпетів.
 			keymap = {
 				preset = "enter",
 
-				-- Показати completion / documentation
+				-- Показати автодоповнення / documentation
 				["<C-Space>"] = {
 					"show",
 					"show_documentation",
@@ -51,7 +51,7 @@ return {
 					"fallback",
 				},
 
-				-- Закрити completion
+				-- Закрити автодоповнення
 				["<C-e>"] = {
 					"hide",
 					"fallback",
@@ -79,7 +79,7 @@ return {
 					"fallback",
 				},
 
-				-- Signature help
+				-- Сигнатура функції через Blink.cmp у режимі Insert
 				["<C-k>"] = {
 					"show_signature",
 					"hide_signature",
@@ -87,34 +87,34 @@ return {
 				},
 			},
 
-			-- APPEARANCE
+			-- ОФОРМЛЕННЯ
 			appearance = {
 				nerd_font_variant = "mono",
 			},
 
-			-- COMPLETION
+			-- АВТОДОПОВНЕННЯ
 			completion = {
-				-- TRIGGER
+				-- УМОВИ ВИКЛИКУ
 				trigger = {
-					-- Показувати completion під час введення
+					-- Показувати автодоповнення під час введення
 					show_on_keyword = true,
 
-					-- Не запускати новий completion всередині snippet
+					-- Не запускати новий автодоповнення всередині сніпета
 					show_in_snippet = false,
 				},
 
-				-- LIST
+				-- СПИСОК
 				list = {
 					selection = {
-						-- Не вставляти перший item автоматично
+						-- Не вставляти перший елемент автоматично
 						preselect = false,
 
-						-- Не вставляти item до підтвердження
+						-- Не вставляти елемент до підтвердження
 						auto_insert = false,
 					},
 				},
 
-				-- MENU
+				-- МЕНЮ
 				menu = {
 					border = "rounded",
 
@@ -139,7 +139,7 @@ return {
 					},
 				},
 
-				-- DOCUMENTATION
+				-- ДОКУМЕНТАЦІЯ
 				documentation = {
 					auto_show = true,
 
@@ -150,13 +150,13 @@ return {
 					},
 				},
 
-				-- GHOST TEXT
+				-- ПРИМАРНИЙ ТЕКСТ
 				ghost_text = {
 					enabled = false,
 				},
 			},
 
-			-- SIGNATURE HELP
+			-- ПІДКАЗКА СИГНАТУРИ
 			signature = {
 				enabled = true,
 
@@ -165,7 +165,7 @@ return {
 				},
 			},
 
-			-- SOURCES
+			-- ДЖЕРЕЛА
 			sources = {
 				default = {
 					"lsp",
@@ -205,7 +205,7 @@ return {
 				},
 			},
 
-			-- FUZZY MATCHING
+			-- НЕЧІТКИЙ ПОШУК
 			fuzzy = {
 				implementation = "prefer_rust",
 			},

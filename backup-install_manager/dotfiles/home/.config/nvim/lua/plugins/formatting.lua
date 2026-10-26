@@ -1,4 +1,4 @@
--- FORMATTING
+-- ФОРМАТУВАННЯ
 -- conform.nvim
 
 return {
@@ -29,12 +29,12 @@ return {
 					"v",
 				},
 
-				desc = "Format",
+				desc = "Форматувати код",
 			},
 		},
 
 		opts = {
-			-- FORMATTERS
+			-- ФОРМАТУВАЛЬНИКИ
 			formatters_by_ft = {
 				-- Lua
 				lua = {
@@ -111,16 +111,16 @@ return {
 				},
 			},
 
-			-- FORMAT ON SAVE
+			-- ФОРМАТУВАННЯ ПІД ЧАС ЗБЕРЕЖЕННЯ
 			format_on_save = function(bufnr)
-				-- Не форматувати special buffers
+				-- Не форматувати спеціальні буфери
 				if vim.bo[bufnr].buftype ~= "" then
 					return
 				end
 
 				-- Можна вимкнути глобально:
 				-- :lua vim.g.disable_autoformat = true
-				-- або тільки для поточного buffer:
+				-- або тільки для поточного буфера:
 				-- :lua vim.b.disable_autoformat = true
 				if vim.g.disable_autoformat then
 					return
@@ -133,18 +133,18 @@ return {
 				return {
 					timeout_ms = 1000,
 
-					-- Якщо зовнішнього formatter немає,
-					-- використовувати LSP formatting
+					-- Якщо зовнішнього форматувальника немає,
+					-- використовувати форматування LSP
 					lsp_format = "fallback",
 				}
 			end,
 
-			-- FORMAT OPTIONS
+			-- ПАРАМЕТРИ ФОРМАТУВАННЯ
 			default_format_opts = {
 				lsp_format = "fallback",
 			},
 
-			-- FORMATTER SETTINGS
+			-- НАЛАШТУВАННЯ ФОРМАТУВАЛЬНИКІВ
 			formatters = {
 				-- SHFMT
 				shfmt = {
@@ -163,26 +163,26 @@ return {
 		},
 
 		init = function()
-			-- Використовувати Conform для gq/operator formatting
+			-- Використовувати Conform для форматування через gq та оператор
 			vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
 		end,
 
 		config = function(_, opts)
 			require("conform").setup(opts)
 
-			-- COMMANDS
+			-- КОМАНДИ
 			vim.api.nvim_create_user_command("FormatDisable", function(args)
 				if args.bang then
 					vim.b.disable_autoformat = true
 
-					vim.notify("Autoformat вимкнено для поточного buffer")
+					vim.notify("Автоформатування вимкнено для поточного буфера")
 				else
 					vim.g.disable_autoformat = true
 
-					vim.notify("Autoformat вимкнено глобально")
+					vim.notify("Автоформатування вимкнено глобально")
 				end
 			end, {
-				desc = "Вимкнути format-on-save",
+				desc = "Вимкнути форматування під час збереження",
 				bang = true,
 			})
 
@@ -190,9 +190,9 @@ return {
 				vim.g.disable_autoformat = false
 				vim.b.disable_autoformat = false
 
-				vim.notify("Autoformat увімкнено")
+				vim.notify("Автоформатування увімкнено")
 			end, {
-				desc = "Увімкнути format-on-save",
+				desc = "Увімкнути форматування під час збереження",
 			})
 		end,
 	},

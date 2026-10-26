@@ -40,6 +40,8 @@ alias fmh='spf "$HOME"'
 alias lg='lazygit'
 # LazyDocker.
 alias ld='lazydocker'
+# LazyRSync
+alias lsc='lazyrsync'
 # Zellij.
 alias ze='zellij'
 alias zz='zellij'

@@ -1,4 +1,4 @@
--- OPTIONS
+-- ПАРАМЕТРИ
 -- Базові налаштування Neovim
 
 local opt = vim.opt

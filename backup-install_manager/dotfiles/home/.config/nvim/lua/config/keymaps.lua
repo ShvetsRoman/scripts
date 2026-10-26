@@ -1,4 +1,4 @@
--- KEYMAPS
+-- КЛАВІШІ
 -- Базові клавіатурні скорочення
 
 local map = vim.keymap.set
@@ -9,19 +9,19 @@ map("n", "H", "0", { desc = "Перейти на початок рядка" })
 map("n", "<leader>a", "GVgg", { desc = "Виділити весь текст в файлі" })
 map("n", "<leader>ф", "GVgg", { desc = "Виділити весь текст в файлі" })
 
-map("n", "<leader>/", "gcc", { remap = true, desc = "Comment line" })
-map("v", "<leader>/", "gc", { remap = true, desc = "Comment selection" })
+map("n", "<leader>/", "gcc", { remap = true, desc = "Коментувати або розкоментувати рядок" })
+map("v", "<leader>/", "gc", { remap = true, desc = "Коментувати або розкоментувати виділення" })
 
-map("n", ";", ":", { desc = "CMD enter command mode" })
-map("n", "ж", ":", { desc = "CMD enter command mode" })
+map("n", ";", ":", { desc = "Відкрити командний рядок" })
+map("n", "ж", ":", { desc = "Відкрити командний рядок" })
 
-map("i", "jk", "<ESC>", { desc = "Exit insert mode with 'jk'" })
+map("i", "jk", "<ESC>", { desc = "Вийти з режиму введення через jk" })
 
-map({ "n", "i", "v" }, "<C-s>", "<cmd> :w <CR>", { desc = "Save using Ctrl+s" })
-map({ "n", "i", "v" }, "<C-і>", "<cmd> :w <CR>", { desc = "Save using Ctrl+s" })
+map({ "n", "i", "v" }, "<C-s>", "<cmd> :w <CR>", { desc = "Зберегти файл через Ctrl+S" })
+map({ "n", "i", "v" }, "<C-і>", "<cmd> :w <CR>", { desc = "Зберегти файл через Ctrl+S" })
 
-map("n", "<S-CR>", "O<ESC>", { desc = "Insert Insert line below UP" })
-map("n", "<CR>", "o<ESC>", { desc = "Insert Insert line below" })
+map("n", "<S-CR>", "O<ESC>", { desc = "Додати порожній рядок вище" })
+map("n", "<CR>", "o<ESC>", { desc = "Додати порожній рядок нижче" })
 
 map("n", "<F2>", function()
 	Snacks.explorer()
@@ -46,9 +46,9 @@ map(
 	{ desc = "Видалити зайві порожні рядки (залишиться тільки 1)" }
 )
 
-map("n", "<F11>", "<cmd> :Mason <CR>", { desc = "Mason install" })
+map("n", "<F11>", "<cmd> :Mason <CR>", { desc = "Відкрити менеджер LSP Mason" })
 
-map("n", "<F12>", "<cmd> :Lazy sync <CR>", { desc = "Lazy sync" })
+map("n", "<F12>", "<cmd> :Lazy sync <CR>", { desc = "Синхронізувати плагіни Lazy" })
 
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Прибрати підсвічування пошуку" })
 
