@@ -1,0 +1,43 @@
+# ============================================================
+# FIREWALL — Політика міжмережевого екрана IPv4
+# ============================================================
+# Усі приклади нижче закоментовані та не впливають на конфігурацію.
+# Активні значення збережені без змін.
+# Символ @ у значенні позначає посилання на логічний ресурс.
+#
+# ПРИКЛАД: brute_force_enabled = true — захистити WAN-порти керування.
+# ПРИКЛАД: icmp_limit_per_second = 10 — обмежувати ICMP з WAN.
+
+# Декларативні ресурси RouterOS 7. Посилання — логічні ID, назви — довільні.
+
+
+# Розділ [firewall]: параметри ресурсу firewall.
+[firewall]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# allow_icmp: Дозвіл ICMP відповідно до політики Firewall.
+allow_icmp = true
+# allow_lan_dhcp: Дозволити DHCP-запити з LAN до маршрутизатора.
+allow_lan_dhcp = true
+# input_default_drop: Завершувати INPUT забороною непідтвердженого трафіку.
+input_default_drop = true
+# forward_default_drop: Завершувати FORWARD забороною непідтвердженого трафіку.
+forward_default_drop = true
+# lan_to_wan: Дозволити маршрутизований трафік із LAN до WAN.
+lan_to_wan = true
+# fasttrack: Увімкнути FastTrack (може обходити частину обробки пакетів).
+fasttrack = false
+# drop_new_wan: Блокувати небажані нові з’єднання з WAN.
+drop_new_wan = true
+
+# Опційний захист портів керування тільки від WAN TCP-з'єднань.
+# LAN ніколи не додається у blacklist; це НЕ лічильник невдалих паролів.
+# brute_force_enabled: Захист SSH/WinBox від перебору на WAN; не додає LAN до blacklist.
+brute_force_enabled = false
+# brute_force_ports: Список TCP-портів, що контролює WAN brute-force захист.
+brute_force_ports = "22,8291"
+
+# ICMP: 0 = без обмеження; додатне число = пакетів/с з WAN.
+# LAN ICMP не обмежується.
+# icmp_limit_per_second: 0 = без обмеження; додатне число = ліміт ICMP з WAN (пакетів/с).
+icmp_limit_per_second = 0

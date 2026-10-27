@@ -1,0 +1,80 @@
+# ============================================================
+# SERVICES — IP-служби керування і виявлення
+# ============================================================
+# Усі приклади нижче закоментовані та не впливають на конфігурацію.
+# Активні значення збережені без змін.
+# Символ @ у значенні позначає посилання на логічний ресурс.
+#
+# ПРИКЛАД: [services.telnet] enabled = false — вимкнути незахищений Telnet.
+
+# Порти сервісів: єдине джерело для Firewall INPUT.
+
+# Розділ [services.ssh]: параметри ресурсу services.ssh.
+[services.ssh]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# port: TCP/UDP-порт відповідної служби або SSH-з’єднання.
+port = 22
+# limit_to_lan: true — /ip service address обмежено підмережею LAN; false — без цього обмеження.
+limit_to_lan = true
+
+
+# Розділ [services.winbox]: параметри ресурсу services.winbox.
+[services.winbox]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# port: TCP/UDP-порт відповідної служби або SSH-з’єднання.
+port = 8291
+# limit_to_lan: true — доступ тільки з LAN; false — з будь-якої IPv4-адреси (Firewall діє окремо).
+limit_to_lan = true
+
+# Вимкнені служби RouterOS.
+
+# Розділ [services.telnet]: параметри ресурсу services.telnet.
+[services.telnet]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+
+
+# Розділ [services.ftp]: параметри ресурсу services.ftp.
+[services.ftp]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+
+
+# Розділ [services.www]: параметри ресурсу services.www.
+[services.www]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+
+
+# Розділ [services.www-ssl]: параметри ресурсу services.www-ssl.
+[services.www-ssl]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+
+
+# Розділ [services.api]: параметри ресурсу services.api.
+[services.api]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+
+
+# Розділ [services.api-ssl]: параметри ресурсу services.api-ssl.
+[services.api-ssl]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+
+# Reverse Proxy не використовується для домашнього маршрутизатора.
+
+# Розділ [services.reverse-proxy]: параметри ресурсу services.reverse-proxy.
+[services.reverse-proxy]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+
+# Виявлення сусідів тільки в LAN Interface List.
+
+# Розділ [discovery]: параметри ресурсу discovery.
+[discovery]
+# interface_list: Посилання на список інтерфейсів, де доступна служба.
+interface_list = "@lists.lan"

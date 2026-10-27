@@ -1,0 +1,47 @@
+# ============================================================
+# WIREGUARD — VPN WireGuard та дозволи доступу
+# ============================================================
+# Усі приклади нижче закоментовані та не впливають на конфігурацію.
+# Активні значення збережені без змін.
+# Символ @ у значенні позначає посилання на логічний ресурс.
+#
+# ПРИКЛАД: allow_ssh = true — керування через VPN, якщо WireGuard ввімкнений.
+# ПРИКЛАД: allow_internet = false — не маршрутизувати VPN-клієнтів до WAN.
+
+# Декларативний WireGuard RouterOS 7. Типово вимкнено.
+# Приватні ключі створюються лише на RouterOS; у TOML їх не зберігати.
+# Для увімкнення перевірити firewall INPUT, маршрутизацію та VPN-адреси.
+
+# Розділ [wireguard]: параметри ресурсу wireguard.
+[wireguard]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = false
+# name: Ім’я ресурсу в RouterOS.
+name = "wg-home"
+# listen_port: UDP-порт WireGuard-сервера.
+listen_port = 51820
+# address: IP-адреса або мережа; формат залежить від цього розділу.
+address = "10.77.0.1/24"
+# Правила відкриття порту та VPN-маршрутизації — явні дозволи.
+# allow_wan: Чи дозволено WireGuard з боку WAN.
+allow_wan = false
+# allow_lan: Чи дозволено доступ з WireGuard до локальної мережі.
+allow_lan = false
+# SSH/WinBox до самого маршрутизатора через VPN; не відкриває LAN.
+# Доступ обмежено підмережею WireGuard та його інтерфейсом.
+# Дозволити доступ до SSH через WireGuard.
+# allow_ssh: Дозволити керування SSH через WireGuard.
+allow_ssh = false
+
+# Дозволити доступ до WinBox через WireGuard.
+# allow_winbox: Дозволити керування WinBox через WireGuard.
+allow_winbox = false
+# allow_internet: Дозволити клієнтам WireGuard доступ до Інтернету через роутер.
+allow_internet = false
+
+# Приклад peer без справжнього ключа (не активний).
+# [peers.mobile]
+# enabled = true
+# public_key = "BASE64_PUBLIC_KEY_FROM_CLIENT"
+# allowed_address = "10.77.0.2/32"
+# comment = "mobile"

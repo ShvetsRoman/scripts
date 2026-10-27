@@ -1,0 +1,204 @@
+app=Менеджер конфігурації MikroTik
+help=Команди: list, connect [роутер], status [роутер], plan [роутер] [модуль], apply [роутер], build <роутер> [--name файл.rsc], upload <роутер> [--name файл.rsc] [--reset], help
+router=Роутер
+connected=SSH-з’єднання успішне
+failed=Помилка
+plan=Попередній план (без застосування)
+blocked=Застосування конфігурації заблоковано
+unknown=Невідома команда
+ref_diag_profile=Профіль
+ref_diag_file=файл
+ref_diag_field=поле
+
+ref_error_wifi_interface=Некоректне посилання на Wi-Fi інтерфейс
+ref_error_wifi_bridge=Некоректне посилання на Wi-Fi міст
+ref_error_wifi_security=Некоректне посилання на Wi-Fi захист
+ref_error_bridge_port=Невідомий порт у конфігурації мосту
+ref_error_network_lan=Некоректне посилання на LAN міст
+
+# Typed domain errors — Stage 3
+validation_duplicate_name=Повторена або порожня назва ресурсу
+validation_unknown_bridge_port=Невідомий інтерфейс мосту
+configuration_connection_port_zero=Порт підключення не може дорівнювати нулю
+configuration_wireguard_port_zero=Порт WireGuard не може дорівнювати нулю
+configuration_invalid_interface=Невідомий фізичний інтерфейс
+configuration_invalid_bridge_port=Невідомий фізичний порт мосту
+security_missing_admin=Відсутній адміністратор
+security_invalid_admin_group=Некоректна група адміністратора
+security_invalid_user_group=Некоректна група користувача
+security_weak_ssh=Заборонено вимикати SSH strong-crypto
+security_invalid_mac=Некоректне обмеження MAC-доступу
+security_invalid_channel=Некоректний канал оновлень
+security_auto_install=Автоматичне встановлення заборонено
+security_auto_reboot=Автоматичне перезавантаження заборонено
+security_routerboard_upgrade=Оновлення RouterBOARD потребує ручного підтвердження
+
+# Типізовані помилки Stage 7: незалежні від мови коди.
+configuration_disabled_lan_bridge=LAN міст вимкнено
+configuration_wan_in_bridge=WAN інтерфейс входить до LAN мосту
+
+# Stage 8: типізовані помилки мережі та керування.
+configuration_invalid_management_reference=Некоректне посилання на інтерфейс керування
+configuration_wan_management_conflict=WAN не може використовувати той самий інтерфейс, що й керування
+
+# Stage 9: коди помилок конфігурації, незалежні від мови.
+configuration_missing_lan_bridge=Відсутня конфігурація LAN мосту
+configuration_missing_bridge_ports=LAN міст не містить портів
+configuration_mixed_bridge_hardware=Невідповідні апаратні параметри портів мосту
+configuration_bridge_port_mismatch=Список портів мосту не збігається з LAN
+configuration_missing_wan_list=Відсутній WAN список інтерфейсів
+configuration_missing_lan_list=Відсутній LAN список інтерфейсів
+configuration_invalid_interface_list=Некоректне посилання у списку інтерфейсів
+configuration_invalid_dhcp_reference=Некоректне посилання DHCP
+configuration_invalid_dhcp_server_reference=Невідоме посилання на DHCP сервер
+configuration_wireguard_requires_firewall=Для WireGuard потрібно увімкнути Firewall
+configuration_unknown_module=Невідомий модуль
+
+# Stage 10: типізовані помилки парсерів DNS, WAN і DHCP.
+module_wan_interface_conflict=WAN не може збігатися з LAN або Management
+module_dns_invalid_address=Некоректна адреса DNS
+module_dns_empty_servers=DNS: потрібен щонайменше один сервер
+module_dns_duplicate_servers=DNS: дубльовані сервери
+module_dhcp_invalid_pool_start=Некоректний початок DHCP-пулу
+module_dhcp_invalid_pool_end=Некоректний кінець DHCP-пулу
+module_dhcp_invalid_gateway=Некоректний DHCP gateway
+module_dhcp_pool_outside_lan=DHCP-пул або gateway поза LAN
+module_dhcp_invalid_dns=Некоректний DHCP DNS
+module_dhcp_unsafe_dns=Недопустимий DHCP DNS
+module_dhcp_missing_dns=DHCP потребує DNS-сервер
+module_dhcp_invalid_lease_time=Некоректний DHCP lease_time
+module_dhcp_invalid_name=Некоректне ім’я DHCP
+
+# Stage 11: типізовані помилки Network / NAT / Firewall.
+module_network_interface_conflict = Помилка налаштування: LAN/Management interface conflict
+module_network_lan_prefix = Помилка налаштування: Invalid LAN prefix
+module_network_address_conflict = Помилка налаштування: LAN/Management address conflict
+module_network_subnet_conflict = Помилка налаштування: LAN/Management subnet conflict
+module_network_management_mismatch = Помилка налаштування: Management and LAN mismatch
+module_network_management_port = Помилка налаштування: Invalid management port
+module_network_duplicate_port = Помилка налаштування: Duplicate LAN port
+module_nat_wan_disabled = Помилка налаштування: NAT requires WAN DHCP
+module_nat_missing_wan_list = Помилка налаштування: WAN list is required
+module_nat_hairpin_dependencies = Помилка налаштування: Hairpin dependencies are missing
+module_nat_hairpin_subnet_missing = Помилка налаштування: Invalid or missing hairpin LAN subnet
+module_nat_forward_dependencies = Помилка налаштування: Port forwarding dependencies are missing
+module_nat_duplicate_forward = Помилка налаштування: Duplicate port forwarding
+module_nat_hairpin_public_address_missing = Помилка налаштування: Hairpin public address is missing
+module_firewall_required = Помилка налаштування: Firewall must be enabled
+module_firewall_management_ports = Помилка налаштування: Invalid management ports
+module_firewall_lists_required = Помилка налаштування: Interface lists are required
+module_firewall_drop_requires_enabled = Помилка налаштування: Drop requires firewall
+module_firewall_management_prefix = Помилка налаштування: Invalid management prefix
+module_firewall_management_overlap = Помилка налаштування: Overlapping management network
+module_firewall_bruteforce_ports = Помилка налаштування: Invalid brute-force ports
+module_firewall_bruteforce_duplicate = Помилка налаштування: Duplicate brute-force port
+module_firewall_bruteforce_requires_enabled = Помилка налаштування: Brute-force protection requires firewall
+module_firewall_icmp_limit = Помилка налаштування: Invalid ICMP limit
+
+# Stage 12: локалізація внутрішніх валідаторів NAT та IPv6.
+module_nat_hairpin_cidr = Помилка налаштування Hairpin CIDR
+module_nat_forward_protocol = Некоректний протокол перенаправлення
+module_nat_forward_port = Некоректний порт перенаправлення
+module_nat_forward_address = Некоректна адреса призначення
+module_nat_forward_destination = Некоректна адреса WAN призначення
+module_nat_forward_tcp_limit = Некоректний TCP-ліміт
+module_ipv6_firewall_required = IPv6 потребує Firewall
+
+# Stage 13: типізовані помилки Bridge, Lists та Wireless.
+module_bridge_name=Некоректна назва мосту
+module_bridge_protocol=Некоректний протокол мосту
+module_bridge_port=Повторений або некоректний порт мосту
+module_bridge_empty=Міст повинен мати порти
+module_list_name=Некоректна назва списку
+module_list_duplicate=Назви списків WAN і LAN повинні відрізнятися
+module_list_wan_disabled=Для списків потрібен увімкнений WAN
+module_wifi_factory_id=Невідомий фізичний Wi-Fi ID
+module_wifi_disabled_driver=Вимкнений Wi-Fi потребує driver=none
+module_wifi_disabled_radios=Вимкнений Wi-Fi не повинен містити радіо
+module_wifi_driver=Непідтримуваний драйвер Wi-Fi
+module_wifi_no_radios=Радіо Wi-Fi не знайдено
+module_wifi_factory_name=Некоректне фізичне ім’я Wi-Fi
+module_wifi_factory_duplicate=Повтор фізичного імені Wi-Fi
+module_wifi_interface=Некоректний інтерфейс Wi-Fi
+module_wifi_bridge=Некоректний міст Wi-Fi
+module_wifi_radio_disabled=Wi-Fi радіо вимкнено
+module_wifi_token=Некоректний параметр Wi-Fi
+module_wifi_security=Некоректний профіль безпеки Wi-Fi
+module_wifi_password_source=Пароль Wi-Fi налаштовується окремо
+module_wifi_authentication=Підтримується тільки WPA2-PSK
+module_wifi_security_duplicate=Повтор імені профілю Wi-Fi
+module_wifi_channel=Некоректний параметр каналу Wi-Fi
+
+# Stage 14: типізовані помилки інтерфейсів і WireGuard
+module_interface_physical = Некоректні параметри interfaces.*
+module_interface_name = Некоректні параметри interfaces.*.name
+module_interface_duplicate = Некоректні параметри interfaces.*
+module_interface_critical_disabled = Некоректні параметри interfaces.*.enabled
+module_interface_management_rename = Некоректні параметри interfaces.*.name
+module_interface_rename_collision = Некоректні параметри interfaces.*.name
+module_wireguard_token = Некоректні параметри wireguard.*
+module_wireguard_port = Некоректні параметри wireguard.listen_port
+module_wireguard_cidr = Некоректні параметри wireguard.address
+module_wireguard_lan_overlap = Некоректні параметри wireguard.address
+module_wireguard_management_overlap = Некоректні параметри wireguard.address
+module_wireguard_internet_permission = Некоректні параметри wireguard.allow_wan
+module_wireguard_peer_key = Некоректні параметри peers.*.public_key
+module_wireguard_peer_base64 = Некоректні параметри peers.*.public_key
+module_wireguard_peer_duplicate = Некоректні параметри peers.*.public_key
+module_wireguard_peer_cidr = Некоректні параметри peers.*.allowed_address
+module_wireguard_peer_outside = Некоректні параметри peers.*.allowed_address
+module_wireguard_peer_host_collision = Некоректні параметри peers.*.allowed_address
+module_wireguard_peer_overlap = Некоректні параметри peers.*.allowed_address
+
+# Stage 15: структуровані міжмодульні помилки.
+cross_static01=Static Audit: перетин підмереж LAN та Management
+cross_static02=Static Audit: окремий Management не може використовувати LAN Bridge
+cross_static03=Static Audit: адреса маршрутизатора є network/broadcast
+cross_static04=Static Audit: некоректна адреса lease
+cross_static05=Static Audit: lease використовує network/broadcast або адресу поза LAN
+cross_static06=Static Audit: повтор IP у leases
+cross_static07=Static Audit: повтор MAC у leases
+cross_static08=Static Audit: pool.start
+cross_static09=Static Audit: pool.end
+cross_static10=Static Audit: DHCP pool має неправильний діапазон
+cross_static11=Static Audit: DHCP DNS не є IPv4
+cross_static12=Static Audit: повторена адреса DHCP DNS
+cross_static13=Static Audit: DHCP вказує на вимкнений DNS маршрутизатора
+cross_static14=Static Audit: DHCP Server потребує дозволу Firewall INPUT DHCP
+cross_static15=Static Audit: Bridge-порт <id> відсутній в interfaces.toml
+cross_static16=Static Audit: <id> дублюється в Bridge та Wireless
+cross_static17=Static Audit: невідомий фізичний Wi-Fi інтерфейс <id>
+cross_static18=Static Audit: Wi-Fi <id> посилається на невідомий Security Profile
+cross_static19=Static Audit: некоректна LAN або Management CIDR
+cross_consistency01=Consistency: DHCP DNS вказує на роутер, але DNS cache вимкнено
+cross_consistency02=Consistency: DNS cache потребує активного Firewall
+cross_consistency03=Consistency: LAN→WAN потребує WAN та NAT masquerade
+cross_consistency04=Consistency: потрібні Firewall та фінальні INPUT/FORWARD DROP
+cross_consistency05=Consistency: порт WireGuard конфліктує з портом керування
+cross_consistency06=Consistency: WireGuard дозволяє вимкнений WinBox
+cross_finalization01=Finalization: відсутній WAN list
+cross_finalization02=Finalization: відсутній LAN list
+cross_finalization03=Finalization: WAN та LAN Interface Lists мають різні назви
+cross_finalization04=Finalization: спочатку увімкни WireGuard, а потім VPN-дозволи
+cross_finalization05=Finalization: VPN-дозволи потребують увімкненого Firewall
+cross_finalization06=Finalization: VPN SSH дозволено для вимкненого SSH-сервісу
+cross_finalization07=Finalization: VPN WinBox дозволено для вимкненого WinBox-сервісу
+cross_finalization08=Finalization: MAC-керування дозволене лише через LAN
+
+module_system_identity=Помилка перевірки system.toml: identity.name
+module_system_timezone=Помилка перевірки system.toml: clock.timezone
+module_system_ntp_missing=Помилка перевірки system.toml: ntp.servers
+module_system_ntp_count=Помилка перевірки system.toml: ntp.servers
+module_system_ntp_token=Помилка перевірки system.toml: ntp.servers
+module_services_ports_zero=Помилка перевірки services.toml: services.*.port
+module_services_ports_conflict=Помилка перевірки services.toml: services.*.port
+module_services_discovery_reference=Помилка перевірки services.toml: discovery.interface_list
+module_services_discovery_token=Помилка перевірки services.toml: discovery.interface_list
+module_leases_limit=Помилка перевірки dhcp.toml: leases.devices
+module_leases_dhcp_disabled=Помилка перевірки dhcp.toml: leases.enabled
+module_leases_id=Помилка перевірки dhcp.toml: leases.devices.*
+module_leases_address=Помилка перевірки dhcp.toml: leases.devices.*.address
+module_leases_comment=Помилка перевірки dhcp.toml: leases.devices.*.comment
+module_leases_mac=Помилка перевірки dhcp.toml: leases.devices.*.mac
+module_leases_lan_range=Помилка перевірки dhcp.toml: leases.devices.*.address
+module_leases_duplicate=Помилка перевірки dhcp.toml: leases.devices.*

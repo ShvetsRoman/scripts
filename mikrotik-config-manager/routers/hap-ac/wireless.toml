@@ -1,0 +1,73 @@
+# ============================================================
+# WIRELESS — Бездротові інтерфейси
+# ============================================================
+# Усі приклади нижче закоментовані та не впливають на конфігурацію.
+# Активні значення збережені без змін.
+# Символ @ у значенні позначає посилання на логічний ресурс.
+#
+# ПРИКЛАД для CHR: enabled = false, driver = "none".
+
+# Вибір драйвера: legacy -> /interface wireless; wifi-qcom-ac -> /interface wifi.
+# Пакет драйвера повинен бути встановлений на реальному пристрої.
+
+# Розділ [wireless]: параметри ресурсу wireless.
+[wireless]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# driver: Тип бездротового драйвера; none — немає фізичного Wi-Fi.
+driver = "legacy"
+
+
+# Розділ [wireless.wlan1]: параметри ресурсу wireless.wlan1.
+[wireless.wlan1]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# interface: Логічне посилання на інтерфейс; значення @... визначається в інших TOML.
+interface = "@interfaces.wlan1"
+# ssid: Параметр ssid розділу wireless.wlan1; зберігайте тип значення.
+ssid = "HOME_test"
+# band: Параметр band розділу wireless.wlan1; зберігайте тип значення.
+band = "2ghz-b/g/n"
+# channel_width: Параметр channel_width розділу wireless.wlan1; зберігайте тип значення.
+channel_width = "20mhz"
+# frequency: Параметр frequency розділу wireless.wlan1; зберігайте тип значення.
+frequency = "auto"
+# country: Параметр country розділу wireless.wlan1; зберігайте тип значення.
+country = "ukraine"
+# security: Параметр security розділу wireless.wlan1; зберігайте тип значення.
+security = "@security.wifi"
+# bridge: Посилання на LAN-міст, до якого додається порт.
+bridge = "@bridge.lan"
+
+
+# Розділ [wireless.wlan2]: параметри ресурсу wireless.wlan2.
+[wireless.wlan2]
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# interface: Логічне посилання на інтерфейс; значення @... визначається в інших TOML.
+interface = "@interfaces.wlan2"
+# ssid: Параметр ssid розділу wireless.wlan2; зберігайте тип значення.
+ssid = "HOME_test"
+# band: Параметр band розділу wireless.wlan2; зберігайте тип значення.
+band = "5ghz-a/n/ac"
+# channel_width: Параметр channel_width розділу wireless.wlan2; зберігайте тип значення.
+channel_width = "20/40/80mhz-XXXX"
+# frequency: Параметр frequency розділу wireless.wlan2; зберігайте тип значення.
+frequency = "auto"
+# country: Параметр country розділу wireless.wlan2; зберігайте тип значення.
+country = "ukraine"
+# security: Параметр security розділу wireless.wlan2; зберігайте тип значення.
+security = "@security.wifi"
+# bridge: Посилання на LAN-міст, до якого додається порт.
+bridge = "@bridge.lan"
+
+# Профіль захисту Wi-Fi: без пароля, його читаємо тільки з .secrets.
+
+# Розділ [security.wifi]: параметри ресурсу security.wifi.
+[security.wifi]
+# name: Ім’я ресурсу в RouterOS.
+name = "home-wifi-security"
+# authentication: Параметр authentication розділу security.wifi; зберігайте тип значення.
+authentication = "wpa2-psk"
+# password_source: Параметр password_source розділу security.wifi; зберігайте тип значення.
+password_source = "manual"

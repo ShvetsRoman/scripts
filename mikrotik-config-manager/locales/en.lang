@@ -1,0 +1,204 @@
+app=MikroTik Configuration Manager
+help=Commands: list, connect [router], status [router], plan [router] [module], apply [router], build <router> [--name file.rsc], upload <router> [--name file.rsc] [--reset], help
+router=Router
+connected=SSH connection successful
+failed=Error
+plan=Preview plan (not applied)
+blocked=Apply is disabled in this version
+unknown=Unknown command
+ref_diag_profile=Profile
+ref_diag_file=file
+ref_diag_field=field
+
+ref_error_wifi_interface=Invalid Wi-Fi interface reference
+ref_error_wifi_bridge=Invalid Wi-Fi bridge reference
+ref_error_wifi_security=Invalid Wi-Fi security reference
+ref_error_bridge_port=Unknown bridge port reference
+ref_error_network_lan=Invalid LAN bridge reference
+
+# Typed domain errors — Stage 3
+validation_duplicate_name=Duplicate or empty resource name
+validation_unknown_bridge_port=Unknown bridge interface
+configuration_connection_port_zero=Connection port must not be zero
+configuration_wireguard_port_zero=WireGuard port must not be zero
+configuration_invalid_interface=Unknown physical interface
+configuration_invalid_bridge_port=Unknown physical bridge port
+security_missing_admin=Administrator entry is missing
+security_invalid_admin_group=Invalid administrator group
+security_invalid_user_group=Invalid user group
+security_weak_ssh=SSH strong-crypto must remain enabled
+security_invalid_mac=Invalid MAC access restriction
+security_invalid_channel=Invalid update channel
+security_auto_install=Automatic update installation is forbidden
+security_auto_reboot=Automatic reboot is forbidden
+security_routerboard_upgrade=RouterBOARD upgrade requires manual confirmation
+
+# Typed Stage 7 errors.
+configuration_disabled_lan_bridge=LAN bridge is disabled
+configuration_wan_in_bridge=WAN interface belongs to the LAN bridge
+
+# Stage 8: typed network and management errors.
+configuration_invalid_management_reference=Invalid management interface reference
+configuration_wan_management_conflict=WAN cannot use the management interface
+
+# Stage 9: коди помилок конфігурації, незалежні від мови.
+configuration_missing_lan_bridge=LAN bridge configuration is missing
+configuration_missing_bridge_ports=LAN bridge has no ports
+configuration_mixed_bridge_hardware=Inconsistent bridge hardware settings
+configuration_bridge_port_mismatch=Bridge ports do not match LAN
+configuration_missing_wan_list=WAN interface list is missing
+configuration_missing_lan_list=LAN interface list is missing
+configuration_invalid_interface_list=Invalid interface-list reference
+configuration_invalid_dhcp_reference=Invalid DHCP reference
+configuration_invalid_dhcp_server_reference=Unknown DHCP server reference
+configuration_wireguard_requires_firewall=WireGuard requires Firewall to be enabled
+configuration_unknown_module=Unknown module
+
+# Stage 10: типізовані помилки парсерів DNS, WAN і DHCP.
+module_wan_interface_conflict=WAN interface conflicts with LAN or Management
+module_dns_invalid_address=Invalid DNS address
+module_dns_empty_servers=At least one DNS server is required
+module_dns_duplicate_servers=Duplicate DNS servers
+module_dhcp_invalid_pool_start=Invalid DHCP pool start
+module_dhcp_invalid_pool_end=Invalid DHCP pool end
+module_dhcp_invalid_gateway=Invalid DHCP gateway
+module_dhcp_pool_outside_lan=DHCP pool or gateway outside LAN
+module_dhcp_invalid_dns=Invalid DHCP DNS address
+module_dhcp_unsafe_dns=Unsafe DHCP DNS address
+module_dhcp_missing_dns=DHCP requires a DNS server
+module_dhcp_invalid_lease_time=Invalid DHCP lease time
+module_dhcp_invalid_name=Invalid DHCP name
+
+# Stage 11: типізовані помилки Network / NAT / Firewall.
+module_network_interface_conflict = LAN/Management interface conflict
+module_network_lan_prefix = Invalid LAN prefix
+module_network_address_conflict = LAN/Management address conflict
+module_network_subnet_conflict = LAN/Management subnet conflict
+module_network_management_mismatch = Management and LAN mismatch
+module_network_management_port = Invalid management port
+module_network_duplicate_port = Duplicate LAN port
+module_nat_wan_disabled = NAT requires WAN DHCP
+module_nat_missing_wan_list = WAN list is required
+module_nat_hairpin_dependencies = Hairpin dependencies are missing
+module_nat_hairpin_subnet_missing = Invalid or missing hairpin LAN subnet
+module_nat_forward_dependencies = Port forwarding dependencies are missing
+module_nat_duplicate_forward = Duplicate port forwarding
+module_nat_hairpin_public_address_missing = Hairpin public address is missing
+module_firewall_required = Firewall must be enabled
+module_firewall_management_ports = Invalid management ports
+module_firewall_lists_required = Interface lists are required
+module_firewall_drop_requires_enabled = Drop requires firewall
+module_firewall_management_prefix = Invalid management prefix
+module_firewall_management_overlap = Overlapping management network
+module_firewall_bruteforce_ports = Invalid brute-force ports
+module_firewall_bruteforce_duplicate = Duplicate brute-force port
+module_firewall_bruteforce_requires_enabled = Brute-force protection requires firewall
+module_firewall_icmp_limit = Invalid ICMP limit
+
+# Stage 12: локалізація внутрішніх валідаторів NAT та IPv6.
+module_nat_hairpin_cidr = Invalid Hairpin CIDR
+module_nat_forward_protocol = Invalid forwarding protocol
+module_nat_forward_port = Invalid forwarding port
+module_nat_forward_address = Invalid forwarding target address
+module_nat_forward_destination = Invalid forwarding destination address
+module_nat_forward_tcp_limit = Invalid TCP limit
+module_ipv6_firewall_required = IPv6 requires firewall
+
+# Stage 13: typed Bridge, Lists and Wireless diagnostics.
+module_bridge_name=Invalid bridge name
+module_bridge_protocol=Invalid bridge protocol
+module_bridge_port=Duplicate or invalid bridge port
+module_bridge_empty=Bridge requires ports
+module_list_name=Invalid interface list name
+module_list_duplicate=WAN and LAN list names must differ
+module_list_wan_disabled=Lists require enabled WAN
+module_wifi_factory_id=Unknown physical Wi-Fi ID
+module_wifi_disabled_driver=Disabled Wi-Fi requires driver=none
+module_wifi_disabled_radios=Disabled Wi-Fi cannot declare radios
+module_wifi_driver=Unsupported Wi-Fi driver
+module_wifi_no_radios=No Wi-Fi radios
+module_wifi_factory_name=Invalid Wi-Fi factory name
+module_wifi_factory_duplicate=Duplicate Wi-Fi factory name
+module_wifi_interface=Invalid Wi-Fi interface
+module_wifi_bridge=Invalid Wi-Fi bridge
+module_wifi_radio_disabled=Wi-Fi radio is disabled
+module_wifi_token=Invalid Wi-Fi parameter
+module_wifi_security=Invalid Wi-Fi security profile
+module_wifi_password_source=Wi-Fi password must be configured separately
+module_wifi_authentication=Only WPA2-PSK is supported
+module_wifi_security_duplicate=Duplicate Wi-Fi security profile
+module_wifi_channel=Invalid Wi-Fi channel setting
+
+# Stage 14: типізовані помилки інтерфейсів і WireGuard
+module_interface_physical = Invalid configuration: interfaces.*
+module_interface_name = Invalid configuration: interfaces.*.name
+module_interface_duplicate = Invalid configuration: interfaces.*
+module_interface_critical_disabled = Invalid configuration: interfaces.*.enabled
+module_interface_management_rename = Invalid configuration: interfaces.*.name
+module_interface_rename_collision = Invalid configuration: interfaces.*.name
+module_wireguard_token = Invalid configuration: wireguard.*
+module_wireguard_port = Invalid configuration: wireguard.listen_port
+module_wireguard_cidr = Invalid configuration: wireguard.address
+module_wireguard_lan_overlap = Invalid configuration: wireguard.address
+module_wireguard_management_overlap = Invalid configuration: wireguard.address
+module_wireguard_internet_permission = Invalid configuration: wireguard.allow_wan
+module_wireguard_peer_key = Invalid configuration: peers.*.public_key
+module_wireguard_peer_base64 = Invalid configuration: peers.*.public_key
+module_wireguard_peer_duplicate = Invalid configuration: peers.*.public_key
+module_wireguard_peer_cidr = Invalid configuration: peers.*.allowed_address
+module_wireguard_peer_outside = Invalid configuration: peers.*.allowed_address
+module_wireguard_peer_host_collision = Invalid configuration: peers.*.allowed_address
+module_wireguard_peer_overlap = Invalid configuration: peers.*.allowed_address
+
+# Stage 15: структуровані міжмодульні помилки.
+cross_static01=Cross-module validation: Static01
+cross_static02=Cross-module validation: Static02
+cross_static03=Cross-module validation: Static03
+cross_static04=Cross-module validation: Static04
+cross_static05=Cross-module validation: Static05
+cross_static06=Cross-module validation: Static06
+cross_static07=Cross-module validation: Static07
+cross_static08=Cross-module validation: Static08
+cross_static09=Cross-module validation: Static09
+cross_static10=Cross-module validation: Static10
+cross_static11=Cross-module validation: Static11
+cross_static12=Cross-module validation: Static12
+cross_static13=Cross-module validation: Static13
+cross_static14=Cross-module validation: Static14
+cross_static15=Cross-module validation: Static15
+cross_static16=Cross-module validation: Static16
+cross_static17=Cross-module validation: Static17
+cross_static18=Cross-module validation: Static18
+cross_static19=Cross-module validation: Static19
+cross_consistency01=Cross-module validation: Consistency01
+cross_consistency02=Cross-module validation: Consistency02
+cross_consistency03=Cross-module validation: Consistency03
+cross_consistency04=Cross-module validation: Consistency04
+cross_consistency05=Cross-module validation: Consistency05
+cross_consistency06=Cross-module validation: Consistency06
+cross_finalization01=Cross-module validation: Finalization01
+cross_finalization02=Cross-module validation: Finalization02
+cross_finalization03=Cross-module validation: Finalization03
+cross_finalization04=Cross-module validation: Finalization04
+cross_finalization05=Cross-module validation: Finalization05
+cross_finalization06=Cross-module validation: Finalization06
+cross_finalization07=Cross-module validation: Finalization07
+cross_finalization08=Cross-module validation: Finalization08
+
+module_system_identity=Invalid system.toml setting: identity.name
+module_system_timezone=Invalid system.toml setting: clock.timezone
+module_system_ntp_missing=Invalid system.toml setting: ntp.servers
+module_system_ntp_count=Invalid system.toml setting: ntp.servers
+module_system_ntp_token=Invalid system.toml setting: ntp.servers
+module_services_ports_zero=Invalid services.toml setting: services.*.port
+module_services_ports_conflict=Invalid services.toml setting: services.*.port
+module_services_discovery_reference=Invalid services.toml setting: discovery.interface_list
+module_services_discovery_token=Invalid services.toml setting: discovery.interface_list
+module_leases_limit=Invalid dhcp.toml setting: leases.devices
+module_leases_dhcp_disabled=Invalid dhcp.toml setting: leases.enabled
+module_leases_id=Invalid dhcp.toml setting: leases.devices.*
+module_leases_address=Invalid dhcp.toml setting: leases.devices.*.address
+module_leases_comment=Invalid dhcp.toml setting: leases.devices.*.comment
+module_leases_mac=Invalid dhcp.toml setting: leases.devices.*.mac
+module_leases_lan_range=Invalid dhcp.toml setting: leases.devices.*.address
+module_leases_duplicate=Invalid dhcp.toml setting: leases.devices.*

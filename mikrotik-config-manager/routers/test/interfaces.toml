@@ -1,0 +1,61 @@
+# ============================================================
+# INTERFACES — Фізичні інтерфейси та їхні назви
+# ============================================================
+# Усі приклади нижче закоментовані та не впливають на конфігурацію.
+# Активні значення збережені без змін.
+# Символ @ у значенні позначає посилання на логічний ресурс.
+#
+# ПРИКЛАД: name = "00_wan" — нове ім’я порту WAN в RouterOS.
+
+# П’ять портів CHR — аналог домашнього маршрутизатора.
+# ether1: WAN (VirtualBox NAT), ether2–ether5: LAN.
+
+
+# Розділ [interfaces.ether1]: параметри ресурсу interfaces.ether1.
+[interfaces.ether1]
+# name: Ім’я ресурсу в RouterOS.
+name = "00_wan"
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# comment: Текстовий опис ресурсу, що відображається у RouterOS.
+comment = "wan_nat"
+
+
+# Розділ [interfaces.ether2]: параметри ресурсу interfaces.ether2.
+[interfaces.ether2]
+# name: Ім’я ресурсу в RouterOS.
+name = "01_lan1"
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# comment: Текстовий опис ресурсу, що відображається у RouterOS.
+comment = "lan_hostonly"
+
+
+# Розділ [interfaces.ether3]: параметри ресурсу interfaces.ether3.
+[interfaces.ether3]
+# name: Ім’я ресурсу в RouterOS.
+name = "01_lan2"
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# comment: Текстовий опис ресурсу, що відображається у RouterOS.
+comment = "lan_internal"
+
+
+# Розділ [interfaces.ether4]: параметри ресурсу interfaces.ether4.
+[interfaces.ether4]
+# name: Ім’я ресурсу в RouterOS.
+name = "01_lan3"
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# comment: Текстовий опис ресурсу, що відображається у RouterOS.
+comment = "lan_internal"
+
+
+# Розділ [interfaces.ether5]: параметри ресурсу interfaces.ether5.
+[interfaces.ether5]
+# name: Ім’я ресурсу в RouterOS.
+name = "01_lan4"
+# enabled: Увімкнути або вимкнути цей ресурс (true / false).
+enabled = true
+# comment: Текстовий опис ресурсу, що відображається у RouterOS.
+comment = "lan_internal"
