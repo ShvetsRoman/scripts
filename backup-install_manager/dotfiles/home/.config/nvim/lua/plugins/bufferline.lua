@@ -25,7 +25,8 @@ return {
 
 				show_close_icon = false,
 
-				always_show_bufferline = true,
+				always_show_bufferline = false,
+				auto_toggle_bufferline = true,
 
 				offsets = {},
 			},

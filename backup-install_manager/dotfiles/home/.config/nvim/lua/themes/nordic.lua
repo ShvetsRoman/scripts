@@ -47,6 +47,10 @@ return {
 					for _, highlight in pairs(highlights) do
 						highlight.italic = false
 					end
+					-- Підсвічування рядка під курсором
+					highlights.CursorLine = {
+						bg = "#2B323D",
+					}
 				end,
 			})
 			-- Застосувати тему Nordic

@@ -8,6 +8,7 @@ opt.number = true -- Показувати абсолютний номер пот
 opt.relativenumber = true -- Показувати відносні номери інших рядків
 opt.signcolumn = "yes" -- Завжди показувати колонку знаків (LSP, Git, діагностика)
 opt.cursorline = true -- Підсвічувати рядок, на якому знаходиться курсор
+vim.opt.cursorlineopt = "both" -- Підсвічувати весь рядок
 opt.numberwidth = 4 -- Мінімальна ширина колонки номерів рядків
 opt.showmode = false -- Не показувати режим INSERT, NORMAL тощо в командному рядку
 opt.laststatus = 3 -- Використовувати один глобальний statusline для всіх вікон
