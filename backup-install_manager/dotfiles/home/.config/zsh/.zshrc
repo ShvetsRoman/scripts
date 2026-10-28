@@ -150,24 +150,33 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 # ============================================================
-# THEME
+# PROMPT — STARSHIP / POWERLEVEL10K
 # ============================================================
-# Powerlevel10k використовуємо, якщо він встановлений.
-# Якщо Powerlevel10k відсутній, використовуємо Starship.
-if [[ -f "/Qusr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme" ]]; then
-    # Powerlevel10k
-    source "/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme"
-    # Конфігурація Powerlevel10k.
-    P10K_CONFIG="$ZSH_CONFIG_DIR/p10k_my_nordic_v1.zsh"
+# ШЛЯХИ ДО КОНФІГУРАЦІЙ
+# Тема Powerlevel10k.
+P10K_THEME="/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme"
+# Власна Nordic-конфігурація Powerlevel10k.
+P10K_CONFIG="$ZSH_CONFIG_DIR/p10k_my_nordic_v1.zsh"
+# ------------------------------------------------------------
+# 1. STARSHIP
+# ------------------------------------------------------------
+if command -v starship >/dev/null 2>&1; then
+    # Ініціалізувати Starship.
+    eval "$(starship init zsh)"
+# ------------------------------------------------------------
+# 2. POWERLEVEL10K
+# ------------------------------------------------------------
+elif [[ -f "$P10K_THEME" ]]; then
+    # Завантажити тему Powerlevel10k.
+    source "$P10K_THEME"
+    # Перевірити наявність власної Nordic-конфігурації.
     if [[ -f "$P10K_CONFIG" ]]; then
+        # Завантажити власну Nordic-конфігурацію.
         source "$P10K_CONFIG"
-    else
+    # Перевірити наявність звичайної конфігурації.
+    elif [[ -f "$ZSH_CONFIG_DIR/p10k.zsh" ]]; then
+        # Завантажити стандартну конфігурацію.
         source "$ZSH_CONFIG_DIR/p10k.zsh"
-    fi
-else
-    # Starship
-    if command -v starship >/dev/null 2>&1; then
-        eval "$(starship init zsh)"
     fi
 fi
 

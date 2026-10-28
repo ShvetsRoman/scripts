@@ -71,6 +71,7 @@ krename=/usr/bin/krename
 lzma=/usr/bin/lzma
 md5sum=/usr/bin/md5sum
 mount=/usr/bin/mount
+rm=/usr/bin/rm
 sha1sum=/usr/bin/sha1sum
 sha224sum=/usr/bin/sha224sum
 sha256sum=/usr/bin/sha256sum
@@ -82,6 +83,7 @@ unace=/usr/bin/unace
 unrar=/usr/bin/unrar
 unzip=/usr/bin/unzip
 xz=/usr/bin/xz
+zip=/usr/bin/zip
 
 [JobManager]
 Queue Mode=false
