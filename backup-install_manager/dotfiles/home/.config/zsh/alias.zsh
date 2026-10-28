@@ -44,7 +44,6 @@ alias ld='lazydocker'
 alias lsc='lazyrsync'
 # Zellij.
 alias ze='zellij'
-alias zz='zellij'
 # Helix
 alias hx='helix'
 
@@ -52,7 +51,7 @@ alias hx='helix'
 # Генерація паролю.
 alias genpass='bash "$HOME/00_setup/scripts_bash/gen_pass.sh"'
 # Setup Manager.
-alias setup-manager='bash "$HOME/00_setup/scripts_bash/setup-manager/setup-manager.sh"'
+alias backup-install='bash "$HOME/00_setup/scripts_bash/backup-install_manager/backup-install_manager.sh"'
 # Backup Sync.
 alias backup-sync='bash "$HOME/00_setup/scripts_bash/backup-sync/backup-sync.sh"'
 
@@ -61,10 +60,7 @@ alias backup-sync='bash "$HOME/00_setup/scripts_bash/backup-sync/backup-sync.sh"
 alias zed='zeditor'
 # Neovim
 alias v='nvim'
-alias vi='nvim'
 alias vim='nvim'
-alias n='nvim'
-alias nv='nvim'
 
 # ZSH CONFIG
 # Основний .zshrc.
@@ -75,38 +71,6 @@ alias nza='${EDITOR:-nvim} "$HOME/.config/zsh/alias.zsh"'
 alias nzp='${EDITOR:-nvim} "$HOME/.config/zsh/path.zsh"'
 # Каталог додаткових Zsh-скриптів.
 alias nzs='${EDITOR:-nvim} "$HOME/.config/zsh/scripts"'
-
-# TELEVISION
-# Перейти в каталог, вибраний через Television.
-tvd() {
-    local dir
-
-    dir="$(tv dirs)" || return
-
-    if [[ -n "$dir" && -d "$dir" ]]; then
-        cd -- "$dir" || return
-    fi
-}
-# Відкрити файл через Television у редакторі.
-tvf() {
-    local file
-
-    file="$(tv files)" || return
-
-    if [[ -n "$file" ]]; then
-        "${EDITOR:-nvim}" -- "$file"
-    fi
-}
-# Знайти текст через Television та відкрити результат.
-tvt() {
-    local result
-
-    result="$(tv text)" || return
-
-    if [[ -n "$result" ]]; then
-        "${EDITOR:-nvim}" -- "$result"
-    fi
-}
 
 # FASTFETCH
 # Сумісність зі старою звичкою викликати neofetch.
@@ -185,32 +149,18 @@ alias sen='sudo systemctl enable --now'
 alias sdn='sudo systemctl disable --now'
 
 # GIT
-alias gits='git status'
 alias gs='git status'
-alias gita='git add .'
 alias ga='git add .'
-alias gitp='git push'
 alias gp='git push'
-alias gitpl='git pull'
 alias gpl='git pull'
 # Git commit
 gc() {
-    local message
     if (($# == 0)); then
-        message="add"
-    else
-        message="$*"
+        print -u2 'Використання: gc "повідомлення коміту"'
+        return 2
     fi
-    git commit -m "$message"
+    git commit -m "$*"
 }
-
-# NIXOS
-alias snrs='sudo nixos-rebuild switch'
-alias snrsu='sudo nixos-rebuild switch --upgrade'
-alias snp='sudo nvim /etc/nixos/programs.nix'
-alias snnc='sudo nvim /etc/nixos/configuration.nix'
-alias snc='sudo nvim /etc/nixos/config.nix'
-alias sns='sudo nvim /etc/nixos/services.nix'
 
 # PACMAN / ARCH LINUX
 # Reflector
@@ -313,36 +263,3 @@ alias pr='paru -R'
 # alias saa='sudo apt autoremove'
 # alias sas='sudo apt search'
 # alias sal='sudo apt list --installed'
-
-# MIKROTIK
-# Перезавантаження MikroTik через SSH.
-alias mikreboot='ssh -p 2240 -i "$HOME/.ssh/id_mik" roman@192.168.88.1 "/system reboot"'
-
-# SUDO COMMAND LINE
-sudo-command-line() {
-    # Якщо командний рядок порожній —
-    # завантажуємо попередню команду.
-    [[ -z "$BUFFER" ]] && zle up-history
-    if [[ "$BUFFER" == sudo\ * ]]; then
-        # sudo command -> command
-        LBUFFER="${LBUFFER#sudo }"
-    elif [[ "$BUFFER" == "$EDITOR"\ * ]]; then
-        # nvim file -> sudoedit file
-        LBUFFER="${LBUFFER#"$EDITOR" }"
-        LBUFFER="sudoedit $LBUFFER"
-    elif [[ "$BUFFER" == sudoedit\ * ]]; then
-        # sudoedit file -> nvim file
-        LBUFFER="${LBUFFER#sudoedit }"
-        LBUFFER="$EDITOR $LBUFFER"
-    else
-        # command -> sudo command
-        LBUFFER="sudo $LBUFFER"
-    fi
-}
-zle -N sudo-command-line
-# Emacs mode.
-bindkey -M emacs '\e\e' sudo-command-line
-# Vim command mode.
-bindkey -M vicmd '\e\e' sudo-command-line
-# Vim insert mode.
-bindkey -M viins '\e\e' sudo-command-line

@@ -4,7 +4,6 @@
 export LANG="uk_UA.UTF-8"
 
 # DEFAULT APPLICATIONS
-
 # Editor
 # Основний текстовий редактор.
 export EDITOR="nvim"

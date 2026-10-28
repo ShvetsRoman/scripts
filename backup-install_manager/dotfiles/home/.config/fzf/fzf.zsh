@@ -16,22 +16,6 @@
 # ============================================================
 
 # ------------------------------------------------------------
-# Інтеграція fzf з Zsh
-# ------------------------------------------------------------
-
-source <(fzf --zsh)
-
-# повертатиме 0, і замість 130
-fzf() {
-    command fzf "$@"
-    local rc=$?
-    if ((rc == 130)); then
-        return 0
-    fi
-    return "$rc"
-}
-
-# ------------------------------------------------------------
 # Базові команди пошуку
 # ------------------------------------------------------------
 
@@ -143,8 +127,11 @@ ffile() {
         )"
     fi
 
-    if [[ $? -ne 0 ]]; then
+    local fzf_result=$?
+    if ((fzf_result == 1 || fzf_result == 130)); then
         return 0
+    elif ((fzf_result != 0)); then
+        return "$fzf_result"
     fi
 
     if [[ -n "$file" ]]; then
@@ -183,8 +170,11 @@ fvim() {
         )"
     fi
 
-    if [[ $? -ne 0 ]]; then
+    local fzf_result=$?
+    if ((fzf_result == 1 || fzf_result == 130)); then
         return 0
+    elif ((fzf_result != 0)); then
+        return "$fzf_result"
     fi
 
     if [[ -n "$file" ]]; then
@@ -192,41 +182,7 @@ fvim() {
     fi
 }
 
-ff() {
-    local file
-
-    if ! command -v fd >/dev/null 2>&1; then
-        echo "Помилка: команда fd не знайдена."
-        return 1
-    fi
-
-    if ! command -v nvim >/dev/null 2>&1; then
-        echo "Помилка: команда nvim не знайдена."
-        return 1
-    fi
-
-    if command -v bat >/dev/null 2>&1; then
-        file="$(
-            fd --type f --hidden --follow --exclude .git |
-                fzf \
-                    --prompt='Neovim ❯ ' \
-                    --preview='bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null'
-        )"
-    else
-        file="$(
-            fd --type f --hidden --follow --exclude .git |
-                fzf --prompt='Neovim ❯ '
-        )"
-    fi
-
-    if [[ $? -ne 0 ]]; then
-        return 0
-    fi
-
-    if [[ -n "$file" ]]; then
-        nvim -- "$file"
-    fi
-}
+ff() { fvim "$@"; }
 
 # ============================================================
 # FRG - Пошук тексту через ripgrep
@@ -278,8 +234,11 @@ frg() {
         )"
     fi
 
-    if [[ $? -ne 0 ]]; then
+    local fzf_result=$?
+    if ((fzf_result == 1 || fzf_result == 130)); then
         return 0
+    elif ((fzf_result != 0)); then
+        return "$fzf_result"
     fi
 
     if [[ -z "$result" ]]; then
@@ -310,8 +269,11 @@ fkill() {
                 --header='TAB: вибрати кілька процесів'
     )"
 
-    if [[ $? -ne 0 ]]; then
+    local fzf_result=$?
+    if ((fzf_result == 1 || fzf_result == 130)); then
         return 0
+    elif ((fzf_result != 0)); then
+        return "$fzf_result"
     fi
 
     if [[ -z "$selected" ]]; then
@@ -320,7 +282,7 @@ fkill() {
 
     print -r -- "$selected" |
         awk '{print $2}' |
-        xargs kill "-$signal"
+        xargs -r kill "-$signal"
 }
 
 # ============================================================
@@ -360,8 +322,11 @@ fgit() {
                 --preview-window=right:60%
     )"
 
-    if [[ $? -ne 0 ]]; then
+    local fzf_result=$?
+    if ((fzf_result == 1 || fzf_result == 130)); then
         return 0
+    elif ((fzf_result != 0)); then
+        return "$fzf_result"
     fi
 
     if [[ -z "$commit" ]]; then
@@ -383,44 +348,20 @@ fgit() {
 # ============================================================
 
 fgbranch() {
-    local branch
-
-    if ! command -v git >/dev/null 2>&1; then
-        echo "Помилка: команда git не знайдена."
-        return 1
+    (($+commands[git] && $+commands[fzf])) || return 127
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 1
+    local branch code
+    branch=$(git branch --all --format='%(refname:short)' | grep -v 'HEAD$' | fzf --prompt='Git branch ❯ ')
+    code=$?
+    ((code == 1 || code == 130)) && return 0
+    ((code != 0)) && return "$code"
+    [[ -n "$branch" ]] || return 0
+    if [[ "$branch" == */* ]] && ! git show-ref --verify --quiet "refs/heads/$branch"; then
+        # Git сам визначає tracking branch лише за однозначного відповідника.
+        git switch --track "$branch"
+    else
+        git switch -- "$branch"
     fi
-
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "Поточна директорія не є Git-репозиторієм."
-        return 1
-    fi
-
-    branch="$(
-        git branch --all --color=always |
-            grep -v '/HEAD' |
-            fzf \
-                --ansi \
-                --prompt='Git branch ❯ ' \
-                --preview='
-                branch=$(echo {} | sed "s/^[* ]*//")
-                branch=${branch#remotes/origin/}
-                git log --oneline --graph --decorate --color=always "$branch" -30 2>/dev/null
-            '
-    )"
-
-    if [[ $? -ne 0 ]]; then
-        return 0
-    fi
-
-    if [[ -z "$branch" ]]; then
-        return 0
-    fi
-
-    branch="${branch//$'\e'\[[0-9;]##m/}"
-    branch="$(sed 's/^[* ]*//' <<<"$branch")"
-    branch="${branch#remotes/origin/}"
-
-    git switch "$branch"
 }
 
 # ============================================================
@@ -428,47 +369,32 @@ fgbranch() {
 # ============================================================
 
 fgfile() {
-    local selected
-    local file
-
-    if ! command -v git >/dev/null 2>&1; then
-        echo "Помилка: команда git не знайдена."
-        return 1
-    fi
-
-    if ! command -v nvim >/dev/null 2>&1; then
-        echo "Помилка: команда nvim не знайдена."
-        return 1
-    fi
-
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "Поточна директорія не є Git-репозиторієм."
-        return 1
-    fi
-
-    selected="$(
-        git status --short |
-            fzf \
-                --prompt='Git file ❯ ' \
-                --preview='
-                file=$(echo {} | cut -c4-)
-                git diff --color=always -- "$file"
-            '
-    )"
-
-    if [[ $? -ne 0 ]]; then
-        return 0
-    fi
-
-    if [[ -z "$selected" ]]; then
-        return 0
-    fi
-
-    file="${selected:3}"
-
-    if [[ -n "$file" ]]; then
-        nvim -- "$file"
-    fi
+    (($+commands[git] && $+commands[fzf] && $+commands[nvim])) || return 127
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 1
+    local file code
+    # NUL-розділювач зберігає пробіли, переноси та спецсимволи у шляхах.
+    file=$(git -c core.quotepath=false status --porcelain=v1 -z | python3 -c '
+import sys
+raw=sys.stdin.buffer.read().split(b"\0")
+names=[]
+i=0
+while i < len(raw):
+    entry=raw[i]
+    if not entry: break
+    status=entry[:2]
+    name=entry[3:]
+    if status[:1] in (b"R", b"C") or status[1:] in (b"R", b"C"):
+        i+=1
+        # Для перейменування перше ім’я — актуальний шлях, друге — старий.
+        # Пропускаємо старе ім’я, але зберігаємо актуальний шлях.
+    names.append(name)
+    i+=1
+sys.stdout.buffer.write(b"\0".join(names)+b"\0" if names else b"")
+' | fzf --read0 --print0 --prompt='Git file ❯ ' | tr -d '\0')
+    code=$?
+    ((code == 1 || code == 130)) && return 0
+    ((code != 0)) && return "$code"
+    [[ -n "$file" ]] && nvim -- "$file"
 }
 
 # ============================================================
@@ -495,8 +421,11 @@ fpacman() {
                 --preview-window=right:60%
     )"
 
-    if [[ $? -ne 0 ]]; then
+    local fzf_result=$?
+    if ((fzf_result == 1 || fzf_result == 130)); then
         return 0
+    elif ((fzf_result != 0)); then
+        return "$fzf_result"
     fi
 
     if [[ -z "$selected" ]]; then
@@ -534,8 +463,11 @@ fparu() {
                 --preview-window=right:60%
     )"
 
-    if [[ $? -ne 0 ]]; then
+    local fzf_result=$?
+    if ((fzf_result == 1 || fzf_result == 130)); then
         return 0
+    elif ((fzf_result != 0)); then
+        return "$fzf_result"
     fi
 
     if [[ -n "$package" ]]; then
@@ -548,30 +480,21 @@ fparu() {
 # ============================================================
 
 fremove() {
-    local packages
-
-    if ! command -v pacman >/dev/null 2>&1; then
-        echo "Помилка: команда pacman не знайдена."
-        return 1
-    fi
-
-    packages="$(
-        pacman -Qq |
-            fzf \
-                --multi \
-                --prompt='Remove package ❯ ' \
-                --header='TAB: вибрати кілька пакетів' \
-                --preview='pacman -Qi {}'
-    )"
-
-    if [[ $? -ne 0 ]]; then
-        return 0
-    fi
-
-    if [[ -z "$packages" ]]; then
-        return 0
-    fi
-
-    print -r -- "$packages" |
-        xargs sudo pacman -Rns --
+    (($+commands[pacman] && $+commands[fzf])) || return 127
+    local selected code
+    local -a packages
+    selected=$(pacman -Qq | fzf --multi --prompt='Remove package ❯ ' --header='Tab: вибір пакетів' --preview='pacman -Qi {}')
+    code=$?
+    ((code == 1 || code == 130)) && return 0
+    ((code != 0)) && return "$code"
+    [[ -n "$selected" ]] || return 0
+    packages=("${(@f)selected}")
+    print -r -- 'Обрано для видалення:'
+    printf '  %s\n' "${packages[@]}"
+    read -r '?Підтвердити видалення? [y/N] ' answer
+    [[ "$answer" == [yY] || "$answer" == yes ]] || return 0
+    sudo pacman -Rns -- "${packages[@]}"
 }
+
+# Ініціалізація офіційних Ctrl+R, Ctrl+T, Alt+C.
+eval "$(fzf --zsh)"
