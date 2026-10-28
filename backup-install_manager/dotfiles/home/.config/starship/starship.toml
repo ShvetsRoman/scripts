@@ -4,7 +4,7 @@
 # ============================================================
 # STARSHIP — КОНФІГУРАЦІЯ ДЛЯ ZSH
 # ============================================================
-# Тема: Nordic
+# Тема: Catppuccin Mocha / Nordic
 # Оболонка: Zsh
 # Розташування файлів:
 # ~/.config/starship/
@@ -32,7 +32,7 @@ scan_timeout = 30
 command_timeout = 800
 
 # Використовувати визначену нижче палітру кольорів.
-palette = "nordic"
+palette = "catppuccin_mocha"
 
 # ============================================================
 # 2. ФОРМАТ ЗАПРОШЕННЯ (PROMPT)
@@ -66,7 +66,9 @@ $nodejs\
 $rust\
 $golang\
 $docker_context\
-${custom.docker_status}\
+${custom.docker_all}\
+${custom.docker_partial}\
+${custom.docker_none}\
 $line_break\
 $status\
 $character"""
@@ -77,7 +79,7 @@ $cmd_duration\
 $jobs$time"""
 
 # ============================================================
-# 3. КОЛЬОРОВА ПАЛІТРА NORDIC
+# 3. КОЛЬОРОВА ПАЛІТРА CATPPUCCIN MOCHA
 # ============================================================
 # Кольори можна використовувати за назвами:
 # blue   — синій
@@ -90,25 +92,25 @@ $jobs$time"""
 # dimmed — приглушений текст.
 # ============================================================
 
-[palettes.nordic]
-rosewater = "#D8DEE9"
-flamingo = "#D8DEE9"
-pink = "#B48EAD"
-mauve = "#B48EAD"
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
 red = "#BF616A"
-maroon = "#BF616A"
-peach = "#D08770"
-yellow = "#EBCB8B"
-green = "#A3BE8C"
-teal = "#8FBCBB"
-sky = "#88C0D0"
-sapphire = "#81A1C1"
-blue = "#81A1C1"
-lavender = "#B48EAD"
-text = "#ECEFF4"
-subtext = "#D8DEE9"
-overlay = "#616E88"
-surface = "#434C5E"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext = "#a6adc8"
+overlay = "#6c7086"
+surface = "#45475a"
 
 # ============================================================
 # 4. ОПЕРАЦІЙНА СИСТЕМА
@@ -334,17 +336,42 @@ style = "sky"
 format = "via [$symbol$version]($style) "
 
 # ============================================================
-# DOCKER COMPOSE — ОДИН МОДУЛЬ / ОДНЕ ОПИТУВАННЯ
-# Показує  3/5 running; немає Compose — модуль прихований.
+# DOCKER — УСІ КОНТЕЙНЕРИ ЗАПУЩЕНІ
 # ============================================================
 
-[custom.docker_status]
+[custom.docker_all]
 disabled = false
-description = "Кількість запущених контейнерів Docker Compose"
-require_repo = false
-command = 'bash "$HOME/.config/starship/scripts/docker-status.sh"'
+description = "Усі Docker-контейнери запущені"
+when = 'bash "$HOME/.config/starship/scripts/docker-status.sh" all >/dev/null'
+command = 'bash "$HOME/.config/starship/scripts/docker-status.sh" all'
 symbol = "  "
-style = "bold fg:#89b4fa"
+style = "bold fg:#a6e3a1"
+format = "[$symbol$output]($style) "
+
+# ============================================================
+# DOCKER — ЧАСТИНА КОНТЕЙНЕРІВ ЗАПУЩЕНА
+# ============================================================
+
+[custom.docker_partial]
+disabled = false
+description = "Частина Docker-контейнерів запущена"
+when = 'bash "$HOME/.config/starship/scripts/docker-status.sh" partial >/dev/null'
+command = 'bash "$HOME/.config/starship/scripts/docker-status.sh" partial'
+symbol = "  "
+style = "bold fg:#f9e2af"
+format = "[$symbol$output]($style) "
+
+# ============================================================
+# DOCKER — УСІ КОНТЕЙНЕРИ ЗУПИНЕНІ
+# ============================================================
+
+[custom.docker_none]
+disabled = false
+description = "Docker-контейнери зупинені"
+when = 'bash "$HOME/.config/starship/scripts/docker-status.sh" none >/dev/null'
+command = 'bash "$HOME/.config/starship/scripts/docker-status.sh" none'
+symbol = "  "
+style = "bold fg:#f38ba8"
 format = "[$symbol$output]($style) "
 
 # ============================================================
