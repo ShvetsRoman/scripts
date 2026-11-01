@@ -21,6 +21,29 @@ mic_mute=Microphone Mute,Microphone Mute\tMeta+Volume Mute,Вимкнути мі
 mute=Volume Mute,Volume Mute,Вимкнути звук
 push_to_talk=none,none,Натисніть\\, щоб почати
 
+[krema]
+_k_friendly_name=Krema
+activate-entry-1=Meta+1,Meta+1,Activate Entry 1
+activate-entry-2=Meta+2,Meta+2,Activate Entry 2
+activate-entry-3=Meta+3,Meta+3,Activate Entry 3
+activate-entry-4=Meta+4,Meta+4,Activate Entry 4
+activate-entry-5=Meta+5,Meta+5,Activate Entry 5
+activate-entry-6=Meta+6,Meta+6,Activate Entry 6
+activate-entry-7=Meta+7,Meta+7,Activate Entry 7
+activate-entry-8=Meta+8,Meta+8,Activate Entry 8
+activate-entry-9=Meta+9,Meta+9,Activate Entry 9
+focus-dock=Meta+Alt+D,Meta+Alt+D,Focus Dock
+new-instance-entry-1=Meta+Shift+1,Meta+Shift+1,New Instance of Entry 1
+new-instance-entry-2=Meta+Shift+2,Meta+Shift+2,New Instance of Entry 2
+new-instance-entry-3=Meta+Shift+3,Meta+Shift+3,New Instance of Entry 3
+new-instance-entry-4=Meta+Shift+4,Meta+Shift+4,New Instance of Entry 4
+new-instance-entry-5=Meta+Shift+5,Meta+Shift+5,New Instance of Entry 5
+new-instance-entry-6=Meta+Shift+6,Meta+Shift+6,New Instance of Entry 6
+new-instance-entry-7=Meta+Shift+7,Meta+Shift+7,New Instance of Entry 7
+new-instance-entry-8=Meta+Shift+8,Meta+Shift+8,New Instance of Entry 8
+new-instance-entry-9=Meta+Shift+9,Meta+Shift+9,New Instance of Entry 9
+toggle-dock=Meta+`,Meta+`,Toggle Dock
+
 [krusader]
 _k_friendly_name=Krusader
 bring_main_window_to_top=none,Meta+K,Зробити головне вікно верхнім
@@ -250,32 +273,32 @@ view_zoom_out=Meta+-,Meta+-,Зменшити
 
 [kwin][$InverseAction]
 Cycle Overview=Cycle Overview Opposite
-Increase Opacity=Decrease Opacity
+Decrease Opacity=Increase Opacity
 MoveZoomRight=MoveZoomLeft
 MoveZoomUp=MoveZoomDown
 Switch One Desktop Down=Switch One Desktop Up
-Switch One Desktop to the Left=Switch One Desktop to the Right
-Switch Window Down=Switch Window Up
+Switch One Desktop to the Right=Switch One Desktop to the Left
 Switch Window Right=Switch Window Left
-Switch to Next Screen=Switch to Previous Screen
-Switch to Previous Desktop=Switch to Next Desktop
+Switch Window Up=Switch Window Down
+Switch to Next Desktop=Switch to Previous Desktop
+Switch to Previous Screen=Switch to Next Screen
 Switch to Screen Below=Switch to Screen Above
 Switch to Screen to the Left=Switch to Screen to the Right
 Walk Through Windows (Reverse)=Walk Through Windows
-Walk Through Windows Alternative=Walk Through Windows Alternative (Reverse)
-Walk Through Windows of Current Application (Reverse)=Walk Through Windows of Current Application
+Walk Through Windows Alternative (Reverse)=Walk Through Windows Alternative
+Walk Through Windows of Current Application=Walk Through Windows of Current Application (Reverse)
 Walk Through Windows of Current Application Alternative=Walk Through Windows of Current Application Alternative (Reverse)
-Window Grow Horizontal=Window Shrink Horizontal
+Window Grow Vertical=Window Shrink Vertical
 Window One Desktop Up=Window One Desktop Down
-Window One Desktop to the Left=Window One Desktop to the Right
+Window One Desktop to the Right=Window One Desktop to the Left
 Window One Screen Up=Window One Screen Down
-Window One Screen to the Right=Window One Screen to the Left
-Window Pack Down=Window Pack Up
+Window One Screen to the Left=Window One Screen to the Right
 Window Pack Right=Window Pack Left
+Window Pack Up=Window Pack Down
 Window Raise=Window Lower
-Window Shrink Vertical=Window Grow Vertical
-Window to Next Screen=Window to Previous Screen
-Window to Previous Desktop=Window to Next Desktop
+Window Shrink Horizontal=Window Grow Horizontal
+Window to Next Desktop=Window to Previous Desktop
+Window to Previous Screen=Window to Next Screen
 view_zoom_out=view_zoom_in
 
 [mediacontrol]

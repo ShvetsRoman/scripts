@@ -153,6 +153,15 @@ alias gs='git status'
 alias ga='git add .'
 alias gp='git push'
 alias gpl='git pull'
+# Git add
+ga() {
+    if (($# == 0)); then
+        print -u2 'Використання: ga "файл|директорія|. - всі зміни поточної директорії"'
+        return 2
+    fi
+
+    git add -- "$@"
+}
 # Git commit
 gc() {
     if (($# == 0)); then
