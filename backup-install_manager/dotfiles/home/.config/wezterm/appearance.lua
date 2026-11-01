@@ -1,5 +1,5 @@
 -- WEZTERM — ЗОВНІШНІЙ ВИГЛЯД
-local wezterm = require "wezterm"
+local wezterm = require("wezterm")
 
 local appearance = {}
 
@@ -8,7 +8,7 @@ appearance.color_scheme = "nord"
 -- appearance.color_scheme = "OneDark (base16)"
 
 -- FONT
-appearance.font = wezterm.font "FiraCode Nerd Font"
+appearance.font = wezterm.font("FiraCode Nerd Font")
 appearance.font_size = 16
 
 -- BACKGROUND
@@ -27,10 +27,10 @@ appearance.tab_max_width = 32
 
 -- WINDOW PADDING
 appearance.window_padding = {
-    left = 5,
-    right = 5,
-    top = 5,
-    bottom = 5,
+	left = 5,
+	right = 5,
+	top = 5,
+	bottom = 5,
 }
 
 -- CURSOR
@@ -43,100 +43,93 @@ appearance.cursor_thickness = "2px"
 
 -- COLORS
 appearance.colors = {
-    -- Cursor
-    cursor_bg = "#EBCB8B",
-    cursor_fg = "#2E3440",
-    cursor_border = "#EBCB8B",
+	-- Cursor
+	cursor_bg = "#EBCB8B",
+	cursor_fg = "#2E3440",
+	cursor_border = "#EBCB8B",
 
-    -- Tab bar
-    tab_bar = {
-        background = "#2E3440",
+	-- Tab bar
+	tab_bar = {
+		background = "#2E3440",
 
-        -- Активна вкладка
-        active_tab = {
-            bg_color = "#88C0D0",
-            fg_color = "#2E3440",
-            intensity = "Bold",
-        },
+		-- Активна вкладка
+		active_tab = {
+			bg_color = "#88C0D0",
+			fg_color = "#2E3440",
+			intensity = "Bold",
+		},
 
-        -- Неактивна вкладка
-        inactive_tab = {
-            bg_color = "#3B4252",
-            fg_color = "#D8DEE9",
-        },
+		-- Неактивна вкладка
+		inactive_tab = {
+			bg_color = "#3B4252",
+			fg_color = "#D8DEE9",
+		},
 
-        -- Неактивна вкладка під курсором
-        inactive_tab_hover = {
-            bg_color = "#434C5E",
-            fg_color = "#ECEFF4",
-            italic = true,
-        },
+		-- Неактивна вкладка під курсором
+		inactive_tab_hover = {
+			bg_color = "#434C5E",
+			fg_color = "#ECEFF4",
+			italic = true,
+		},
 
-        -- Кнопка нової вкладки
-        new_tab = {
-            bg_color = "#3B4252",
-            fg_color = "#D8DEE9",
-        },
+		-- Кнопка нової вкладки
+		new_tab = {
+			bg_color = "#3B4252",
+			fg_color = "#D8DEE9",
+		},
 
-        -- Кнопка нової вкладки під курсором
-        new_tab_hover = {
-            bg_color = "#88C0D0",
-            fg_color = "#2E3440",
-            italic = true,
-        },
-    },
+		-- Кнопка нової вкладки під курсором
+		new_tab_hover = {
+			bg_color = "#88C0D0",
+			fg_color = "#2E3440",
+			italic = true,
+		},
+	},
 }
 
 -- CUSTOM TAB TITLE
-appearance.format_tab_title = function(
-    tab,
-    tabs,
-    panes,
-    cfg,
-    hover,
-    max_width
-)
-    local is_active = tab.is_active
-    local is_hover = hover
+appearance.format_tab_title = function(tab, tabs, panes, cfg, hover, max_width)
+	local is_active = tab.is_active
+	local is_hover = hover
 
-    -- Кольори вкладки
-    local bg, fg
+	-- Кольори вкладки
+	local bg, fg
 
-    if is_active then
-        bg, fg = "#88C0D0", "#2E3440"
-    elseif is_hover then
-        bg, fg = "#434C5E", "#ECEFF4"
-    else
-        bg, fg = "#3B4252", "#D8DEE9"
-    end
+	if is_active then
+		bg, fg = "#88C0D0", "#2E3440"
+	elseif is_hover then
+		bg, fg = "#434C5E", "#ECEFF4"
+	else
+		bg, fg = "#3B4252", "#D8DEE9"
+	end
 
-    -- Номер вкладки
-    local index = (tab.tab_index + 1) .. ": "
+	-- Номер вкладки
+	local index = (tab.tab_index + 1) .. ": "
 
-    -- Назва вкладки
-    local title = tab.active_pane.title or "shell"
+	-- Назва вкладки
+	local title = tab.active_pane.title or "shell"
 
-    -- Zoom indicator
-    local zoom_icon = ""
+	-- Zoom indicator
+	local zoom_icon = ""
 
-    if tab.active_pane.is_zoomed then
-        zoom_icon = "  "
-    end
+	if tab.active_pane.is_zoomed then
+		zoom_icon = "  "
+	end
 
-    -- Формуємо текст
-    local text = " " .. index .. title .. zoom_icon .. " "
+	-- Формуємо текст
+	local text = " " .. index .. title .. zoom_icon .. " "
 
-    -- Обмеження довжини
-    if #text > max_width then
-        text = text:sub(1, max_width - 4) .. "... "
-    end
+	-- Обмеження довжини
+	if #text > max_width then
+		text = text:sub(1, max_width - 4) .. "... "
+	end
 
-    -- Результат
-    return {
-        { Background = { Color = bg } },
-        { Foreground = { Color = fg } },
-        { Text = text },
-    }
+	-- Результат
+	return {
+		{ Background = { Color = bg } },
+		{ Foreground = { Color = fg } },
+		{ Text = text },
+	}
 end
 
 return appearance

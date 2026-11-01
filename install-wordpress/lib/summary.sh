@@ -30,7 +30,7 @@ show_final_info() {
 
     printf '\n'
     printf '============================================================\n'
-    printf ' WORDPRESS STACK V2.0.8\n'
+    printf ' WORDPRESS STACK V%s\n' "$VERSION"
     printf '============================================================\n'
     printf '\n'
 
@@ -86,6 +86,7 @@ show_final_info() {
     printf '  make status\n'
     printf '  make logs\n'
     printf '  make backup\n'
+    printf '  make logs-rotate\n'
     printf '  make healthcheck\n'
 
     printf '\n'

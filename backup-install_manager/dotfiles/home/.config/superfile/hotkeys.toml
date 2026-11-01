@@ -1,19 +1,15 @@
-###############################################################################
-#                                Global hotkeys                               #
-###############################################################################
-
-#-- Basic Actions
+# Basic Actions
 confirm = ['enter', 'right', 'l']
 cd_quit = ['Q', '']
 quit = ['q', 'esc']
 
-#-- Navigation
+# Navigation
 list_down = ['down', 'j']
 list_up = ['up', 'k']
 page_down = ['ctrl+f', 'pgdown']
 page_up = ['ctrl+b', 'pgup']
 
-#-- File Panel Controls
+# File Panel Controls
 close_file_panel = ['w', '']
 create_new_file_panel = ['n', '']
 next_file_panel = ['tab', 'L']
@@ -24,31 +20,31 @@ split_file_panel = ['N', '']
 toggle_file_preview_panel = ['f', '']
 toggle_reverse_sort = ['R', '']
 
-#-- Focus Manipulation
+# Focus Manipulation
 focus_on_metadata = ['m', '']
 focus_on_process_bar = ['b', '']
 focus_on_sidebar = ['s', '']
 
-#-- File/Dir Creation/Renaming
+# File/Dir Creation/Renaming
 file_panel_item_create = ['ctrl+n', 'n']
 file_panel_item_rename = ['ctrl+r', 'r']
 
-#-- Main File Operations
+# Main File Operations
 copy_items = ['ctrl+c', 'y']
 cut_items = ['ctrl+x', 'x']
 delete_items = ['ctrl+d', 'delete', 'd']
 paste_items = ['ctrl+v', 'p', '']
 permanently_delete_items = ['D', '']
 
-#-- Archive Manipulation
+# Archive Manipulation
 compress_file = ['ctrl+a', '']
 extract_file = ['ctrl+e', '']
 
-#-- Editor Actions
+# Editor Actions
 open_current_directory_with_editor = ['E', '']
 open_file_with_editor = ['e', '']
 
-#-- Other Actions
+# Other Actions
 change_panel_mode = ['v', '']
 copy_path = ['ctrl+p', '']
 copy_present_working_directory = ['c', '']
@@ -59,27 +55,17 @@ open_zoxide = ['z', '']
 toggle_dot_file = ['.', '']
 toggle_footer = ['F', '']
 
-###############################################################################
-#                                Typing hotkeys                               #
-###############################################################################
-
-# Note: These hotkeys can override all hotkeys.
-
+# These hotkeys can override all hotkeys.
 confirm_typing = ['enter', '']
 cancel_typing = ['ctrl+c', 'esc']
 
-###############################################################################
-#                            Mode-Specific Hotkeys                            #
-###############################################################################
+# These hotkeys can conflict with other modes, but not with global
 
-# Note: These hotkeys can conflict with other modes, but not with global
-# hotkeys.
-
-#-- Normal Mode Actions
+# Normal Mode Actions
 parent_directory = ['h', 'left', 'backspace']
 search_bar = ['/', '']
 
-#-- Selection Mode Actions
+# Selection Mode Actions
 file_panel_select_mode_items_select_down = ['shift+down', 'J']
 file_panel_select_mode_items_select_up = ['shift+up', 'K']
 file_panel_select_all_items = ['A', '']

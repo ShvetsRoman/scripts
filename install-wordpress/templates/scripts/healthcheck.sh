@@ -113,7 +113,7 @@ check_wordpress_php() {
 
 check_nginx_internal() {
     echo
-    echo "[Nginx internal]"
+    echo "[Nginx -> FPM]"
 
     compose exec \
         -T \
@@ -121,9 +121,9 @@ check_nginx_internal() {
         wget \
         -q \
         --spider \
-        http://127.0.0.1/
+        http://127.0.0.1/fpm-ping
 
-    echo "Nginx: OK"
+    echo "Nginx/FPM: OK"
 }
 
 check_traefik_ping() {

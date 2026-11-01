@@ -139,6 +139,16 @@ POST_MAX_SIZE=${POST_MAX_SIZE}
 MAX_EXECUTION_TIME=${MAX_EXECUTION_TIME}
 MAX_INPUT_VARS=${MAX_INPUT_VARS}
 
+FRONTEND_SUBNET=${FRONTEND_SUBNET}
+
+TRAEFIK_MEM_LIMIT=${TRAEFIK_MEM_LIMIT}
+NGINX_MEM_LIMIT=${NGINX_MEM_LIMIT}
+WORDPRESS_MEM_LIMIT=${WORDPRESS_MEM_LIMIT}
+DB_MEM_LIMIT=${DB_MEM_LIMIT}
+WPCLI_MEM_LIMIT=${WPCLI_MEM_LIMIT}
+PIDS_LIMIT=${PIDS_LIMIT}
+DB_PIDS_LIMIT=${DB_PIDS_LIMIT}
+
 BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS}
 EOF
 
@@ -176,6 +186,10 @@ install_templates() {
     install_template \
         "$SCRIPT_DIR/templates/php/custom.ini" \
         "$INSTALL_DIR/php/custom.ini"
+
+    install_template \
+        "$SCRIPT_DIR/templates/php/fpm-ping.conf" \
+        "$INSTALL_DIR/php/fpm-ping.conf"
 
     install_template \
         "$SCRIPT_DIR/templates/Makefile" \

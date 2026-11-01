@@ -1,348 +1,291 @@
-local wezterm = require "wezterm"
+local wezterm = require("wezterm")
 
 local act = wezterm.action
 
 return {
 
-    -- ============================================================
-    -- HELIX / VIM / NEOVIM
-    -- ============================================================
+	-- HELIX / VIM / NEOVIM
+	-- Ctrl+W НЕ чіпаємо.
+	-- Він повинен повністю передаватися термінальній програмі.
+	-- Тобто:
+	-- Ctrl+W       -> Helix Window mode
+	-- Ctrl+W h     -> Helix window left
+	-- Ctrl+W j     -> Helix window down
+	-- Ctrl+W k     -> Helix window up
+	-- Ctrl+W l     -> Helix window right
+	-- Тут спеціально НІЯКОГО binding для Ctrl+W немає.
 
-    -- Ctrl+W НЕ чіпаємо.
-    -- Він повинен повністю передаватися термінальній програмі.
-    --
-    -- Тобто:
-    -- Ctrl+W       -> Helix Window mode
-    -- Ctrl+W h     -> Helix window left
-    -- Ctrl+W j     -> Helix window down
-    -- Ctrl+W k     -> Helix window up
-    -- Ctrl+W l     -> Helix window right
-    --
-    -- Тут спеціально НІЯКОГО binding для Ctrl+W немає.
+	-- ВКЛАДКИ WEZTERM
+	-- Ctrl+Shift+T — нова вкладка
+	{
+		key = "t",
+		mods = "CTRL|SHIFT",
+		action = act.SpawnTab("CurrentPaneDomain"),
+	},
 
+	-- Ctrl+Shift+W — закрити вкладку
+	{
+		key = "w",
+		mods = "CTRL|SHIFT",
+		action = act.CloseCurrentTab({
+			confirm = false,
+		}),
+	},
 
-    -- ============================================================
-    -- ВКЛАДКИ WEZTERM
-    -- ============================================================
+	-- Ctrl+Shift+N — наступна вкладка
+	{
+		key = "l",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateTabRelative(1),
+	},
 
-    -- Ctrl+Shift+T — нова вкладка
-    {
-        key = "t",
-        mods = "CTRL|SHIFT",
-        action = act.SpawnTab "CurrentPaneDomain",
-    },
+	-- Ctrl+Shift+P — попередня вкладка
+	{
+		key = "h",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateTabRelative(-1),
+	},
 
-    -- Ctrl+Shift+W — закрити вкладку
-    {
-        key = "w",
-        mods = "CTRL|SHIFT",
-        action = act.CloseCurrentTab {
-            confirm = false,
-        },
-    },
+	-- Ctrl+Shift+1..5 — вибір вкладки
+	{
+		key = "1",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateTab(0),
+	},
 
-    -- Ctrl+Shift+N — наступна вкладка
-    {
-        key = "l",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateTabRelative(1),
-    },
+	{
+		key = "2",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateTab(1),
+	},
 
-    -- Ctrl+Shift+P — попередня вкладка
-    {
-        key = "h",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateTabRelative(-1),
-    },
+	{
+		key = "3",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateTab(2),
+	},
 
-    -- Ctrl+Shift+1..5 — вибір вкладки
-    {
-        key = "1",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateTab(0),
-    },
+	{
+		key = "4",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateTab(3),
+	},
 
-    {
-        key = "2",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateTab(1),
-    },
+	{
+		key = "5",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateTab(4),
+	},
 
-    {
-        key = "3",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateTab(2),
-    },
+	-- ПАНЕЛІ
+	-- Ctrl+\ — вертикальний split
+	{
+		key = "\\",
+		mods = "CTRL",
+		action = act.SplitHorizontal({
+			domain = "CurrentPaneDomain",
+		}),
+	},
 
-    {
-        key = "4",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateTab(3),
-    },
+	-- Ctrl+- — горизонтальний split
+	{
+		key = "-",
+		mods = "CTRL",
+		action = act.SplitVertical({
+			domain = "CurrentPaneDomain",
+		}),
+	},
 
-    {
-        key = "5",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateTab(4),
-    },
+	-- НАВІГАЦІЯ МІЖ ПАНЕЛЯМИ
+	-- Ctrl+H — вліво
+	{
+		key = "h",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Left"),
+	},
 
+	-- Ctrl+L — вправо
+	{
+		key = "l",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Right"),
+	},
 
-    -- ============================================================
-    -- ПАНЕЛІ
-    -- ============================================================
+	-- Ctrl+K — вгору
+	{
+		key = "k",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Up"),
+	},
 
-    -- Ctrl+\ — вертикальний split
-    {
-        key = "\\",
-        mods = "CTRL",
-        action = act.SplitHorizontal {
-            domain = "CurrentPaneDomain",
-        },
-    },
+	-- Ctrl+J — вниз
+	{
+		key = "j",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Down"),
+	},
 
-    -- Ctrl+- — горизонтальний split
-    {
-        key = "-",
-        mods = "CTRL",
-        action = act.SplitVertical {
-            domain = "CurrentPaneDomain",
-        },
-    },
+	-- Ctrl+стрілки
+	{
+		key = "LeftArrow",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Left"),
+	},
 
+	{
+		key = "RightArrow",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Right"),
+	},
 
-    -- ============================================================
-    -- НАВІГАЦІЯ МІЖ ПАНЕЛЯМИ
-    -- ============================================================
+	{
+		key = "UpArrow",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Up"),
+	},
 
-    -- Ctrl+H — вліво
-    {
-        key = "h",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Left",
-    },
+	{
+		key = "DownArrow",
+		mods = "CTRL",
+		action = act.ActivatePaneDirection("Down"),
+	},
 
-    -- Ctrl+L — вправо
-    {
-        key = "l",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Right",
-    },
+	-- РОЗМІР ПАНЕЛІ
+	-- Alt+Shift+Left
+	{
+		key = "LeftArrow",
+		mods = "ALT|SHIFT",
+		action = act.AdjustPaneSize({
+			"Left",
+			2,
+		}),
+	},
 
-    -- Ctrl+K — вгору
-    {
-        key = "k",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Up",
-    },
+	-- Alt+Shift+Right
+	{
+		key = "RightArrow",
+		mods = "ALT|SHIFT",
+		action = act.AdjustPaneSize({
+			"Right",
+			2,
+		}),
+	},
 
-    -- Ctrl+J — вниз
-    {
-        key = "j",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Down",
-    },
+	-- Alt+Shift+Up
+	{
+		key = "UpArrow",
+		mods = "ALT|SHIFT",
+		action = act.AdjustPaneSize({
+			"Up",
+			2,
+		}),
+	},
 
-    -- Ctrl+стрілки
-    {
-        key = "LeftArrow",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Left",
-    },
+	-- Alt+Shift+Down
+	{
+		key = "DownArrow",
+		mods = "ALT|SHIFT",
+		action = act.AdjustPaneSize({
+			"Down",
+			2,
+		}),
+	},
 
-    {
-        key = "RightArrow",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Right",
-    },
+	-- ЗАКРИТТЯ ПАНЕЛІ
+	-- Ctrl+Shift+X
+	{
+		key = "x",
+		mods = "CTRL|SHIFT",
+		action = act.CloseCurrentPane({
+			confirm = false,
+		}),
+	},
 
-    {
-        key = "UpArrow",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Up",
-    },
+	-- ZOOM
+	-- Ctrl+Shift+Z
+	{
+		key = "z",
+		mods = "CTRL|SHIFT",
+		action = act.TogglePaneZoomState,
+	},
 
-    {
-        key = "DownArrow",
-        mods = "CTRL",
-        action = act.ActivatePaneDirection "Down",
-    },
+	-- РОЗМІР ШРИФТУ
+	{
+		key = "+",
+		mods = "CTRL|SHIFT",
+		action = act.IncreaseFontSize,
+	},
 
+	{
+		key = "=",
+		mods = "CTRL|SHIFT",
+		action = act.IncreaseFontSize,
+	},
 
-    -- ============================================================
-    -- РОЗМІР ПАНЕЛІ
-    -- ============================================================
+	{
+		key = "-",
+		mods = "CTRL|SHIFT",
+		action = act.DecreaseFontSize,
+	},
 
-    -- Alt+Shift+Left
-    {
-        key = "LeftArrow",
-        mods = "ALT|SHIFT",
-        action = act.AdjustPaneSize {
-            "Left",
-            2,
-        },
-    },
+	{
+		key = "0",
+		mods = "CTRL|SHIFT",
+		action = act.ResetFontSize,
+	},
 
-    -- Alt+Shift+Right
-    {
-        key = "RightArrow",
-        mods = "ALT|SHIFT",
-        action = act.AdjustPaneSize {
-            "Right",
-            2,
-        },
-    },
+	-- COPY / PASTE
+	-- Ctrl+Shift+C
+	{
+		key = "c",
+		mods = "CTRL|SHIFT",
+		action = act.CopyTo("Clipboard"),
+	},
 
-    -- Alt+Shift+Up
-    {
-        key = "UpArrow",
-        mods = "ALT|SHIFT",
-        action = act.AdjustPaneSize {
-            "Up",
-            2,
-        },
-    },
+	-- Ctrl+Shift+V
+	{
+		key = "v",
+		mods = "CTRL|SHIFT",
+		action = act.PasteFrom("Clipboard"),
+	},
 
-    -- Alt+Shift+Down
-    {
-        key = "DownArrow",
-        mods = "ALT|SHIFT",
-        action = act.AdjustPaneSize {
-            "Down",
-            2,
-        },
-    },
+	-- ПОШУК
+	-- Ctrl+Shift+F
+	{
+		key = "f",
+		mods = "CTRL|SHIFT",
+		action = act.Search("CurrentSelectionOrEmptyString"),
+	},
 
+	-- CLEAR SCROLLBACK
+	-- Ctrl+Shift+K
+	{
+		key = "k",
+		mods = "CTRL|SHIFT",
+		action = act.ClearScrollback("ScrollbackAndViewport"),
+	},
 
-    -- ============================================================
-    -- ЗАКРИТТЯ ПАНЕЛІ
-    -- ============================================================
+	-- RELOAD CONFIG
+	-- Ctrl+Shift+R
+	{
+		key = "r",
+		mods = "CTRL|SHIFT",
+		action = act.ReloadConfiguration,
+	},
 
-    -- Ctrl+Shift+X
-    {
-        key = "x",
-        mods = "CTRL|SHIFT",
-        action = act.CloseCurrentPane {
-            confirm = false,
-        },
-    },
+	-- COMMAND PALETTE
+	-- Ctrl+Shift+P
+	{
+		key = "o",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateCommandPalette,
+	},
 
-
-    -- ============================================================
-    -- ZOOM
-    -- ============================================================
-
-    -- Ctrl+Shift+Z
-    {
-        key = "z",
-        mods = "CTRL|SHIFT",
-        action = act.TogglePaneZoomState,
-    },
-
-
-    -- ============================================================
-    -- РОЗМІР ШРИФТУ
-    -- ============================================================
-
-    {
-        key = "+",
-        mods = "CTRL|SHIFT",
-        action = act.IncreaseFontSize,
-    },
-
-    {
-        key = "=",
-        mods = "CTRL|SHIFT",
-        action = act.IncreaseFontSize,
-    },
-
-    {
-        key = "-",
-        mods = "CTRL|SHIFT",
-        action = act.DecreaseFontSize,
-    },
-
-    {
-        key = "0",
-        mods = "CTRL|SHIFT",
-        action = act.ResetFontSize,
-    },
-
-
-    -- ============================================================
-    -- COPY / PASTE
-    -- ============================================================
-
-    -- Ctrl+Shift+C
-    {
-        key = "c",
-        mods = "CTRL|SHIFT",
-        action = act.CopyTo "Clipboard",
-    },
-
-    -- Ctrl+Shift+V
-    {
-        key = "v",
-        mods = "CTRL|SHIFT",
-        action = act.PasteFrom "Clipboard",
-    },
-
-
-    -- ============================================================
-    -- ПОШУК
-    -- ============================================================
-
-    -- Ctrl+Shift+F
-    {
-        key = "f",
-        mods = "CTRL|SHIFT",
-        action = act.Search "CurrentSelectionOrEmptyString",
-    },
-
-
-    -- ============================================================
-    -- CLEAR SCROLLBACK
-    -- ============================================================
-
-    -- Ctrl+Shift+K
-    {
-        key = "k",
-        mods = "CTRL|SHIFT",
-        action = act.ClearScrollback "ScrollbackAndViewport",
-    },
-
-
-    -- ============================================================
-    -- RELOAD CONFIG
-    -- ============================================================
-
-    -- Ctrl+Shift+R
-    {
-        key = "r",
-        mods = "CTRL|SHIFT",
-        action = act.ReloadConfiguration,
-    },
-
-
-    -- ============================================================
-    -- COMMAND PALETTE
-    -- ============================================================
-
-    -- Ctrl+Shift+P
-    {
-        key = "o",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateCommandPalette,
-    },
-
-
-    -- ============================================================
-    -- COPY MODE
-    -- ============================================================
-
-    -- Ctrl+Shift+Space
-    {
-        key = "Space",
-        mods = "CTRL|SHIFT",
-        action = act.ActivateCopyMode,
-    },
+	-- COPY MODE
+	-- Ctrl+Shift+Space
+	{
+		key = "Space",
+		mods = "CTRL|SHIFT",
+		action = act.ActivateCopyMode,
+	},
 }

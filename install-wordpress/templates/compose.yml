@@ -6,6 +6,9 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    mem_limit: "${TRAEFIK_MEM_LIMIT}"
+    pids_limit: "${PIDS_LIMIT}"
+
     command:
       - "--configFile=/etc/traefik/traefik.yml"
 
@@ -50,10 +53,14 @@ services:
       - /var/run
       - /var/cache/nginx
 
+    mem_limit: "${NGINX_MEM_LIMIT}"
+    pids_limit: "${PIDS_LIMIT}"
+
     volumes:
       - ./data/wordpress:/var/www/html:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/security-headers.conf:/etc/nginx/conf.d/security-headers.conf:ro
+      - ./nginx/real-ip.conf:/etc/nginx/conf.d/real-ip.conf:ro
       - ./logs/nginx:/var/log/nginx
 
     networks:
@@ -67,7 +74,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - wget -q --spider http://127.0.0.1/ || exit 1
+        - wget -q --spider http://127.0.0.1/fpm-ping || exit 1
       interval: 30s
       timeout: 5s
       retries: 3
@@ -85,6 +92,9 @@ services:
 
     security_opt:
       - no-new-privileges:true
+
+    mem_limit: "${WORDPRESS_MEM_LIMIT}"
+    pids_limit: "${PIDS_LIMIT}"
 
     environment:
       DEPLOY_MODE: "${DEPLOY_MODE}"
@@ -133,6 +143,7 @@ services:
     volumes:
       - ./data/wordpress:/var/www/html
       - ./php/custom.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+      - ./php/fpm-ping.conf:/usr/local/etc/php-fpm.d/zz-fpm-ping.conf:ro
 
     networks:
       - backend
@@ -163,6 +174,9 @@ services:
 
     security_opt:
       - no-new-privileges:true
+
+    mem_limit: "${DB_MEM_LIMIT}"
+    pids_limit: "${DB_PIDS_LIMIT}"
 
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
@@ -208,6 +222,9 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    mem_limit: "${WPCLI_MEM_LIMIT}"
+    pids_limit: "${PIDS_LIMIT}"
+
     environment:
       WORDPRESS_DB_HOST: "${WORDPRESS_DB_HOST}"
       WORDPRESS_DB_USER: "${MYSQL_USER}"
@@ -249,6 +266,9 @@ networks:
   frontend:
     name: "${COMPOSE_PROJECT_NAME}_frontend"
     driver: bridge
+    ipam:
+      config:
+        - subnet: "${FRONTEND_SUBNET}"
 
   backend:
     name: "${COMPOSE_PROJECT_NAME}_backend"

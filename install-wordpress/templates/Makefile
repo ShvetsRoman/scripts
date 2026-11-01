@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 COMPOSE := docker compose -f compose.yml -f compose.override.yml
 
-.PHONY: help config up down restart status logs logs-nginx logs-wordpress logs-db \
+.PHONY: help config up down restart status logs logs-nginx logs-wordpress logs-db logs-rotate \
         shell wp install permissions backup restore healthcheck pull update clean
 
 help: ## Показати список команд
@@ -35,6 +35,9 @@ logs-wordpress: ## Логи PHP-FPM
 
 logs-db: ## Логи MySQL
 	$(COMPOSE) logs -f --tail=200 db
+
+logs-rotate: ## Ротувати nginx логи (для cron)
+	bash ./scripts/logrotate-nginx.sh
 
 shell: ## Shell WordPress container
 	$(COMPOSE) exec wordpress sh

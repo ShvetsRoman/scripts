@@ -1,4 +1,4 @@
-# install-wordpress V2.0.8
+# install-wordpress V2.0.9
 
 Модульний WordPress stack:
 
@@ -51,7 +51,7 @@ SERVER_IP wp.home.arpa
 
 ## Чому не .local
 
-`.local` використовується mDNS/Bonjour, тому default LAN hostname у V2.0.8:
+`.local` використовується mDNS/Bonjour, тому default LAN hostname у V2.0.9:
 
 ```text
 wp.home.arpa
@@ -92,6 +92,21 @@ sudo ./wordpress-stack.sh \
   --enable-fail2ban \
   --manage-firewall
 ```
+
+## V2.0.9
+
+Додано:
+
+- `server_tokens off` у Nginx (версія не віддається);
+- FastCGI `/fpm-ping` endpoint — healthcheck nginx→PHP-FPM через реальний ping, а не тільки `php-fpm -t`;
+- `--staging` — Let's Encrypt staging CA для тестування (сертифікати не довірені; для переходу на prod видали `letsencrypt/acme.json`);
+- DNS preflight перед Let's Encrypt у internet mode — A-запис має вказувати на сервер (skip через `--force`);
+- `nginx/real-ip.conf` — X-Forwarded-For довіряється лише frontend-підмережі `FRONTEND_SUBNET` (фіксована `subnet` у compose), а не всім приватним range;
+- `wait_for_services` через `docker inspect` — стійкість до змін формату JSON у Docker Compose;
+- Resource limits: `mem_limit` + `pids_limit` для кожного сервісу;
+- Ротація nginx логів: `make logs-rotate` (підходить для cron), ретеншн = `BACKUP_RETENTION_DAYS`;
+- `VERSION` має єдине джерело — `config/defaults.conf`;
+- Smoke-тест installer (`--no-start` у tmp dir) у `tests/run-tests.sh`.
 
 ## V2.0.8
 

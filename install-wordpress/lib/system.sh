@@ -184,6 +184,45 @@ prepare_install_path() {
     log_success "Шлях підготовлено."
 }
 
+preflight_domain_dns() {
+    if [[ "$DEPLOY_MODE" != "internet" ]]; then
+        return 0
+    fi
+
+    log_step "Preflight: перевірка DNS для $DOMAIN."
+
+    local server_ip
+    local dns_ips
+
+    server_ip="$(get_server_ip || true)"
+
+    if [[ -z "$server_ip" ]]; then
+        log_warning "Не вдалося визначити IP сервера — DNS preflight пропущено."
+        return 0
+    fi
+
+    dns_ips="$(
+        getent ahostsv4 "$DOMAIN" 2>/dev/null |
+        awk '{print $1}' |
+        sort -u
+    )"
+
+    if [[ -z "$dns_ips" ]]; then
+        die "Preflight DNS: немає A-запису для $DOMAIN. Направ домен на сервер ($server_ip) або запусти з --staging для тестування."
+    fi
+
+    if ! printf '%s\n' "$dns_ips" | grep -Fxq -- "$server_ip"; then
+        if [[ "$FORCE" == true ]]; then
+            log_warning "DNS $DOMAIN не вказує на цей сервер (DNS: $dns_ips, сервер: $server_ip); продовжено через --force."
+            return 0
+        fi
+
+        die "Preflight DNS: $DOMAIN не вказує на цей сервер ($server_ip). A-записи: $dns_ips. Онови DNS і почекай propagation. Якщо використовуєш proxy/CDN або NAT — запусти з --force."
+    fi
+
+    log_success "Preflight DNS: $DOMAIN -> $server_ip."
+}
+
 check_disk_space() {
     log_step "Перевірка вільного місця."
 

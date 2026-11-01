@@ -3,7 +3,6 @@
 # Основна локаль системи для поточної shell-сесії.
 export LANG="uk_UA.UTF-8"
 
-# DEFAULT APPLICATIONS
 # Editor
 # Основний текстовий редактор.
 export EDITOR="nvim"
@@ -40,7 +39,3 @@ if [[ -d "$HOME/.local/bin" ]]; then
 fi
 # Видалити дублікати з PATH.
 typeset -U path PATH
-
-# PROGRAM CONFIGURATION
-# Starship
-export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship/starship.toml"

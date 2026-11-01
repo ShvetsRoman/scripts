@@ -1,12 +1,11 @@
-# More details are at https://superfile.dev/configure/superfile-config/
 # change your theme
 theme = 'nord_my'
 
 # The editor files will be opened with. (Leave blank to use the EDITOR environment variable).
-editor = 'nvim'
+editor = '$EDITOR'
 
 # The editor directories will be opened with. (Leave blank to use the default editors).
-dir_editor = 'nvim'
+dir_editor = '$EDITOR'
 
 # Auto check for update
 auto_check_update = true

@@ -15,6 +15,11 @@ show_help() {
   --email EMAIL
       Email для Let's Encrypt.
 
+  --staging
+      Використовувати Let's Encrypt staging CA (для тестування).
+      Сертифікати НЕ будуть довірені браузерами.
+      Для переходу на production видали letsencrypt/acme.json.
+
 Опції:
   --admin-email EMAIL
       Email адміністратора WordPress.
@@ -111,6 +116,10 @@ parse_args() {
                 require_arg_value "$1" "${2:-}"
                 ACME_EMAIL="$2"
                 shift 2
+                ;;
+            --staging)
+                ACME_STAGING=true
+                shift
                 ;;
             --admin-email)
                 require_arg_value "$1" "${2:-}"
@@ -221,5 +230,9 @@ validate_args() {
 
     if [[ -n "$PROJECT_NAME" && ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
         die "Некоректний project name: $PROJECT_NAME"
+    fi
+
+    if [[ "$ACME_STAGING" == true && "$DEPLOY_MODE" == "lan" ]]; then
+        log_warning "--staging ігнорується в lan mode."
     fi
 }

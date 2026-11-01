@@ -10,6 +10,16 @@ create_traefik_config() {
     local frontend_network
     frontend_network="$(frontend_network_name)"
 
+    local ca_server_line=""
+
+    if [[ "$DEPLOY_MODE" == "internet" && "$ACME_STAGING" == true ]]; then
+        ca_server_line='      caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"'
+        log_warning "Let's Encrypt STAGING активний: сертифікати не будуть довірені браузерами."
+        if [[ -f "$INSTALL_DIR/letsencrypt/acme.json" ]]; then
+            log_warning "Знайдено letsencrypt/acme.json: для перемикання staging↔production видали його."
+        fi
+    fi
+
     if [[ "$DEPLOY_MODE" == "internet" ]]; then
         cat > "$INSTALL_DIR/traefik/traefik.yml" <<EOF
 log:
@@ -45,6 +55,7 @@ certificatesResolvers:
   letsencrypt:
     acme:
       email: "${ACME_EMAIL}"
+${ca_server_line}
       storage: "/letsencrypt/acme.json"
       httpChallenge:
         entryPoint: web
@@ -74,6 +85,25 @@ EOF
     fi
 
     chmod 0644 "$INSTALL_DIR/traefik/traefik.yml"
+}
+
+create_real_ip_config() {
+    log_step "Створення Nginx real-IP configuration."
+
+    cat > "$INSTALL_DIR/nginx/real-ip.conf" <<EOF
+# Managed by wordpress-stack installer.
+# Only Traefik (frontend network + loopback) is trusted for X-Forwarded-For.
+
+set_real_ip_from 127.0.0.1;
+set_real_ip_from ${FRONTEND_SUBNET};
+
+real_ip_header X-Forwarded-For;
+real_ip_recursive on;
+EOF
+
+    chmod 0644 "$INSTALL_DIR/nginx/real-ip.conf"
+
+    log_success "real-ip.conf готова (frontend: ${FRONTEND_SUBNET})."
 }
 
 configure_compose_mode() {
@@ -191,64 +221,68 @@ wait_for_services() {
 
     local timeout=180
     local elapsed=0
+    local id
+    local name status health
+    local info
+    local failing=""
+    local all_ready=true
+
+    cd "$INSTALL_DIR" || return 1
 
     while (( elapsed < timeout )); do
-        local unhealthy
-        local starting
-        local exited
+        failing=""
+        all_ready=true
 
-        unhealthy="$(
-            cd "$INSTALL_DIR" || exit 1
+        while IFS= read -r id; do
+            [[ -n "$id" ]] || continue
 
+            info="$(
+                docker inspect \
+                    --format '{{.Name}} {{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+                    "$id" \
+                    2>/dev/null \
+                    || true
+            )"
+
+            read -r name status health <<<"$info" || true
+
+            case "$health" in
+                healthy|none)
+                    if [[ -z "$status" ]]; then
+                        # inspect race (container recreated) — retry next iteration.
+                        all_ready=false
+                    elif [[ "$status" != "running" ]]; then
+                        failing+="$name state=$status health=$health"$'\n'
+                    fi
+                    ;;
+                starting)
+                    all_ready=false
+                    ;;
+                *)
+                    failing+="$name state=$status health=$health"$'\n'
+                    ;;
+            esac
+        done < <(
+            docker compose \
+                -f compose.yml \
+                -f compose.override.yml \
+                ps -q \
+                2>/dev/null \
+                || true
+        )
+
+        if [[ -n "$failing" ]]; then
             docker compose \
                 -f compose.yml \
                 -f compose.override.yml \
                 ps \
-                --format json \
-                2>/dev/null |
-            grep -c '"Health":"unhealthy"' || true
-        )"
+                --all
 
-        starting="$(
-            cd "$INSTALL_DIR" || exit 1
-
-            docker compose \
-                -f compose.yml \
-                -f compose.override.yml \
-                ps \
-                --format json \
-                2>/dev/null |
-            grep -c '"Health":"starting"' || true
-        )"
-
-        exited="$(
-            cd "$INSTALL_DIR" || exit 1
-
-            docker compose \
-                -f compose.yml \
-                -f compose.override.yml \
-                ps \
-                --all \
-                --format json \
-                2>/dev/null |
-            grep -Ec '"State":"(exited|dead)"' || true
-        )"
-
-        if (( unhealthy > 0 || exited > 0 )); then
-            (
-                cd "$INSTALL_DIR" || exit 1
-
-                docker compose \
-                    -f compose.yml \
-                    -f compose.override.yml \
-                    ps \
-                    --all
-            )
-
+            printf '%b' "$failing"
             die "Один або більше контейнерів unhealthy/exited."
         fi
 
-        if (( starting == 0 )); then
+        if [[ "$all_ready" == true ]]; then
             log_success "Сервіси готові."
             return 0
         fi
@@ -257,15 +291,11 @@ wait_for_services() {
         elapsed=$((elapsed + 3))
     done
 
-    (
-        cd "$INSTALL_DIR" || exit 1
-
-        docker compose \
-            -f compose.yml \
-            -f compose.override.yml \
-            ps \
-            --all
-    )
+    docker compose \
+        -f compose.yml \
+        -f compose.override.yml \
+        ps \
+        --all
 
     die "Healthcheck timeout після ${timeout} секунд."
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 # WordPress Production Stack Installer
-# Version: 2.0.8
+# VERSION is defined in config/defaults.conf (single source).
 # ============================================================
 
 set -Eeuo pipefail
@@ -12,10 +12,9 @@ SCRIPT_DIR="$(
 )"
 readonly SCRIPT_DIR
 
-readonly VERSION="2.0.8"
-
 # shellcheck source=config/defaults.conf
 source "$SCRIPT_DIR/config/defaults.conf"
+
 # shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
 # shellcheck source=lib/args.sh
@@ -52,11 +51,13 @@ main() {
     validate_privilege_requirements
     prepare_install_path
     check_disk_space
+    preflight_domain_dns
 
     create_project_structure
     create_env_file
     install_templates
     create_traefik_config
+    create_real_ip_config
     configure_compose_mode
     configure_php_mode
     create_gitignore
