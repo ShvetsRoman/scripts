@@ -28,6 +28,7 @@ alignment=132
 [PlasmaViews][Panel 198]
 floating=1
 panelLengthMode=1
+panelOpacity=2
 panelVisibility=2
 shell=org.kde.plasma.desktop
 

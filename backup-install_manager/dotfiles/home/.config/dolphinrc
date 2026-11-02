@@ -46,7 +46,7 @@ IconSize=16
 ToolButtonStyle=IconOnly
 
 [PreviewSettings]
-Plugins=glycin-image-rs,imagethumbnail,glycin-heif,exrthumbnail,jpegthumbnail,glycin-jxl,windowsimagethumbnail,glycin-svg,svgthumbnail,opendocumentthumbnail,directorythumbnail,djvuthumbnail,cursorthumbnail,fontthumbnail
+Plugins=glycin-image-rs,imagethumbnail,glycin-heif,exrthumbnail,jpegthumbnail,glycin-jxl,windowsimagethumbnail,glycin-svg,svgthumbnail,opendocumentthumbnail,djvuthumbnail,cursorthumbnail,fontthumbnail
 
 [Toolbar mainToolBar]
 IconSize=16

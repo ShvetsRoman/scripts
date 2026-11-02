@@ -150,7 +150,6 @@ alias sdn='sudo systemctl disable --now'
 
 # GIT
 alias gs='git status'
-alias ga='git add .'
 alias gp='git push'
 alias gpl='git pull'
 # Git add

@@ -11,8 +11,15 @@ Rows=1
 [Effect-Blur]
 BlurStength=50
 
+[Effect-better-blur-dx]
+BlurDecorations=true
+BlurMenus=true
+NoiseStrength=30
+WindowClasses=systemsettings
+
 [Effect-blur]
-NoiseStrength=2
+BlurStrength=8
+NoiseStrength=0
 
 [Effect-glide]
 Duration=500
@@ -32,18 +39,35 @@ Duration=400
 InScale=0.3
 OutScale=0.3
 
+[Effect-translucency]
+MoveResize=100
+
 [Effect-wobblywindows]
 Drag=90
 Stiffness=6
 WobblynessLevel=2
 
 [Plugins]
+better_blur_dxEnabled=true
 blurEnabled=true
 krohnkiteEnabled=false
+kwin4_effect_geometry_changeEnabled=true
 magiclampEnabled=true
 shakecursorEnabled=false
 squashEnabled=false
 wobblywindowsEnabled=true
+
+[Script-mousetiler]
+defaultInput=1
+popupGridAt=1
+popupLayout=2x1\n1x1\nSPECIAL_SPLIT_HORIZONTAL\nSPECIAL_AUTO_TILER_1\n15,10,70,80\nSPECIAL_AUTO_TILER_3\n
+rememberTiler=true
+restoreSize=true
+screenMargin=5
+showTextHintv2=false
+tileMargin=5
+toolBarEnabled=false
+verticalAlignment=0
 
 [TabBoxAlternative]
 LayoutName=big_icons
@@ -72,6 +96,10 @@ tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"wi
 padding=4
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
+[Tiling][cddac82f-6684-43a2-9d0d-2d8df37e57ee][eb2d7987-de58-48bd-baad-ba2d24c8b18f]
+padding=4
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
 [Windows]
 BorderSnapZone=15
 WindowSnapZone=15
@@ -80,6 +108,7 @@ WindowSnapZone=15
 Scale=1.65
 
 [org.kde.kdecoration2]
+BorderSize=Normal
 BorderSizeAuto=false
-ButtonsOnLeft=
+ButtonsOnLeft=MH
 ButtonsOnRight=IAX

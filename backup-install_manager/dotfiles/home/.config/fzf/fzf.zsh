@@ -158,8 +158,6 @@ fvim() {
     fi
 }
 
-ff() { fvim "$@"; }
-
 # FRG - Пошук тексту через ripgrep
 frg() {
     local result
