@@ -192,8 +192,8 @@ return {
 					{
 						"filename",
 
-						-- Відносний шлях.
-						path = 1,
+						-- Повний абсолютний шлях до файла.
+						path = 2,
 					},
 				},
 
@@ -240,7 +240,12 @@ return {
 				lualine_b = {},
 
 				lualine_c = {
-					"filename",
+					{
+						"filename",
+
+						-- Повний абсолютний шлях.
+						path = 2,
+					},
 				},
 
 				lualine_x = {

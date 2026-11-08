@@ -3,7 +3,7 @@
 #   Темніший фон       #3b4252
 #   Рамки              #4c566a
 #   Основний текст     #e5e9f0
-#   Основний синій     #81a1c1
+#   Основний синій     #61AFEF 
 #   Світлий синій      #88c0d0
 #   Бірюзовий          #8fbcbb
 #   Зелений            #a3be8c
@@ -46,7 +46,7 @@ full_screen_bg = "#2e3440"
 # Градієнт інтерфейсу.
 #
 # Superfile підтримує два кольори.
-gradient_color = ["#81a1c1", "#88c0d0"]
+gradient_color = ["#61AFEF", "#88c0d0"]
 
 
 # -----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ gradient_color = ["#81a1c1", "#88c0d0"]
 # -----------------------------------------------------------------------------
 
 # Колір іконок звичайних директорій.
-directory_icon_color = "#81a1c1"
+directory_icon_color = "#61AFEF"
 
 
 ###############################################################################
@@ -74,10 +74,10 @@ file_panel_border = "#4c566a"
 file_panel_border_active = "#81a1c1"
 
 # Іконка переходу у батьківську директорію.
-file_panel_top_directory_icon = "#88c0d0"
+file_panel_top_directory_icon = "#61AFEF"
 
 # Поточний шлях у верхній частині панелі.
-file_panel_top_path = "#88c0d0"
+file_panel_top_path = "#61AFEF"
 
 # Колір тексту вибраного елемента.
 file_panel_item_selected_fg = "#e5e9f0"
@@ -108,14 +108,14 @@ footer_border_active = "#81a1c1"
 ###############################################################################
 
 # Основний колір тексту та іконок у лівій панелі.
-sidebar_fg = "#81a1c1"
+sidebar_fg = "#61AFEF"
 
 # Фон Sidebar.
 sidebar_bg = "#2e3440"
 
 # Заголовки секцій:
 # Home / Pinned / Disks.
-sidebar_title = "#88c0d0"
+sidebar_title = "#61AFEF"
 
 # Рамка Sidebar.
 sidebar_border = "#4c566a"

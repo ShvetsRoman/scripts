@@ -1,0 +1,426 @@
+# ============================================================
+# METADATA — версія схеми та сумісність
+# ============================================================
+schema_version = "1.0"
+generated_for = "RouterOS 7.23.8"
+last_updated = "2026-11-03"
+
+# ============================================================
+# INTERFACES — фізичні інтерфейси та їхні імена в RouterOS
+# ============================================================
+
+[interfaces.ether1]              # WAN-порт
+name = "00_wan"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether2]              # LAN-порт 1
+name = "01_lan1"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether3]              # LAN-порт 2
+name = "01_lan2"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether4]              # LAN-порт 3
+name = "01_lan3"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether5]              # LAN-порт 4
+name = "01_lan4"
+enabled = true
+comment = "physical_port"
+
+[interfaces.wlan1]               # Wi-Fi 2.4 ГГц
+name = "02_wifi_24GHz"
+enabled = true
+comment = "wireless_pending"
+
+[interfaces.wlan2]               # Wi-Fi 5 ГГц
+name = "02_wifi_5GHz"
+enabled = true
+comment = "wireless_pending"
+
+[interfaces.sfp1]                # SFP-порт (не використовується)
+name = "SFP"
+enabled = false
+comment = "unused"
+
+# ============================================================
+# BRIDGE — LAN-міст і порти, що до нього входять
+# ============================================================
+
+[bridge.lan]
+name = "bridge-lan"
+enabled = true
+protocol_mode = "rstp"           # rstp — захист від петель
+
+[ports.ether2]                   # ether2 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = true                        # апаратне прискорення
+
+[ports.ether3]                   # ether3 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = true
+
+[ports.ether4]                   # ether4 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = true
+
+[ports.ether5]                   # ether5 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = true
+
+# ============================================================
+# LISTS — логічні списки інтерфейсів WAN / LAN
+# ============================================================
+
+[lists.wan]
+name = "WAN"
+enabled = true
+members = ["@interfaces.ether1"]            # явне посилання на інтерфейс WAN
+
+[lists.lan]
+name = "LAN"
+enabled = true
+members = ["@bridge.lan"]        # явне посилання на міст LAN
+
+# ============================================================
+# NETWORK — IPv4-адреса LAN-інтерфейсу та керування
+# ============================================================
+
+[network.lan]
+interface = "@bridge.lan"
+address = "192.168.88.1/24"      # адреса роутера в LAN
+
+[management]                     # доступ до керування — лише з LAN
+interface = "@bridge.lan"
+address = "@network.lan"             # посилання на адресу з [network.lan]
+on_lan = true
+
+# ============================================================
+# WAN — Інтернет-підключення
+# ============================================================
+
+[wan]
+enabled = true
+interface = "@interfaces.ether1"
+add_default_route = true         # додати маршрут за замовчуванням
+use_peer_dns = false             # не брати DNS від провайдера
+
+# ============================================================
+# DHCP — пул, сервер, параметри мережі та статичні прив’язки
+# ============================================================
+
+[pool.lan]                       # динамічний діапазон адрес
+name = "pool-lan"
+start = "192.168.88.100"
+end = "192.168.88.200"
+
+[server.lan]                     # DHCP-сервер на мосту LAN
+name = "dhcp-server"
+enabled = true
+interface = "@bridge.lan"
+pool = "@pool.lan"
+lease_time = "12h"
+
+[dhcp.network.lan]               # параметри мережі, які отримують клієнти
+gateway = "192.168.88.1"         # шлюз для клієнтів
+dns_servers = ["192.168.88.1"]   # DNS для клієнтів — сам роутер
+
+[leases]                         # контейнер статичних прив’язок
+enabled = true
+server = "@server.lan"
+
+# Пристрої зі статичними адресами — масив таблиць
+[[leases.devices]]
+address = "192.168.88.2"
+mac = "44:DF:65:6C:14:07"
+comment = "mi_repiter"
+
+[[leases.devices]]
+address = "192.168.88.3"
+mac = "20:10:7A:95:7D:48"
+comment = "printer"
+
+[[leases.devices]]
+address = "192.168.88.4"
+mac = "5C:CF:7F:B8:C5:C2"
+comment = "Signal"
+
+[[leases.devices]]
+address = "192.168.88.5"
+mac = "4C:3B:DF:49:2C:FD"
+comment = "X-Box"
+
+[[leases.devices]]
+address = "192.168.88.6"
+mac = "14:DD:A9:12:69:0C"
+comment = "server-pc"
+
+[[leases.devices]]
+address = "192.168.88.7"
+mac = "D0:78:01:06:66:3B"
+comment = "tv_km3-spalnay"
+
+[[leases.devices]]
+address = "192.168.88.8"
+mac = "A0:6F:AA:5E:47:DC"
+comment = "tv_lg-32"
+
+[[leases.devices]]
+address = "192.168.88.10"
+mac = "00:25:22:EA:7C:FA"
+comment = "Vadim-pc"
+
+[[leases.devices]]
+address = "192.168.88.11"
+mac = "70:77:81:79:F7:37"
+comment = "roman-pc"
+
+[[leases.devices]]
+address = "192.168.88.12"
+mac = "88:46:04:6B:91:02"
+comment = "tel_roman"
+
+[[leases.devices]]
+address = "192.168.88.13"
+mac = "4C:63:71:1C:B8:BC"
+comment = "tel_oksana"
+
+[[leases.devices]]
+address = "192.168.88.14"
+mac = "AA:97:75:5F:DD:47"
+comment = "tel_vadim"
+
+[[leases.devices]]
+address = "192.168.88.15"
+mac = "32:30:42:8B:32:66"
+comment = "tel_sasha"
+
+[[leases.devices]]
+address = "192.168.88.16"
+mac = "76:E2:52:AD:FA:F3"
+comment = "planshet_sasha"
+
+[[leases.devices]]
+address = "192.168.88.17"
+mac = "FE:40:7E:77:A9:41"
+comment = "planshet_sasha_2"
+
+[[leases.devices]]
+address = "192.168.88.18"
+mac = "74:4C:A1:55:85:0B"
+comment = "notebook_sasha"
+
+# ============================================================
+# DNS — DNS-кеш роутера та сервери
+# ============================================================
+
+[dns]
+enabled = true
+servers = ["1.1.1.3", "1.0.0.3"]       # Cloudflare Family (фільтрація)
+allow_remote_requests = true           # дозволити LAN-клієнтам користуватись DNS роутера
+
+# ============================================================
+# NAT — Masquerade та (опційно) Hairpin
+# ============================================================
+
+[nat]
+enabled = true
+masquerade = true                      # підміна адрес для виходу в Інтернет
+hairpin_enabled = false                # доступ з LAN до власної публічної IP
+
+# ============================================================
+# FIREWALL — базова політика захисту
+# ============================================================
+
+[firewall]
+enabled = true
+allow_icmp = true                      # дозволити ICMP
+allow_lan_dhcp = true                  # дозволити DHCP із LAN
+input_default_drop = true              # INPUT: забороняти непідтверджене
+forward_default_drop = true            # FORWARD: забороняти непідтверджене
+lan_to_wan = true                      # дозволити LAN → WAN
+fasttrack = false                      # FastTrack вимкнено
+drop_new_wan = true                    # блокувати нові з’єднання з WAN
+brute_force_enabled = true             # захист SSH/WinBox від перебору (тільки WAN)
+brute_force_ports = "22,8291"
+brute_force_blacklist_timeout = "1d"
+brute_force_stage_timeout = "1m"
+icmp_burst = 5
+icmp_limit_per_second = 10             # ліміт ICMP з WAN, пакетів/с
+
+# ============================================================
+# SERVICES — IP-служби керування
+# ============================================================
+
+[services.ssh]
+enabled = true
+port = 22
+limit_to_lan = true                    # SSH лише з LAN
+
+[services.winbox]
+enabled = true
+port = 8291
+limit_to_lan = true                    # WinBox лише з LAN
+
+[services.telnet]
+enabled = false                        # незахищений — вимкнено
+
+[services.ftp]
+enabled = false
+
+[services.www]
+enabled = false
+
+[services.www-ssl]
+enabled = false
+
+[services.api]
+enabled = false
+
+[services.api-ssl]
+enabled = false
+
+[discovery]                            # виявлення сусідів лише в LAN
+interface_list = "@lists.lan"
+
+# ============================================================
+# SYSTEM — ім’я, час, NTP
+# ============================================================
+
+[identity]
+name = "router_home"                   # ім’я роутера (без пробілів)
+
+[clock]
+timezone = "Europe/Kyiv"
+
+[ntp]
+enabled = true
+servers = ["0.ua.pool.ntp.org", "1.ua.pool.ntp.org", "2.ua.pool.ntp.org", "3.ua.pool.ntp.org"]
+
+# ============================================================
+# SYSTEM-SECURITY — користувачі, SSH, MAC, оновлення
+# ============================================================
+
+[users.admin]
+name = "admin"
+enabled = true
+create = true
+group = "full"
+ssh_keys = ["~/.ssh/id_mikrotik_lab.pub"]
+password_file = ".secrets"        # один файл секретів профілю (відносно каталогу профілю)
+password_key = "ADMIN_PASSWORD"   # ключ у файлі; паролі в TOML не зберігаються
+
+[users.roman]
+name = "roman"
+enabled = true
+create = true
+group = "full"
+ssh_keys = ["~/.ssh/id_mikrotik_lab.pub"]
+password_file = ".secrets"
+password_key = "USER_ROMAN_PASSWORD"
+
+[ssh]
+strong_crypto = true                   # посилена криптографія SSH
+
+[mac_access]                           # MAC-доступ лише в LAN
+interface_list = "@lists.lan"
+mac_server = true
+mac_winbox = true
+
+[updates]
+channel = "long-term"                  # канал оновлень RouterOS
+
+[routerboard]
+supported = true                  # фізичний пристрій із RouterBOARD
+
+# ============================================================
+# WIRELESS — Wi-Fi 2.4 / 5 ГГц
+# ============================================================
+
+[wireless]
+enabled = true
+driver = "legacy"                      # legacy → /interface wireless
+
+[wireless.wlan1]                       # 2.4 ГГц
+enabled = true
+interface = "@interfaces.wlan1"
+ssid = "HOME_test"
+band = "2ghz-b/g/n"
+channel_width = "20mhz"
+frequency = "auto"
+country = "ukraine"
+security = "@security.wifi"
+bridge = "@bridge.lan"                 # Wi-Fi входить у міст LAN
+
+[wireless.wlan2]                       # 5 ГГц
+enabled = true
+interface = "@interfaces.wlan2"
+ssid = "HOME_test"
+band = "5ghz-a/n/ac"
+channel_width = "20/40/80mhz-XXXX"
+frequency = "auto"
+country = "ukraine"
+security = "@security.wifi"
+bridge = "@bridge.lan"
+
+[security.wifi]                        # профіль захисту Wi-Fi
+name = "home-wifi-security"
+authentication = "wpa2-psk"
+password_file = ".secrets"            # той самий файл секретів
+password_key = "WIFI_PASSWORD"
+
+# ============================================================
+# GUEST Wi-Fi — окрема гостьова мережа (розкоментуйте для ввімкнення)
+# Пароль гостей додайте в .secrets як GUEST_WIFI_PASSWORD (деталі у README).
+# ============================================================
+
+# [bridge.guest]
+# name = "bridge-guest"
+
+# [security.guest]
+# name = "guest-wifi-security"
+# authentication = "wpa2-psk"
+# password_file = ".secrets"
+# password_key = "GUEST_WIFI_PASSWORD"
+
+# [wireless.guest]
+# enabled = true
+# masters = ["@interfaces.wlan1", "@interfaces.wlan2"]   # SSID гостя на обох радіо
+# name_prefix = "guest"                   # VAP: guest-va1, guest-va2
+# ssid = "HOME-Guest"
+# security = "@security.guest"
+# bridge = "@bridge.guest"
+# address = "192.168.89.1/24"
+# pool_start = "192.168.89.100"
+# pool_end = "192.168.89.200"
+# dns_servers = ["192.168.89.1"]          # або зовнішній, напр. ["1.1.1.3"]
+
+# ============================================================
+# UPnP — автопроброс портів (розкоментуйте для ввімкнення)
+# ============================================================
+
+# [upnp]
+# enabled = true
+# external = "@interfaces.ether1"          # WAN-порт
+# internal = "@bridge.lan"      # LAN-міст
+
+# ============================================================
+# IPV6 — вимкнено (правила Firewall IPv6 не створюються)
+# ============================================================
+
+[connection]
+host = "192.168.88.1"
+user = "admin"
+identity_file = "~/.ssh/id_mikrotik_lab"
+
+# Шляхи профілю: усі локальні артефакти залишаються в каталозі цього профілю.

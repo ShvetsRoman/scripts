@@ -1,0 +1,373 @@
+{
+  "schema_version": "1.0",
+  "root_keys": {
+    "schema_version": "str",
+    "generated_for": "str",
+    "last_updated": "str"
+  },
+  "tables": {
+    "interfaces.*": {
+      "name": "str",
+      "enabled": "bool",
+      "comment": "str"
+    },
+    "bridge.*": {
+      "name": "str",
+      "enabled": "bool",
+      "protocol_mode": "enum:none,stp,rstp,mstp"
+    },
+    "ports.*": {
+      "bridge": "str",
+      "enabled": "bool",
+      "hw": "bool"
+    },
+    "lists.*": {
+      "name": "str",
+      "enabled": "bool",
+      "members": "str_list"
+    },
+    "network.*": {
+      "interface": "str",
+      "address": "str"
+    },
+    "management": {
+      "interface": "str",
+      "address": "str",
+      "on_lan": "bool"
+    },
+    "wan": {
+      "enabled": "bool",
+      "interface": "str",
+      "add_default_route": "bool",
+      "use_peer_dns": "bool"
+    },
+    "pool.*": {
+      "name": "str",
+      "start": "str",
+      "end": "str"
+    },
+    "server.*": {
+      "name": "str",
+      "enabled": "bool",
+      "interface": "str",
+      "pool": "str",
+      "lease_time": "str"
+    },
+    "dhcp.network.*": {
+      "gateway": "str",
+      "dns_servers": "str_list"
+    },
+    "leases": {
+      "enabled": "bool",
+      "server": "str",
+      "devices": "table_list"
+    },
+    "leases.devices": {
+      "address": "str",
+      "mac": "str",
+      "comment": "str"
+    },
+    "dns": {
+      "enabled": "bool",
+      "servers": "str_list",
+      "allow_remote_requests": "bool"
+    },
+    "nat": {
+      "enabled": "bool",
+      "masquerade": "bool",
+      "hairpin_enabled": "bool",
+      "hairpin_lan_subnet": "str"
+    },
+    "forward.*": {
+      "protocol": "str",
+      "wan_port": "int_or_str",
+      "to_address": "str",
+      "to_port": "int_or_str",
+      "dst_address": "str",
+      "tcp_new_limit": "int"
+    },
+    "firewall": {
+      "enabled": "bool",
+      "allow_icmp": "bool",
+      "allow_lan_dhcp": "bool",
+      "input_default_drop": "bool",
+      "forward_default_drop": "bool",
+      "lan_to_wan": "bool",
+      "fasttrack": "bool",
+      "drop_new_wan": "bool",
+      "brute_force_enabled": "bool",
+      "brute_force_ports": "str",
+      "icmp_limit_per_second": "int",
+      "brute_force_blacklist_timeout": "str",
+      "brute_force_stage_timeout": "str",
+      "icmp_burst": "int",
+      "fasttrack_hw_offload": "bool"
+    },
+    "services.*": {
+      "enabled": "bool",
+      "port": "int",
+      "limit_to_lan": "bool"
+    },
+    "discovery": {
+      "interface_list": "str"
+    },
+    "upnp": {
+      "enabled": "bool",
+      "external": "str",
+      "internal": "str"
+    },
+    "identity": {
+      "name": "str"
+    },
+    "clock": {
+      "timezone": "str"
+    },
+    "ntp": {
+      "enabled": "bool",
+      "servers": "str_list",
+      "max_servers": "int"
+    },
+    "users.*": {
+      "name": "str",
+      "enabled": "bool",
+      "create": "bool",
+      "group": "str",
+      "password_file": "str",
+      "password_key": "str",
+      "ssh_keys": "str_list"
+    },
+    "ssh": {
+      "strong_crypto": "bool"
+    },
+    "mac_access": {
+      "interface_list": "str",
+      "mac_server": "bool",
+      "mac_winbox": "bool"
+    },
+    "updates": {
+      "channel": "enum:stable,long-term,testing,development",
+      "auto_install": "bool",
+      "auto_reboot": "bool",
+      "auto_interval": "str"
+    },
+    "routerboard": {
+      "supported": "bool",
+      "upgrade": "bool"
+    },
+    "wireless": {
+      "enabled": "bool",
+      "driver": "enum:none,legacy,wifi-qcom-ac,wifi-qcom"
+    },
+    "wireless.guest": {
+      "enabled": "bool",
+      "masters": "str_list",
+      "name_prefix": "str",
+      "ssid": "str",
+      "security": "str",
+      "bridge": "str",
+      "address": "str",
+      "pool_start": "str",
+      "pool_end": "str",
+      "dns_servers": "str_list",
+      "lease_time": "str"
+    },
+    "wireless.*": {
+      "enabled": "bool",
+      "interface": "str",
+      "ssid": "str",
+      "band": "str",
+      "channel_width": "str",
+      "frequency": "str",
+      "country": "str",
+      "security": "str",
+      "bridge": "str"
+    },
+    "security.*": {
+      "name": "str",
+      "authentication": "str",
+      "password_file": "str",
+      "password_key": "str"
+    },
+    "ipv6": {
+      "enabled": "bool",
+      "firewall": "bool"
+    },
+    "connection": {
+      "host": "str",
+      "port": "int",
+      "user": "str",
+      "identity_file": "str",
+      "strict_host_key_checking": "enum:yes,no,accept-new,ask",
+      "timeout_seconds": "int",
+      "transfer_settle_seconds": "int"
+    },
+    "paths": {
+      "output_dir": "str",
+      "backup_dir": "str",
+      "remote_dir": "str",
+      "keep_rsc_on_router": "bool"
+    },
+    "backup": {
+      "encrypt": "bool",
+      "password_file": "str",
+      "password_key": "str",
+      "remove_remote_after_download": "bool"
+    },
+    "reset": {
+      "no_defaults": "bool",
+      "skip_backup": "bool",
+      "run_after_reset": "bool",
+      "require_confirmation": "bool"
+    }
+  },
+  "required_tables": {
+    "identity": [
+      "name"
+    ],
+    "network.lan": [
+      "address",
+      "interface"
+    ],
+    "lists.wan": [
+      "name"
+    ],
+    "lists.lan": [
+      "name"
+    ],
+    "connection": [
+      "host",
+      "user"
+    ]
+  },
+  "constraints": {
+    "matching_table_keys": [
+      {
+        "source": "ports",
+        "target": "interfaces",
+        "message": "Кожен ports.<name> потребує відповідну секцію interfaces.<name>"
+      }
+    ],
+    "reference_types": [
+      {
+        "field": "ports.*.bridge",
+        "targets": [
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "lists.*.members",
+        "targets": [
+          "interfaces.*",
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "network.*.interface",
+        "targets": [
+          "interfaces.*",
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "management.interface",
+        "targets": [
+          "interfaces.*",
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "management.address",
+        "targets": [
+          "network.*"
+        ]
+      },
+      {
+        "field": "wan.interface",
+        "targets": [
+          "interfaces.*"
+        ]
+      },
+      {
+        "field": "server.*.interface",
+        "targets": [
+          "interfaces.*",
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "server.*.pool",
+        "targets": [
+          "pool.*"
+        ]
+      },
+      {
+        "field": "leases.server",
+        "targets": [
+          "server.*"
+        ]
+      },
+      {
+        "field": "discovery.interface_list",
+        "targets": [
+          "lists.*"
+        ]
+      },
+      {
+        "field": "mac_access.interface_list",
+        "targets": [
+          "lists.*"
+        ]
+      },
+      {
+        "field": "wireless.*.interface",
+        "targets": [
+          "interfaces.*"
+        ]
+      },
+      {
+        "field": "wireless.*.security",
+        "targets": [
+          "security.*"
+        ]
+      },
+      {
+        "field": "wireless.*.bridge",
+        "targets": [
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "wireless.guest.masters",
+        "targets": [
+          "interfaces.*"
+        ]
+      },
+      {
+        "field": "wireless.guest.bridge",
+        "targets": [
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "wireless.guest.security",
+        "targets": [
+          "security.*"
+        ]
+      },
+      {
+        "field": "upnp.external",
+        "targets": [
+          "interfaces.*",
+          "bridge.*"
+        ]
+      },
+      {
+        "field": "upnp.internal",
+        "targets": [
+          "interfaces.*",
+          "bridge.*"
+        ]
+      }
+    ]
+  }
+}

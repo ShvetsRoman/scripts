@@ -1,0 +1,13 @@
+# Секрети
+**/.secrets
+
+# Конфігурації/backup, які можуть містити паролі
+profiles/*/output/*.rsc
+profiles/*/backups/*
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Тимчасові файли генерації
+profiles/*/output/.build.*

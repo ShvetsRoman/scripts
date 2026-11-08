@@ -1,0 +1,275 @@
+# ============================================================
+# METADATA — версія схеми та сумісність
+# ============================================================
+schema_version = "1.0"
+generated_for = "RouterOS 7.24.6"
+last_updated = "2026-11-03"
+
+# ============================================================
+# INTERFACES — фізичні інтерфейси та їхні імена в RouterOS
+# ============================================================
+
+[interfaces.ether1]              # Host-only керування CHR
+name = "00_management"
+enabled = true
+comment = "host_only_management"
+
+[interfaces.ether2]              # LAN-порт 1
+name = "01_lan1"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether3]              # LAN-порт 2
+name = "01_lan2"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether4]              # LAN-порт 3
+name = "01_lan3"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether5]              # LAN-порт 4
+name = "01_lan4"
+enabled = true
+comment = "physical_port"
+
+[interfaces.ether6]              # Окремий WAN-порт; VirtualBox Adapter 6 = NAT
+name = "02_wan"
+enabled = true
+comment = "virtualbox_nat_uplink"
+
+[bridge.lan]
+name = "bridge-lan"
+enabled = true
+protocol_mode = "rstp"           # rstp — захист від петель
+
+[ports.ether2]                   # ether2 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = false                        # апаратне прискорення
+
+[ports.ether3]                   # ether3 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = false
+
+[ports.ether4]                   # ether4 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = false
+
+[ports.ether5]                   # ether5 → міст LAN
+bridge = "@bridge.lan"
+enabled = true
+hw = false
+
+# ============================================================
+# LISTS — логічні списки інтерфейсів WAN / LAN
+# ============================================================
+
+[lists.wan]
+name = "WAN"
+enabled = true
+members = ["@interfaces.ether6"]
+
+[lists.management]
+name = "MGMT"
+enabled = true
+members = ["@interfaces.ether1"]
+
+[lists.lan]
+name = "LAN"
+enabled = true
+members = ["@bridge.lan"]        # явне посилання на міст LAN
+
+# ============================================================
+# NETWORK — IPv4-адреса LAN-інтерфейсу та керування
+# ============================================================
+
+[network.lan]
+interface = "@bridge.lan"
+address = "192.168.88.1/24"      # адреса роутера в LAN
+
+[management]                     # окрема host-only мережа керування
+interface = "@interfaces.ether1"
+address = "192.168.56.2/24"
+on_lan = false
+
+# ============================================================
+# WAN — Інтернет-підключення
+# ============================================================
+
+[wan]
+enabled = true
+interface = "@interfaces.ether6"           # ether6 — окремий WAN через VirtualBox NAT
+add_default_route = true         # отримати маршрут за замовчуванням через DHCP
+use_peer_dns = false             # DNS задаємо вручну нижче
+
+# ============================================================
+# DHCP — пул, сервер, параметри мережі та статичні прив’язки
+# ============================================================
+
+[pool.lan]                       # динамічний діапазон адрес
+name = "pool-lan"
+start = "192.168.88.100"
+end = "192.168.88.200"
+
+[server.lan]                     # DHCP-сервер на мосту LAN
+name = "dhcp-server"
+enabled = true
+interface = "@bridge.lan"
+pool = "@pool.lan"
+lease_time = "12h"
+
+[dhcp.network.lan]               # параметри мережі, які отримують клієнти
+gateway = "192.168.88.1"         # шлюз для клієнтів
+dns_servers = ["192.168.88.1"] # клієнти використовують DNS-кеш маршрутизатора
+
+[leases]                         # статичні leases не переносяться в тестову VM
+enabled = true
+server = "@server.lan"
+
+# Пристрої зі статичними адресами — масив таблиць
+[[leases.devices]]
+address = "192.168.88.2"
+mac = "44:DF:65:6C:14:07"
+comment = "mi_repiter"
+
+[[leases.devices]]
+address = "192.168.88.3"
+mac = "20:10:7A:95:7D:48"
+comment = "printer"
+
+[[leases.devices]]
+address = "192.168.88.4"
+mac = "5C:CF:7F:B8:C5:C2"
+comment = "Signal"
+
+[dns]
+enabled = true
+servers = ["1.1.1.3", "1.0.0.3"]       # Cloudflare Family: malware + adult filtering
+allow_remote_requests = true            # DNS-кеш доступний клієнтам LAN
+
+# ============================================================
+# NAT — Masquerade та (опційно) Hairpin
+# ============================================================
+
+[nat]
+enabled = true
+masquerade = true                       # вихід LAN у WAN через source NAT
+hairpin_enabled = false                 # вмикається лише за потреби port-forward/hairpin
+
+# ============================================================
+# FIREWALL — базова політика захисту
+# ============================================================
+
+[firewall]
+enabled = true
+allow_icmp = true                      # дозволити ICMP
+allow_lan_dhcp = true                  # дозволити DHCP із LAN
+input_default_drop = true              # INPUT: забороняти непідтверджене
+forward_default_drop = true            # FORWARD: забороняти непідтверджене
+lan_to_wan = true                       # дозволити LAN → WAN
+fasttrack = false                      # FastTrack вимкнено
+drop_new_wan = true                    # блокувати нові з’єднання з WAN
+brute_force_enabled = true              # захист SSH/WinBox від перебору на WAN
+brute_force_ports = "22,8291"
+brute_force_blacklist_timeout = "1d"
+brute_force_stage_timeout = "1m"
+icmp_burst = 5
+icmp_limit_per_second = 10             # ліміт ICMP з WAN, пакетів/с
+
+# ============================================================
+# SERVICES — IP-служби керування
+# ============================================================
+
+[services.ssh]
+enabled = true
+port = 22
+limit_to_lan = true                    # SSH лише з LAN
+
+[services.winbox]
+enabled = true
+port = 8291
+limit_to_lan = true                    # WinBox лише з LAN
+
+[services.telnet]
+enabled = false                        # незахищений — вимкнено
+
+[services.ftp]
+enabled = false
+
+[services.www]
+enabled = false
+
+[services.www-ssl]
+enabled = false
+
+[services.api]
+enabled = false
+
+[services.api-ssl]
+enabled = false
+
+[discovery]                            # виявлення сусідів лише в LAN
+interface_list = "@lists.lan"
+
+# ============================================================
+# SYSTEM — ім’я, час, NTP
+# ============================================================
+
+[identity]
+name = "mikrotik-test"                   # ім’я роутера (без пробілів)
+
+[clock]
+timezone = "Europe/Kyiv"
+
+[ntp]
+enabled = true
+servers = ["0.ua.pool.ntp.org", "1.ua.pool.ntp.org", "2.ua.pool.ntp.org", "3.ua.pool.ntp.org"]
+
+# ============================================================
+# SYSTEM-SECURITY — користувачі, SSH, MAC, оновлення
+# ============================================================
+
+[users.roman]
+name = "roman"
+enabled = true
+create = true
+group = "full"
+ssh_keys = ["~/.ssh/id_mikrotik_lab.pub"]
+password_file = ".secrets"
+password_key = "USER_ROMAN_PASSWORD"   # create=true вимагає пароль (у .secrets)
+
+[users.admin]
+name = "admin"
+enabled = false
+create = false
+group = "full"
+ssh_keys = ["~/.ssh/id_mikrotik_lab.pub"]
+password_file = ".secrets"
+password_key = "ADMIN_PASSWORD"   # create=true вимагає пароль (у .secrets)
+
+[ssh]
+strong_crypto = true                   # посилена криптографія SSH
+
+[mac_access]                           # MAC-доступ лише в LAN
+interface_list = "@lists.lan"
+mac_server = true
+mac_winbox = true
+
+[updates]
+channel = "long-term"                  # канал оновлень RouterOS
+
+[routerboard]
+supported = false                 # CHR не має меню /system routerboard
+
+# ============================================================
+# CHR не має Wi-Fi радіомодулів; бездротові параметри не використовуються.
+# ============================================================
+
+[connection]
+host = "192.168.56.2"
+user = "roman"
+identity_file = "~/.ssh/id_mikrotik_lab"
