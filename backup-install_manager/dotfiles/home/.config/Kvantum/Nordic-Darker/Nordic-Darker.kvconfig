@@ -71,7 +71,7 @@ intensity=1.00
 saturation=1.00
 click_behavior=0
 drag_from_buttons=false
-menu_blur_radius=0
+menu_blur_radius=5
 shadowless_popup=false
 tooltip_blur_radius=0
 

@@ -8,7 +8,8 @@ listViewIconSize=48
 [Notification Messages]
 klipperClearHistoryAskAgain=false
 
-[PlasmaViews][Panel 152]
+[PlasmaViews][Panel 266]
+alignment=132
 floating=1
 floatingApplets=1
 panelLengthMode=0
@@ -16,23 +17,25 @@ panelOpacity=2
 panelVisibility=0
 shell=org.kde.plasma.desktop
 
-[PlasmaViews][Panel 152][Defaults]
-maxLength=1800
-minLength=1800
+[PlasmaViews][Panel 266][Defaults]
+maxLength=1745
+minLength=1745
 offset=0
 thickness=34
 
-[PlasmaViews][Panel 152][Horizontal1745]
+[PlasmaViews][Panel 291]
 alignment=132
-
-[PlasmaViews][Panel 198]
 floating=1
+floatingApplets=0
 panelLengthMode=1
 panelOpacity=2
 panelVisibility=2
 shell=org.kde.plasma.desktop
 
-[PlasmaViews][Panel 198][Defaults]
+[PlasmaViews][Panel 291][Defaults]
+maxLength=1745
+minLength=1745
+offset=0
 thickness=47
 
 [Updates]

@@ -123,12 +123,9 @@ menuFont=SF Pro,14,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 smallestReadableFont=SF Pro,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 toolBarFont=SF Pro,14,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 
-[Icons]
-Theme=YAMIS
-
 [KDE]
 AnimationDurationFactor=1.414213562373095
-LookAndFeelPackage=org.kde.klassydarkbottompanel.desktop
+LookAndFeelPackage=Klassy_2026-11-05
 ShowDeleteCommand=true
 contrast=4
 frameContrast=0.2

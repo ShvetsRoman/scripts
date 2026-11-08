@@ -2,30 +2,10 @@
 MiddleButton;NoModifier=org.kde.paste
 RightButton;NoModifier=org.kde.contextmenu
 
-[ActionPlugins][0][RightButton;NoModifier]
-_add panel=false
-_context=true
-_display_settings=true
-_lock_screen=false
-_logout=false
-_open_terminal=false
-_run_command=false
-_sep1=true
-_sep2=true
-_sep3=true
-_sep4=true
-_wallpaper=true
-add widgets=false
-configure=true
-configure shortcuts=false
-desktop edit mode=true
-manage activities=true
-remove=true
-
 [ActionPlugins][1]
 RightButton;NoModifier=org.kde.contextmenu
 
-[Containments][138]
+[Containments][265]
 ItemGeometries-1694x1059=Applet-67:1608.24,886.593,80,96,0;
 ItemGeometries-1745x1091=
 ItemGeometries-1800x1125=Applet-67:1680,944,96,96,0;
@@ -39,24 +19,24 @@ location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
 
-[Containments][138][ConfigDialog]
+[Containments][265][ConfigDialog]
 DialogHeight=760
 DialogWidth=1062
 
-[Containments][138][General]
+[Containments][265][General]
 changedPositions={"desktop:/backup-sync":["1745x1091","0","14"],"desktop:/backup-sync-v2.5.tar.gz":["1745x1091","0","15"],"desktop:/test":["1745x1091","0","0"],"desktop:/test.solidcraft":["1745x1091","0","0"]}
 iconSize=2
 lastResolution=1745x1091
-positions={"1745x1091":["1","18","desktop:/hooks","0","2","desktop:/backup-install_manager.tar.gz","0","2","desktop:/backup-sync","0","14","desktop:/backup-install_setup-manager.tar.gz","0","2","desktop:/test","0","0","desktop:/backup-install_setup-manager","0","1","desktop:/mikrotik-config-manager","0","2","desktop:/config","0","3","desktop:/dotfiles","0","1","desktop:/setup-manager.tar.gz","0","5","desktop:/mikrotik-config-manager.zip","0","3","desktop:/chrome-dakpodcappfkondcgbmonmndfnnhngjl-Default.desktop","0","0","desktop:/setup-manager","0","4","desktop:/nvim.zip","0","2","desktop:/mikrotik-config-manager.zip.l8r49c.part","0","3","desktop:/kitty.zip","0","1","desktop:/backup-install_manager","0","1","desktop:/backup-sync-v2.3.tar.gz","0","4","desktop:/KV","0","4","desktop:/test.solidcraft","0","0","desktop:/backup-sync-v2.5.tar.gz","0","15"],"1800x1125":["1","16"]}
+positions={"1745x1091":["1","18","desktop:/mikrotik-config-manager.zip","0","3","desktop:/setup-manager","0","4","desktop:/KV","0","4","desktop:/hooks","0","2","desktop:/kitty.zip","0","1","desktop:/chrome-dakpodcappfkondcgbmonmndfnnhngjl-Default.desktop","0","0","desktop:/mikrotik-config-manager","0","2","desktop:/backup-sync","0","14","desktop:/nvim.zip","0","2","desktop:/backup-install_setup-manager.tar.gz","0","2","desktop:/dotfiles","0","1","desktop:/backup-sync-v2.5.tar.gz","0","15","desktop:/test","0","0","desktop:/test.solidcraft","0","0","desktop:/setup-manager.tar.gz","0","5","desktop:/backup-install_manager.tar.gz","0","2","desktop:/backup-sync-v2.3.tar.gz","0","4","desktop:/backup-install_manager","0","1","desktop:/backup-install_setup-manager","0","1","desktop:/config","0","3","desktop:/mikrotik-config-manager.zip.l8r49c.part","0","3"],"1800x1125":["1","16"]}
 previewPlugins=glycin-image-rs,kraorathumbnail,imagethumbnail,glycin-heif,exrthumbnail,jpegthumbnail,glycin-jxl,windowsimagethumbnail,glycin-svg,svgthumbnail,directorythumbnail,ffmpegthumbnailer,ffmpegthumbs
 previews=false
 sortMode=-1
 
-[Containments][138][Wallpaper][org.kde.image][General]
-Image=file:///home/roman/00_setup/icons/hunt_showdown_2.jpg
+[Containments][265][Wallpaper][org.kde.image][General]
+Image=file:///usr/share/wallpapers/Horos/
 SlidePaths=/home/roman/.local/share/wallpapers/,/usr/share/wallpapers/
 
-[Containments][152]
+[Containments][266]
 activityId=
 formfactor=2
 immutability=1
@@ -65,162 +45,63 @@ location=3
 plugin=org.kde.panel
 wallpaperplugin=org.kde.image
 
-[Containments][152][Applets][153]
+[Containments][266][Applets][267]
 immutability=1
 plugin=org.kde.plasma.shutdownorswitch
 
-[Containments][152][Applets][153][Configuration]
+[Containments][266][Applets][267][Configuration]
 popupHeight=141
 popupWidth=216
 
-[Containments][152][Applets][153][Configuration][ConfigDialog]
+[Containments][266][Applets][267][Configuration][ConfigDialog]
 DialogHeight=630
 DialogWidth=810
 
-[Containments][152][Applets][154]
+[Containments][266][Applets][268]
 immutability=1
 plugin=org.kde.plasma.marginsseparator
 
-[Containments][152][Applets][155]
+[Containments][266][Applets][269]
 immutability=1
 plugin=org.kde.plasma.appmenu
 
-[Containments][152][Applets][156]
+[Containments][266][Applets][270]
 immutability=1
 plugin=org.kde.plasma.marginsseparator
 
-[Containments][152][Applets][157]
+[Containments][266][Applets][271]
 immutability=1
 plugin=org.kde.plasma.panelspacer
 
-[Containments][152][Applets][158]
-activityId=
-formfactor=0
+[Containments][266][Applets][272]
 immutability=1
-lastScreen=0
-location=0
-plugin=org.kde.plasma.systemtray
-popupHeight=432
-popupWidth=432
-wallpaperplugin=org.kde.image
+plugin=org.kde.plasma.colorpicker
 
-[Containments][152][Applets][158][Applets][160]
-immutability=1
-plugin=org.kde.plasma.cameraindicator
+[Containments][266][Applets][272][Configuration]
+popupHeight=325
+popupWidth=324
 
-[Containments][152][Applets][158][Applets][160][Configuration][ConfigDialog]
+[Containments][266][Applets][272][Configuration][ConfigDialog]
 DialogHeight=630
 DialogWidth=810
 
-[Containments][152][Applets][158][Applets][161]
-immutability=1
-plugin=org.kde.plasma.clipboard
+[Containments][266][Applets][272][Configuration][General]
+compactPreviewCount=0
+history=#d8dee9,#61afef
 
-[Containments][152][Applets][158][Applets][162]
-immutability=1
-plugin=org.kde.plasma.devicenotifier
-
-[Containments][152][Applets][158][Applets][164]
-immutability=1
-plugin=org.kde.plasma.notifications
-
-[Containments][152][Applets][158][Applets][168]
-immutability=1
-plugin=org.kde.plasma.keyboardlayout
-
-[Containments][152][Applets][158][Applets][169]
-immutability=1
-plugin=org.kde.plasma.networkmanagement
-
-[Containments][152][Applets][158][Applets][169][Configuration][General]
-currentDetailsTab=details
-
-[Containments][152][Applets][158][Applets][170]
-immutability=1
-plugin=org.kde.plasma.volume
-
-[Containments][152][Applets][158][Applets][170][Configuration][General]
-migrated=true
-
-[Containments][152][Applets][158][Applets][174]
-immutability=1
-plugin=org.kde.plasma.battery
-
-[Containments][152][Applets][158][Applets][176]
-immutability=1
-plugin=org.kde.plasma.mediacontroller
-
-[Containments][152][Applets][158][Applets][177]
-immutability=1
-plugin=org.kde.plasma.bluetooth
-
-[Containments][152][Applets][158][Applets][180]
-immutability=1
-plugin=org.kde.plasma.printmanager
-
-[Containments][152][Applets][158][Applets][181]
-immutability=1
-plugin=org.kde.plasma.brightness
-
-[Containments][152][Applets][158][Applets][182]
-immutability=1
-plugin=org.kde.plasma.vault
-
-[Containments][152][Applets][158][Applets][182][Configuration][ConfigDialog]
-DialogHeight=630
-DialogWidth=810
-
-[Containments][152][Applets][158][Applets][193]
-immutability=1
-plugin=org.kde.kdeconnect
-
-[Containments][152][Applets][158][Applets][194]
-immutability=1
-plugin=org.kde.plasma.dwellclicker
-
-[Containments][152][Applets][158][ConfigDialog]
-DialogHeight=828
-DialogWidth=1126
-
-[Containments][152][Applets][158][General]
-extraItems=org.kde.plasma.devicenotifier,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.networkmanagement,org.kde.plasma.keyboardlayout,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.brightness,org.kde.plasma.cameraindicator,org.kde.plasma.vault,org.kde.plasma.clipboard,org.kde.kdeconnect,org.kde.plasma.dwellclicker,org.kde.kupapplet
-hiddenItems=org.kde.plasma.clipboard
-knownItems=org.kde.plasma.vault,org.kde.plasma.bluetooth,org.kde.plasma.cameraindicator,org.kde.plasma.clipboard,org.kde.plasma.devicenotifier,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.keyboardindicator,org.kde.plasma.weather,org.kde.kscreen,org.kde.plasma.battery,org.kde.plasma.brightness,org.kde.plasma.keyboardlayout,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.printmanager,org.kde.kdeconnect,org.kde.plasma.dwellclicker,org.kde.kupapplet
-scaleIconsToFit=true
-shownItems=org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.networkmanagement,org.kde.plasma.keyboardlayout,org.kde.plasma.brightness
-
-[Containments][152][Applets][172]
-immutability=1
-plugin=org.kde.plasma.digitalclock
-
-[Containments][152][Applets][172][Configuration]
-popupHeight=451
-popupWidth=396
-
-[Containments][152][Applets][172][Configuration][Appearance]
-dateDisplayFormat=BelowTime
-fontFamily=Noto Sans [GOOG]
-fontSize=12
-fontStyleName=Regular
-fontWeight=400
-
-[Containments][152][Applets][172][Configuration][ConfigDialog]
-DialogHeight=630
-DialogWidth=810
-
-[Containments][152][Applets][185]
+[Containments][266][Applets][273]
 immutability=1
 plugin=org.kde.plasma.kvitals
 
-[Containments][152][Applets][185][Configuration]
+[Containments][266][Applets][273][Configuration]
 popupHeight=377
 popupWidth=552
 
-[Containments][152][Applets][185][Configuration][ConfigDialog]
+[Containments][266][Applets][273][Configuration][ConfigDialog]
 DialogHeight=1025
 DialogWidth=1737
 
-[Containments][152][Applets][185][Configuration][General]
+[Containments][266][Applets][273][Configuration][General]
 activeProfileId=ab912391-f343-4ef2-9676-3a3663bb81e7
 fanUnit=percent
 fontFamily=SF Pro
@@ -232,29 +113,132 @@ shortcutInitialized=true
 showSeparators=false
 updateInterval=1000
 
-[Containments][152][Applets][185][Shortcuts]
+[Containments][266][Applets][273][Shortcuts]
 global=Meta+Shift+V
 
-[Containments][152][Applets][201]
+[Containments][266][Applets][274]
+activityId=
+formfactor=0
 immutability=1
-plugin=org.kde.plasma.colorpicker
+lastScreen=0
+location=0
+plugin=org.kde.plasma.systemtray
+popupHeight=432
+popupWidth=432
+wallpaperplugin=org.kde.image
 
-[Containments][152][Applets][201][Configuration]
-popupHeight=325
-popupWidth=324
+[Containments][266][Applets][274][Applets][275]
+immutability=1
+plugin=org.kde.plasma.vault
 
-[Containments][152][Applets][201][Configuration][ConfigDialog]
+[Containments][266][Applets][274][Applets][276]
+immutability=1
+plugin=org.kde.kdeconnect
+
+[Containments][266][Applets][274][Applets][277]
+immutability=1
+plugin=org.kde.plasma.cameraindicator
+
+[Containments][266][Applets][274][Applets][278]
+immutability=1
+plugin=org.kde.plasma.clipboard
+
+[Containments][266][Applets][274][Applets][279]
+immutability=1
+plugin=org.kde.plasma.devicenotifier
+
+[Containments][266][Applets][274][Applets][280]
+immutability=1
+plugin=org.kde.plasma.manage-inputmethod
+
+[Containments][266][Applets][274][Applets][281]
+immutability=1
+plugin=org.kde.plasma.notifications
+
+[Containments][266][Applets][274][Applets][282]
+immutability=1
+plugin=org.kde.plasma.keyboardindicator
+
+[Containments][266][Applets][274][Applets][283]
+immutability=1
+plugin=org.kde.plasma.weather
+
+[Containments][266][Applets][274][Applets][284]
+immutability=1
+plugin=org.kde.kscreen
+
+[Containments][266][Applets][274][Applets][285]
+immutability=1
+plugin=org.kde.plasma.dwellclicker
+
+[Containments][266][Applets][274][Applets][286]
+immutability=1
+plugin=org.kde.plasma.keyboardlayout
+
+[Containments][266][Applets][274][Applets][287]
+immutability=1
+plugin=org.kde.plasma.networkmanagement
+
+[Containments][266][Applets][274][Applets][288]
+immutability=1
+plugin=org.kde.plasma.volume
+
+[Containments][266][Applets][274][Applets][288][Configuration][General]
+migrated=true
+
+[Containments][266][Applets][274][Applets][289]
+immutability=1
+plugin=org.kde.plasma.printmanager
+
+[Containments][266][Applets][274][Applets][294]
+immutability=1
+plugin=org.kde.plasma.battery
+
+[Containments][266][Applets][274][Applets][295]
+immutability=1
+plugin=org.kde.plasma.brightness
+
+[Containments][266][Applets][274][Applets][296]
+immutability=1
+plugin=org.kde.plasma.mediacontroller
+
+[Containments][266][Applets][274][Applets][297]
+immutability=1
+plugin=org.kde.plasma.bluetooth
+
+[Containments][266][Applets][274][ConfigDialog]
+DialogHeight=780
+DialogWidth=1103
+
+[Containments][266][Applets][274][General]
+extraItems=org.kde.plasma.vault,org.kde.kdeconnect,org.kde.plasma.bluetooth,org.kde.plasma.cameraindicator,org.kde.plasma.devicenotifier,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.keyboardindicator,org.kde.plasma.weather,org.kde.kscreen,org.kde.kupapplet,org.kde.plasma.dwellclicker,org.kde.plasma.printmanager,org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.networkmanagement,org.kde.plasma.keyboardlayout,org.kde.plasma.clipboard,org.kde.plasma.brightness
+hiddenItems=org.kde.plasma.clipboard,org.kde.plasma.brightness
+knownItems=org.kde.plasma.vault,org.kde.kdeconnect,org.kde.plasma.bluetooth,org.kde.plasma.cameraindicator,org.kde.plasma.clipboard,org.kde.plasma.devicenotifier,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.keyboardindicator,org.kde.plasma.weather,org.kde.kscreen,org.kde.kupapplet,org.kde.plasma.battery,org.kde.plasma.brightness,org.kde.plasma.dwellclicker,org.kde.plasma.keyboardlayout,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.plasma.printmanager
+shownItems=org.kde.plasma.volume,org.kde.plasma.battery,org.kde.plasma.networkmanagement,org.kde.plasma.keyboardlayout
+
+[Containments][266][Applets][290]
+immutability=1
+plugin=org.kde.plasma.digitalclock
+
+[Containments][266][Applets][290][Configuration]
+popupHeight=451
+popupWidth=396
+
+[Containments][266][Applets][290][Configuration][Appearance]
+dateDisplayFormat=BelowTime
+fontFamily=Noto Sans [GOOG]
+fontSize=12
+fontStyleName=Regular
+fontWeight=400
+
+[Containments][266][Applets][290][Configuration][ConfigDialog]
 DialogHeight=630
 DialogWidth=810
 
-[Containments][152][Applets][201][Configuration][General]
-compactPreviewCount=0
-history=#d8dee9,#61afef
+[Containments][266][General]
+AppletOrder=267;268;269;270;271;272;273;274;290
 
-[Containments][152][General]
-AppletOrder=153;154;155;156;157;201;185;158;172
-
-[Containments][198]
+[Containments][291]
 activityId=
 formfactor=2
 immutability=1
@@ -263,15 +247,15 @@ location=4
 plugin=org.kde.panel
 wallpaperplugin=org.kde.image
 
-[Containments][198][Applets][199]
+[Containments][291][Applets][292]
 immutability=1
 plugin=org.kde.plasma.punchi-dock-remastered
 
-[Containments][198][Applets][199][Configuration]
-popupHeight=662
-popupWidth=882
+[Containments][291][Applets][292][Configuration]
+popupHeight=694
+popupWidth=914
 
-[Containments][198][Applets][199][Configuration][Appearance]
+[Containments][291][Applets][292][Configuration][Appearance]
 contextMenuBackgroundBlurEnabled=true
 contextMenuBackgroundOpacityPercent=70
 folderDetailedIconSize=34
@@ -285,43 +269,43 @@ iconReflectionOpacity=50
 windowCountBadgePosition=center
 windowCountEmblemScalePercent=80
 
-[Containments][198][Applets][199][Configuration][ConfigDialog]
+[Containments][291][Applets][292][Configuration][ConfigDialog]
 DialogHeight=630
 DialogWidth=887
 
-[Containments][198][Applets][199][Configuration][General]
+[Containments][291][Applets][292][Configuration][General]
 dockItemsJson=[\n    {\n        "_comment": "PunchiMenu launcher item. Opens the configured application menu presentation.",\n        "type": "punchimenu",\n        "name": "PunchiMenu",\n        "icon": "/home/roman/00_setup/icons/launcher/icon_mono.png",\n        "menuMode": "normal",\n        "normalPlacementMode": "centered",\n        "gridIconScalePercent": 100,\n        "favoriteIconScalePercent": 100,\n        "fullScreenBackgroundOpacityPercent": 50,\n        "normalBackgroundOpacityPercent": 75,\n        "normalFloatingLabelVisibleCharacters": 10,\n        "normalFloatingTextShadowPercent": 25,\n        "normalWidthPercent": 55,\n        "normalHeightPercent": 65,\n        "normalPanelDistancePercent": 25,\n        "fullScreenApplicationOrder": "manual",\n        "normalFolderMaximumColumns": 3,\n        "normalFolderMaximumRows": 3,\n        "fullScreenFolderMaximumColumns": 5,\n        "fullScreenFolderMaximumRows": 5,\n        "compactBackgroundOpacityPercent": 85\n    },\n    {\n        "separatorAppearanceSource": "item",\n        "separatorGlowEnabled": false,\n        "separatorLengthRatio": 0.75,\n        "separatorOpacity": 0.1,\n        "separatorStyle": "line",\n        "separatorThickness": 1,\n        "type": "separator"\n    },\n    {\n        "type": "app",\n        "name": "Google Chrome",\n        "icon": "google-chrome",\n        "storageId": "google-chrome.desktop",\n        "appId": "google-chrome",\n        "command": "/usr/bin/google-chrome-stable %U",\n        "actions": []\n    },\n    {\n        "_comment": "Pinned application. command should be the executable or action to launch.",\n        "type": "app",\n        "name": "Kitty",\n        "icon": "kitty",\n        "command": "kitty",\n        "description": "",\n        "appId": "kitty",\n        "actions": []\n    },\n    {\n        "type": "app",\n        "name": "Dolphin",\n        "icon": "org.kde.dolphin",\n        "storageId": "org.kde.dolphin.desktop",\n        "appId": "org.kde.dolphin",\n        "command": "dolphin %u",\n        "actions": []\n    },\n    {\n        "_comment": "Folder item. Groups common user folders and opens as a fan, like the stack row of macOS: it also ships a location so the fan closes with the action that opens that folder in the file manager out of the box.",\n        "type": "folder",\n        "name": "Home",\n        "icon": "user-home",\n        "layout": "fan",\n        "sourcePath": "~",\n        "columns": 3,\n        "rows": 0,\n        "popupMaxWidth": 0,\n        "popupMaxHeight": 0,\n        "innerIconSize": 48,\n        "showLabels": true,\n        "closeOnLaunch": true,\n        "apps": [\n            {\n                "type": "app",\n                "name": "Home",\n                "icon": "user-home",\n                "command": "xdg-open \\"$HOME\\""\n            },\n            {\n                "type": "app",\n                "name": "Documents",\n                "icon": "folder-documents",\n                "command": "xdg-open \\"$(xdg-user-dir DOCUMENTS)\\""\n            },\n            {\n                "type": "app",\n                "name": "Downloads",\n                "icon": "folder-downloads",\n                "command": "xdg-open \\"$(xdg-user-dir DOWNLOAD)\\""\n            },\n            {\n                "type": "app",\n                "name": "Pictures",\n                "icon": "folder-pictures",\n                "command": "xdg-open \\"$(xdg-user-dir PICTURES)\\""\n            },\n            {\n                "type": "app",\n                "name": "Music",\n                "icon": "folder-music",\n                "command": "xdg-open \\"$(xdg-user-dir MUSIC)\\""\n            },\n            {\n                "type": "app",\n                "name": "Videos",\n                "icon": "folder-videos",\n                "command": "xdg-open \\"$(xdg-user-dir VIDEOS)\\""\n            }\n        ]\n    },\n    {\n        "_comment": "Category container in the grid presentation. Its list is filled from the user's installed launchers on the first install and becomes a normal editable container afterwards, so the category capability is visible out of the box.",\n        "type": "folder",\n        "name": "Internet",\n        "icon": "/home/roman/00_setup/icons/folder/folder-internet.svg",\n        "layout": "grid",\n        "sourceType": "manual",\n        "sourceCategory": "Network",\n        "columns": 0,\n        "rows": 0,\n        "popupMaxWidth": 0,\n        "popupMaxHeight": 0,\n        "innerIconSize": 48,\n        "showLabels": true,\n        "sourcePath": "",\n        "closeOnLaunch": true,\n        "apps": [\n            {\n                "type": "app",\n                "name": "Київстар ТБ",\n                "icon": "tv-player",\n                "command": "/opt/google/chrome/google-chrome --profile-directory=Default --app-id=dakpodcappfkondcgbmonmndfnnhngjl",\n                "appId": "google-chrome"\n            },\n            {\n                "appId": "steam",\n                "categories": [\n                    "Network",\n                    "FileTransfer",\n                    "Game"\n                ],\n                "command": "/usr/bin/steam %U",\n                "description": "Програма для керування іграми та запуску ігор у Steam",\n                "desktopEntryName": "steam",\n                "desktopFilePath": "/usr/share/applications/steam.desktop",\n                "executable": "steam",\n                "icon": "steam",\n                "launcherUrl": "applications:steam.desktop",\n                "name": "Steam",\n                "storageId": "steam.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "uget-gtk",\n                "categories": [\n                    "Network",\n                    "FileTransfer"\n                ],\n                "command": "uget-gtk %u",\n                "description": "Download multiple URLs and apply it to one of setting/queue.",\n                "desktopEntryName": "uget-gtk",\n                "desktopFilePath": "/usr/share/applications/uget-gtk.desktop",\n                "executable": "uget-gtk",\n                "icon": "uget-icon",\n                "launcherUrl": "applications:uget-gtk.desktop",\n                "name": "uGet",\n                "storageId": "uget-gtk.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "transmission-qt",\n                "categories": [\n                    "Network",\n                    "FileTransfer",\n                    "P2P",\n                    "Qt"\n                ],\n                "command": "transmission-qt %U",\n                "description": "Download and share files over BitTorrent",\n                "desktopEntryName": "transmission-qt",\n                "desktopFilePath": "/usr/share/applications/transmission-qt.desktop",\n                "executable": "transmission-qt",\n                "icon": "transmission-qt",\n                "launcherUrl": "applications:transmission-qt.desktop",\n                "name": "Transmission (Qt)",\n                "storageId": "transmission-qt.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "org.kde.kdeconnect.sms",\n                "categories": [\n                    "Qt",\n                    "KDE",\n                    "Network",\n                    "InstantMessaging"\n                ],\n                "command": "kdeconnect-sms",\n                "description": "Читання і надсилання повідомлень SMS на з'єднаних пристроях",\n                "desktopEntryName": "org.kde.kdeconnect.sms",\n                "desktopFilePath": "/usr/share/applications/org.kde.kdeconnect.sms.desktop",\n                "executable": "kdeconnect-sms",\n                "icon": "kdeconnect",\n                "launcherUrl": "applications:org.kde.kdeconnect.sms.desktop",\n                "name": "KDE Connect SMS",\n                "storageId": "org.kde.kdeconnect.sms.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "org.kde.kdeconnect.app",\n                "categories": [\n                    "Qt",\n                    "KDE",\n                    "Network"\n                ],\n                "command": "kdeconnect-app",\n                "description": "Поєднайте усі ваші пристрої",\n                "desktopEntryName": "org.kde.kdeconnect.app",\n                "desktopFilePath": "/usr/share/applications/org.kde.kdeconnect.app.desktop",\n                "executable": "kdeconnect-app",\n                "icon": "kdeconnect",\n                "launcherUrl": "applications:org.kde.kdeconnect.app.desktop",\n                "name": "З’єднання KDE",\n                "storageId": "org.kde.kdeconnect.app.desktop",\n                "type": "app"\n            }\n        ],\n        "sortMode": "modified"\n    },\n    {\n        "type": "folder",\n        "storageId": "deadbeef.desktop",\n        "appId": "deadbeef",\n        "description": "",\n        "size": 32,\n        "name": "Media",\n        "icon": "folder-music",\n        "apps": [\n            {\n                "type": "app",\n                "name": "DeadBeef",\n                "icon": "deadbeef",\n                "command": "deadbeef",\n                "appId": "deadbeef"\n            },\n            {\n                "type": "app",\n                "name": "VLC",\n                "icon": "vlc",\n                "command": "/usr/bin/vlc",\n                "appId": "vlc"\n            }\n        ],\n        "layout": "grid",\n        "columns": 3,\n        "rows": 0,\n        "innerIconSize": 48,\n        "showLabels": true,\n        "closeOnLaunch": true,\n        "sourceType": "folder",\n        "sourcePath": "",\n        "sourceCategory": "AudioVideo",\n        "sortMode": "modified"\n    },\n    {\n        "_comment": "Category container in the simple list presentation. Defaults to Graphics and can be refreshed from the user's installed launchers.",\n        "type": "folder",\n        "name": "Graphics",\n        "icon": "folder-pictures",\n        "layout": "grid",\n        "sourceType": "manual",\n        "sourceCategory": "Graphics",\n        "columns": 0,\n        "rows": 0,\n        "popupMaxWidth": 0,\n        "popupMaxHeight": 0,\n        "innerIconSize": 48,\n        "showLabels": false,\n        "sourcePath": "",\n        "closeOnLaunch": true,\n        "apps": [\n            {\n                "appId": "gimp",\n                "categories": [\n                    "Graphics",\n                    "2DGraphics",\n                    "RasterGraphics",\n                    "GTK"\n                ],\n                "command": "gimp-3.2 %U",\n                "description": "Створення зображень та редагування фотографій",\n                "desktopEntryName": "gimp",\n                "desktopFilePath": "/usr/share/applications/gimp.desktop",\n                "executable": "gimp-3.2",\n                "icon": "gimp",\n                "launcherUrl": "applications:gimp.desktop",\n                "name": "GNU Image Manipulation Program",\n                "storageId": "gimp.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "ai.storyteller.photocraft",\n                "categories": [\n                    "Graphics",\n                    "2DGraphics",\n                    "RasterGraphics",\n                    "Photography"\n                ],\n                "command": "photocraft %F",\n                "description": "Edit photos and layered PSD documents",\n                "desktopEntryName": "ai.storyteller.photocraft",\n                "desktopFilePath": "/usr/share/applications/ai.storyteller.photocraft.desktop",\n                "executable": "photocraft",\n                "icon": "ai.storyteller.photocraft",\n                "launcherUrl": "applications:ai.storyteller.photocraft.desktop",\n                "name": "PhotoCraft",\n                "storageId": "ai.storyteller.photocraft.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "ai.storyteller.lightcraft",\n                "categories": [\n                    "Graphics",\n                    "2DGraphics",\n                    "RasterGraphics",\n                    "Photography"\n                ],\n                "command": "lightcraft %F",\n                "description": "Organise photos and develop raw files, non-destructively",\n                "desktopEntryName": "ai.storyteller.lightcraft",\n                "desktopFilePath": "/usr/share/applications/ai.storyteller.lightcraft.desktop",\n                "executable": "lightcraft",\n                "icon": "ai.storyteller.lightcraft",\n                "launcherUrl": "applications:ai.storyteller.lightcraft.desktop",\n                "name": "LightCraft",\n                "storageId": "ai.storyteller.lightcraft.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "org.inkscape.Inkscape",\n                "categories": [\n                    "Graphics",\n                    "VectorGraphics",\n                    "GTK"\n                ],\n                "command": "inkscape %F",\n                "description": "Створення та редагування зображень у форматі SVG",\n                "desktopEntryName": "org.inkscape.Inkscape",\n                "desktopFilePath": "/usr/share/applications/org.inkscape.Inkscape.desktop",\n                "executable": "inkscape",\n                "icon": "org.inkscape.Inkscape",\n                "launcherUrl": "applications:org.inkscape.Inkscape.desktop",\n                "name": "Inkscape",\n                "storageId": "org.inkscape.Inkscape.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "ai.storyteller.vectorcraft",\n                "categories": [\n                    "Graphics",\n                    "2DGraphics",\n                    "VectorGraphics"\n                ],\n                "command": "vectorcraft %F",\n                "description": "Draw and edit vector illustrations, SVG and PDF",\n                "desktopEntryName": "ai.storyteller.vectorcraft",\n                "desktopFilePath": "/usr/share/applications/ai.storyteller.vectorcraft.desktop",\n                "executable": "vectorcraft",\n                "icon": "ai.storyteller.vectorcraft",\n                "launcherUrl": "applications:ai.storyteller.vectorcraft.desktop",\n                "name": "VectorCraft",\n                "storageId": "ai.storyteller.vectorcraft.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "qcad",\n                "categories": [\n                    "Graphics",\n                    "VectorGraphics",\n                    "Engineering",\n                    "Construction",\n                    "2DGraphics",\n                    "Science"\n                ],\n                "command": "qcad %F",\n                "description": "2D САПР",\n                "desktopEntryName": "qcad",\n                "desktopFilePath": "/usr/share/applications/qcad.desktop",\n                "executable": "qcad",\n                "icon": "org.qcad.QCAD",\n                "launcherUrl": "applications:qcad.desktop",\n                "name": "QCAD",\n                "storageId": "qcad.desktop",\n                "type": "app"\n            },\n            {\n                "appId": "ai.storyteller.cadcraft",\n                "categories": [\n                    "Graphics",\n                    "Engineering",\n                    "VectorGraphics"\n                ],\n                "command": "cadcraft %F",\n                "description": "Draft, dimension and plot 2D drawings; open DXF and DWG files",\n                "desktopEntryName": "ai.storyteller.cadcraft",\n                "desktopFilePath": "/usr/share/applications/ai.storyteller.cadcraft.desktop",\n                "executable": "cadcraft",\n                "icon": "ai.storyteller.cadcraft",\n                "launcherUrl": "applications:ai.storyteller.cadcraft.desktop",\n                "name": "CADCraft",\n                "storageId": "ai.storyteller.cadcraft.desktop",\n                "type": "app"\n            }\n        ]\n    },\n    {\n        "_comment": "Folder item in detailed mode. Useful for larger groups where labels and commands matter.",\n        "type": "folder",\n        "name": "LibreOffice",\n        "icon": "folder-documents",\n        "layout": "grid",\n        "columns": 0,\n        "rows": 0,\n        "popupMaxWidth": 0,\n        "popupMaxHeight": 0,\n        "innerIconSize": 48,\n        "showLabels": true,\n        "closeOnLaunch": true,\n        "apps": [\n            {\n                "type": "app",\n                "name": "Writer",\n                "icon": "libreoffice-writer",\n                "command": "libreoffice --writer"\n            },\n            {\n                "type": "app",\n                "name": "Calc",\n                "icon": "libreoffice-calc",\n                "command": "libreoffice --calc"\n            },\n            {\n                "type": "app",\n                "name": "Impress",\n                "icon": "libreoffice-impress",\n                "command": "libreoffice --impress"\n            },\n            {\n                "type": "app",\n                "name": "Draw",\n                "icon": "libreoffice-draw",\n                "command": "libreoffice --draw"\n            },\n            {\n                "type": "app",\n                "name": "LibreOffice Math",\n                "icon": "libreoffice-math",\n                "command": "libreoffice --math"\n            },\n            {\n                "type": "app",\n                "name": "LibreOffice Base",\n                "icon": "libreoffice-base",\n                "command": "libreoffice --base"\n            }\n        ],\n        "sourceType": "manual",\n        "sourcePath": "",\n        "sourceCategory": "Development"\n    },\n    {\n        "type": "app",\n        "name": "Системні параметри",\n        "icon": "preferences-system",\n        "storageId": "systemsettings.desktop",\n        "appId": "systemsettings",\n        "command": "systemsettings"\n    },\n    {\n        "separatorAppearanceSource": "item",\n        "separatorGlowEnabled": false,\n        "separatorLengthRatio": 0.75,\n        "separatorOpacity": 0.1,\n        "separatorStyle": "line",\n        "separatorThickness": 1,\n        "type": "separator"\n    },\n    {\n        "type": "recent-applications",\n        "name": "Recent applications"\n    },\n    {\n        "apps": [],\n        "browseSubfolders": true,\n        "closeOnLaunch": true,\n        "columns": 3,\n        "icon": "folder-download",\n        "innerIconSize": 48,\n        "layout": "list",\n        "name": "Downloads",\n        "rows": 0,\n        "showLabels": true,\n        "sortMode": "modified",\n        "sourceCategory": "Development",\n        "sourcePath": "file:///home/roman/Downloads/",\n        "sourceType": "folder",\n        "type": "folder"\n    },\n    {\n        "_comment": "Trash item. Opens the trash, can show empty/full state, and can accept dropped files.",\n        "type": "trash",\n        "name": "Trash",\n        "icon": "user-trash",\n        "fullIcon": "user-trash-full",\n        "showState": true,\n        "acceptDrops": true\n    },\n    {\n        "_comment": "Visual separator. Useful before date or time widgets.",\n        "type": "separator",\n        "separatorAppearanceSource": "item",\n        "separatorStyle": "line",\n        "separatorThickness": 1,\n        "separatorLengthRatio": 0.75,\n        "separatorOpacity": 0.1,\n        "separatorGlowEnabled": false\n    },\n    {\n        "_comment": "Persistent marker that selects where open applications are rendered without storing dynamic tasks.",\n        "type": "dynamic-applications",\n        "name": "Open applications"\n    }\n]
 hoverScale=1.15
 iconSize=30
 recentApplicationsPosition={"index":12,"before":"[\\"separator\\",\\"\\"]","after":"[\\"folder\\",\\"Downloads\\"]"}
 
-[Containments][198][Applets][199][Configuration][Mouse]
+[Containments][291][Applets][292][Configuration][Mouse]
 clickEffect=pulse
 hoverAnimation=axisZoom
 popupAnimation=fade
 windowMinimizeEffect=slowBounce
 windowPreviewAnimation=fade
 
-[Containments][198][Applets][199][Configuration][Windows]
+[Containments][291][Applets][292][Configuration][Windows]
 windowPreviewBackgroundOpacityPercent=50
 windowPreviewStyle=none
 
-[Containments][198][Applets][204]
+[Containments][291][Applets][293]
 immutability=1
 plugin=com.n3thshan.nokara
 
-[Containments][198][Applets][204][Configuration][ConfigDialog]
+[Containments][291][Applets][293][Configuration][ConfigDialog]
 DialogHeight=804
 DialogWidth=1208
 
-[Containments][198][Applets][204][Configuration][General]
+[Containments][291][Applets][293][Configuration][General]
 dotSizeCustom=20
 spacingHorizontal=0
 spacingVertical=0
 
-[Containments][198][General]
-AppletOrder=199;204
+[Containments][291][General]
+AppletOrder=292;293
 
 [ScreenMapping]
 itemsOnDisabledScreens=
-screenMapping=desktop:/chrome-dakpodcappfkondcgbmonmndfnnhngjl-Default.desktop,0,aae547a3-fb9c-43f7-8842-419c2eb6fd5f,desktop:/test.solidcraft,0,aae547a3-fb9c-43f7-8842-419c2eb6fd5f
+screenMapping=desktop:/test.solidcraft,0,aae547a3-fb9c-43f7-8842-419c2eb6fd5f,desktop:/chrome-dakpodcappfkondcgbmonmndfnnhngjl-Default.desktop,0,aae547a3-fb9c-43f7-8842-419c2eb6fd5f

@@ -172,20 +172,9 @@ gc() {
 
 # PACMAN / ARCH LINUX
 # Reflector
-alias mlu='sudo reflector 
-    --country Ukraine,Poland,Germany,Czechia,Netherlands 
-    --latest 15 
-    --protocol https 
-    --sort rate 
-    --download-timeout 15 
-    --save /etc/pacman.d/mirrorlist'
+alias mlu='sudo reflector --country Ukraine,Poland,Germany,Czechia,Netherlands --latest 15 --protocol https --sort rate --download-timeout 15 --save /etc/pacman.d/mirrorlist'
 
-alias mls='reflector 
-    --country Ukraine,Poland,Germany,Czechia,Netherlands 
-    --latest 15 
-    --protocol https 
-    --sort rate 
-    --download-timeout 15'
+alias mls='reflector --country Ukraine,Poland,Germany,Czechia,Netherlands --latest 15 --protocol https --sort rate --download-timeout 15'
 
 alias mln='sudoedit /etc/pacman.d/mirrorlist'
 
