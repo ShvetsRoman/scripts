@@ -159,7 +159,7 @@ ga() {
         return 2
     fi
 
-    git add -- "$@"
+    git add "$@"
 }
 # Git commit
 gc() {

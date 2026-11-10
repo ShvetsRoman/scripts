@@ -42,9 +42,6 @@ OutScale=0.3
 [Effect-translucency]
 MoveResize=100
 
-[Effect-windowview]
-BorderActivateAll=3
-
 [Effect-wobblywindows]
 Drag=90
 Stiffness=6
@@ -111,7 +108,6 @@ WindowSnapZone=15
 Scale=1.65
 
 [org.kde.kdecoration2]
-BorderSize=None
 BorderSizeAuto=false
 ButtonsOnLeft=
 ButtonsOnRight=IAX
