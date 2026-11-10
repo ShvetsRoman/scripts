@@ -2,11 +2,23 @@
 
 Консолідований журнал усіх великих змін проєкту. Актуальний прогін тестів наведений окремо в кожному розділі на момент останньої зміни.
 
+## Аудит-фікси: безпека reset, локалізація збоїв, валідація (2026-11-10)
+
+- **Preflight перед `--reset`:** read-only SSH-запит (`/:put`) перед відправленням reset; при недоступному каналі reset НЕ відправляється і скрипт виходить з помилкою. Код 255 після reset трактується як очікуваний розрив на reboot лише після успішного preflight. Dead-stub `wait_for_reset_apply` вилучено.
+- **SSH-ключ:** єдиний `:do{} on-error`-блок імпорту розбито на шість окремих команд `sshkey: target user / remove stale file / add file / verify file / import / verify import` — журнал RouterOS локалізує крок відмови (RouterOS не віддає текст помилки в `on-error`); add сталого файлу зроблено ідемпотентним (guarded `/file remove`).
+- **`/ip service`:** для target >= RouterOS 7.24 генерується `available-from=` (заміна `address=`, оголошено deprecated у 7.24); для старіших версій і невідомого `generated_for` — сумісний `address=`. Порівняння версій — `target_routeros_version`/`ver_ge`.
+- **Октальні префікси:** уся арифметика валідаторів і генераторів веде значення через `10#` (напр. `192.168.88.1/08` нормалізується замість ERR-аварії); зачищено залишки в icmp limit/burst та dst-nat limit. TOML не дозволяє ведучі нулі у цілих, тому такі значення блокує валідатор — негативний тест на це.
+- **Lockout-контракт:** `connection.user` має вказувати на `users.*` з `enabled=true` — інакше `--validate` відхиляє профіль.
+- **Allowlist служб:** `[services.*]` приймає лише стандартний набір IP-служб RouterOS у Python-валідаторі та обох генераторах (заміна окремого reverse-proxy-випадку).
+- **Секрети:** `--validate` перевіряє права всіх секрет-файлів профілю (600/400), читання паролів — теж; умовна перевірка `*00` зірвана.
+- **Дедуплікація:** логіка `paths.output_dir`/`remote_dir`/`backup_dir` об'єднана у `rel_dir_checked`/`ensure_private_dir`; подвійний `verify_rsc_token` вилучено.
+- **log.txt** (журнал CHR з приватною топологією) більше не трекається в Git; додано до `.gitignore`.
+
 ## Поточний стан (2026-11-06)
 
 | Перевірка | Результат |
 |---|---:|
-| Локальний тестовий набір | **257 checks: 253 PASS / 0 FAIL / 4 SKIP** |
+| Локальний тестовий набір | **277 checks: 273 PASS / 0 FAIL / 4 SKIP** |
 | Валідація профілів `home-router` та `chr` | PASS |
 | Bash syntax / Python compile / JSON parse | PASS |
 | ShellCheck (`-S warning`) | чистий (лише 1 відоме хибне спрацювання SC2088 у `expand_path` на шаблоні `"~/"`) |
@@ -103,7 +115,7 @@ Guest VAP не отримує дубльований bridge port. Докладн
 - Під час `--upload`/`--reset` застарілість RSC не блокується, окремий `.rsc` маркер "one-time reset" вилучено; повторний RESET тим самим файлом дозволений.
 - Підтвердження RESET спрощено до `y/N` (або `--yes`); вимоги вводити назву профілю немає.
 - Попередження про Wi-Fi паролі коротші за 12 символів показуються лише під час `--secrets` (під час введення), не при build.
-- Прибрано спеціальні `reverse-proxy`-обробки в gen_firewall/gen_services/валідаторі: назви служб тепер мають належати стандартному набору IP-служб RouterOS (api, api-ssl, api-rest, ftp, ssh, telnet, winbox, www, www-ssl, grpc, grpc-ssl).
+- Прибрано спеціальні `reverse-proxy`-обробки в gen_firewall/gen_services/валідаторі; назви служб перевіряються за allowlist стандартного набору IP-служб RouterOS (api, api-ssl, api-rest, ftp, ssh, telnet, winbox, www, www-ssl, grpc, grpc-ssl) у Python-валідаторі та обох генераторах.
 - Затвердження старих звітів об'єднано в цей файл; `ROUTEROS-STATIC-AUDIT.md`, `ROUTEROS-READ-ONLY-VERIFICATION.md`, `TEST-REPORT.md` вилучені.
 
 ## Профіль home-router: імпорт SSH-ключів (2026-11-08)

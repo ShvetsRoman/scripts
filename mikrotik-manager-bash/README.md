@@ -40,6 +40,7 @@ mikrotik-manager-bash/
 ├── mikrotik-manager.sh
 ├── lib/
 │   ├── toml_engine.py
+│   ├── routeros_verify.py
 │   └── schema.json
 ├── profiles/
 │   ├── .secrets.example       # шаблон; приватні .secrets не входять до релізу
@@ -54,6 +55,8 @@ mikrotik-manager-bash/
 └── tests/
     └── run-tests.sh
 ```
+
+Журнали RouterOS (`log.txt` у корені) працювання в репозиторій не входять: вони містять приватну топологію (IP/MAC/fingerprint) і розміщуються лише локально.
 
 Кожен профіль має власні `output/` і `backups/`. Типові шляхи не потребують TOML-секцій: `output/` для RSC та `backups/` для резервних копій. За потреби їх можна перевизначити в `[paths]`. Додаткові параметри SSH задаються в `[connection]`; шифрування backup — в `[backup]`; параметри руйнівної операції `--reset` — в `[reset]`. Ці секції необов'язкові: якщо їх немає, менеджер використовує безпечні типові значення. Інші розширені параметри firewall, NTP, оновлень і RouterBOARD можна додавати лише тоді, коли вони справді потрібні.
 
@@ -85,7 +88,7 @@ mikrotik-manager-bash/
    /system identity set name=mikrotik
    /ip address add address=192.168.10.1/24 interface=ether2
    /ip service set ssh disabled=no
-   /ip service set ssh address=192.168.10.2/32
+   /ip service set ssh available-from=192.168.10.2/32
    ```
 
    Тут `192.168.10.1/24` — приклад IP роутера, `ether2` — приклад LAN-порту,
@@ -100,7 +103,7 @@ mikrotik-manager-bash/
    ```routeros
    /system identity set name=mikrotik
    /ip service set ssh disabled=no
-   /ip service set ssh address=192.168.88.2/32
+   /ip service set ssh address=192.168.88.2/32   # < 7.24; для 7.24+ — available-from=
    ```
 
    У прикладі `192.168.88.2` — адреса ПК; замініть її на фактичну. Якщо у вас
@@ -126,7 +129,7 @@ mikrotik-manager-bash/
    /system identity set name=mikrotik
    /ip address add address=192.168.56.2/24 interface=ether1
    /ip service set ssh disabled=no
-   /ip service set ssh address=192.168.56.1/32
+   /ip service set ssh available-from=192.168.56.1/32
    ```
 
 3. Переконайтеся, що `ether1` має прапорець `R` (running), IP керування
@@ -490,14 +493,12 @@ backup додайте `password_file` і `password_key` у `[backup]`.
 
 ## RouterOS Static Compatibility Audit
 
-Після Home Use Cleanup проведено статичну перевірку генераторів RouterOS 7, firewall, DHCP, NAT, users та трьох Wi-Fi driver contracts. Виправлено ізоляцію Guest Wi-Fi від LAN, перевірки конфліктів DHCP pool/leases та валідацію портів brute-force захисту.
+Після Home Use Cleanup проведено статичну перевірку генераторів RouterOS 7, firewall, DHCP, NAT, users та трьох Wi-Fi driver contracts. Виправлено ізоляцію Guest Wi-Fi від LAN, перевірки конфліктів DHCP pool/leases та валідацію портів brute-force захисту. Детальні звіти попередніх ітерацій (`ROUTEROS-STATIC-AUDIT.md`, `ROUTEROS-READ-ONLY-VERIFICATION.md`, `TEST-REPORT.md`) вилучені; актуальний стан — README, CHANGELOG і регресійний тестовий набір. Останній прогін тестів: **273 PASS / 0 FAIL / 4 SKIP** (SKIP — навмисні реальні SSH/reset-операції).
 
-Детальний звіт із порядком генерації, перевірками та обмеженнями: [`ROUTEROS-STATIC-AUDIT.md`](ROUTEROS-STATIC-AUDIT.md). Результат статичного аудиту: **237 PASS / 0 FAIL / 4 SKIP**. RouterOS runtime не запускався.
 
-## RouterOS Read-only Verification
-
-Команда `--verify` показує в терміналі read-only команди для interfaces, bridge, DHCP, DNS, firewall, NAT, users і Wi-Fi. Вона не генерує окремих файлів, не виконує SSH/SCP та не звертається до роутера. Деталі й обмеження: [`ROUTEROS-READ-ONLY-VERIFICATION.md`](ROUTEROS-READ-ONLY-VERIFICATION.md).
 
 ## Безпечне застосування користувачів та SSH-ключів
 
-Активні користувачі створюються/оновлюються до відкладеного вимкнення старих облікових записів. SSH public key імпортується з перевіркою появи `key-owner` у `/user ssh-keys`; тимчасовий `.pub` видаляється лише після успішної перевірки. При помилці файл залишається для діагностики. Якщо попередні кроки мають помилки (`mgrErrors > 0`), вимкнення старих облікових записів пропускається.
+Активні користувачі створюються/оновлюються до відкладеного вимкнення старих облікових записів. SSH public key імпортується з верифікацією за SSH fingerprint (`/user ssh-keys find where user=... and fingerprint="SHA256:..."`); параметра `key-owner` у RouterOS 7.24 немає, тому він не використовується. Кожен крок імпорту (add file → import → verify) генерується як окрема команда `:do {...} on-error` з власною міткою `sshkey: ...` — журнало роутера локалізує крок відмови. Службовий `.pub`-файл RouterOS видаляє сам після успішного імпорту; при помилці файл залишається для діагностики. Якщо попередні кроки мають помилки (`mgrErrors > 0`), вимкнення старих облікових записів пропускається.
+
+Перед `--reset` виконується read-only preflight SSH-запит: якщо канал недоступний, reset не відправляється. Код 255 після reset трактується як очікуваний розрив на перезавантаженні лише після успішного preflight.

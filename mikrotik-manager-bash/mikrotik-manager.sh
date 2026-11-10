@@ -177,13 +177,16 @@ is_ip() {
   IFS=. read -ra o <<<"$1"
   for x in "${o[@]}"; do (( 10#$x <= 255 )) || return 1; done
 }
-is_cidr() { [[ $1 == */* ]] && is_ip "${1%/*}" && [[ ${1#*/} =~ ^[0-9]+$ ]] && (( ${1#*/} <= 32 )); }
+# 10# — арифметика без октальної інтерпретації ведучих нулів (напр. /08):
+# Python-валідатор приймає префікс з нулем, тож bash не має падати аварійно.
+is_cidr() { [[ $1 == */* ]] && is_ip "${1%/*}" && [[ ${1#*/} =~ ^[0-9]+$ ]] && (( 10#${1#*/} <= 32 )); }
 is_mac()  { [[ $1 =~ ^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$ ]]; }
-is_port() { [[ $1 =~ ^[0-9]+$ ]] && (( $1 >= 1 && $1 <= 65535 )); }
-ip2int()  { local a b c d; IFS=. read -r a b c d <<<"$1"; echo $(( (a<<24) + (b<<16) + (c<<8) + d )); }
+is_port() { [[ $1 =~ ^[0-9]+$ ]] && (( 10#$1 >= 1 && 10#$1 <= 65535 )); }
+ip2int()  { local a b c d; IFS=. read -r a b c d <<<"$1"; echo $(( (10#$a<<24) + (10#$b<<16) + (10#$c<<8) + 10#$d )); }
 int2ip()  { local n=$1; echo "$(( (n>>24)&255 )).$(( (n>>16)&255 )).$(( (n>>8)&255 )).$(( n&255 ))"; }
 cidr_net() {
-  local ip=${1%/*} p=${1#*/} m n
+  local ip=${1%/*} m n
+  local p=$(( 10#${1#*/} ))
   m=$(( p == 0 ? 0 : (0xFFFFFFFF << (32 - p)) & 0xFFFFFFFF ))
   n=$(( $(ip2int "$ip") & m ))
   echo "$(int2ip "$n")/$p"
@@ -225,7 +228,7 @@ read_pw() {  # read_pw <файл> <опис> [ключ]; без ключа — �
   expand_path "$1"
   [[ -r $EXP ]] || die "Файл секретів для $2 не знайдено або недоступний: $EXP (створити: ${0##*/} --secrets --profile $PROFILE)"
   perm=$(stat -c %a "$EXP" 2>/dev/null || stat -f %Lp "$EXP" 2>/dev/null || echo 600)
-  [[ $perm == *00 ]] || warn "Файл секретів $EXP має права $perm; рекомендовано chmod 600"
+  [[ $perm == 600 || $perm == 400 ]] || warn "Файл секретів $EXP має права $perm; рекомендовано chmod 600"
   if [[ -n $key ]]; then
     lookup_key "$EXP" "$key" || die "У $EXP немає непорожнього значення $key (потрібне для $2; додати: ${0##*/} --secrets --profile $PROFILE)"
   else
@@ -234,6 +237,18 @@ read_pw() {  # read_pw <файл> <опис> [ключ]; без ключа — �
   fi
 }
 read_pw_sec() { read_pw "${CFG[$1.password_file]}" "$1" "$(cfg "$1.password_key")"; }
+
+check_secret_perms() {
+  # Права всіх секрет-файлів, на які посилається профіль: лише 600/400 — інакше warn.
+  local key perm
+  for key in "${!CFG[@]}"; do
+    [[ $key == *.password_file ]] || continue
+    expand_path "${CFG[$key]}"
+    [[ -f $EXP ]] || continue
+    perm=$(stat -c %a "$EXP" 2>/dev/null || stat -f %Lp "$EXP" 2>/dev/null || echo 600)
+    [[ $perm == 600 || $perm == 400 ]] || warn "Секрет-файл $key ($EXP) має права $perm; рекомендовано chmod 600"
+  done
+}
 
 # ------------------------------------------------------------
 # Вивід .rsc
@@ -687,9 +702,9 @@ gen_firewall() {
     [[ $lim =~ ^[0-9]+$ ]] || die "firewall.icmp_limit_per_second має бути числом"
     fw input "action=accept protocol=icmp in-interface-list=$L" "input icmp lan"
     if [[ $MGMT_L != "$LAN_L" ]]; then fw input "action=accept protocol=icmp in-interface-list=$M" "input icmp management"; fi
-    if (( lim > 0 )); then
+    if (( 10#$lim > 0 )); then
       burst=$(cfg firewall.icmp_burst 5)
-      [[ $burst =~ ^[0-9]+$ ]] && (( burst >= 1 && burst <= 100 )) || die "firewall.icmp_burst має бути 1..100"
+      [[ $burst =~ ^[0-9]+$ ]] && (( 10#$burst >= 1 && 10#$burst <= 100 )) || die "firewall.icmp_burst має бути 1..100"
       fw input "action=accept protocol=icmp in-interface-list=$W limit=$lim,$burst:packet" "input icmp wan limited"
       fw input "action=drop protocol=icmp in-interface-list=$W" "input icmp wan over limit"
     else
@@ -706,7 +721,7 @@ gen_firewall() {
   mapfile -t SV < <(children services)
   for key in "${SV[@]}"; do
     is_true "services.$key.enabled" || continue
-    [[ $key == reverse-proxy ]] && continue
+    [[ $key =~ ^(api|api-ssl|api-rest|ftp|ssh|telnet|winbox|www|www-ssl|grpc|grpc-ssl)$ ]] || die "services.$key не входить у стандартну IP-службу RouterOS"
     p=$(cfg "services.$key.port")
     is_port "$p" || die "services.$key.port: активна служба потребує порт 1..65535"
     if is_true "services.$key.limit_to_lan" true; then
@@ -787,7 +802,7 @@ gen_nat() {
     [[ $lim =~ ^[0-9]+$ ]] || die "forward.$key.tcp_new_limit має бути числом"
     a="chain=dstnat action=dst-nat protocol=$proto dst-port=$wp to-addresses=$ta to-ports=$tp in-interface-list=$W"
     [[ -z $dst ]] || a+=" dst-address=$dst"
-    if [[ $proto == tcp ]] && (( lim > 0 )); then a+=" limit=$lim,$lim:packet"; fi
+    if [[ $proto == tcp ]] && (( 10#$lim > 0 )); then a+=" limit=$lim,$lim:packet"; fi
     rs "/ip firewall nat add $a comment=$(q "mgr: forward $key")"
     if is_true nat.hairpin_enabled; then
       if [[ -n $dst ]]; then
@@ -831,8 +846,9 @@ gen_services() {
   mapfile -t L < <(children services)
   for key in "${L[@]}"; do
     en=$(cfg "services.$key.enabled" false)
-    if [[ $key == reverse-proxy ]]; then is_true "services.$key.enabled" && die "services.reverse-proxy не є стандартною службою RouterOS; вимкніть цей параметр"; continue; fi
     addr=""; p=""
+    # Стандартний набір IP-служб RouterOS; ім'я йде у RSC без лапок.
+    [[ $key =~ ^(api|api-ssl|api-rest|ftp|ssh|telnet|winbox|www|www-ssl|grpc|grpc-ssl)$ ]] || die "services.$key не входить у стандартну IP-службу RouterOS"
     if [[ $en == true ]]; then
       need "services.$key.port" "services.$key.limit_to_lan"
       is_port "${CFG[services.$key.port]}" || die "services.$key.port некоректний"
@@ -845,7 +861,8 @@ gen_services() {
         fi
         [[ -n $addr ]] || die "services.$key.limit_to_lan=true, але LAN-підмережу не обчислено: задайте [management].address або management.on_lan=true з [network.lan]"
       fi
-      rs "/ip service set [find where name=$key] disabled=no$p address=\"$addr\""
+      local addr_kw; addr_kw=$(service_addr_keyword)
+      rs "/ip service set [find where name=$key] disabled=no$p $addr_kw=\"$addr\""
     else
       rs "/ip service set [find where name=$key] disabled=yes"
     fi
@@ -941,10 +958,16 @@ except Exception:
     sys.exit(1)') || key_fp=""
       [[ $key_fp =~ ^SHA256:[A-Za-z0-9+/=]{40,60}$ ]] || die "Не вдалося обчислити SSH fingerprint: $EXP"
       # RouterOS 7.24.6 сам видаляє pub-файл після успішного імпорту, тому файл
-      # тут не видаляємо: сліплений /file remove кидав «file does not exist»,
+      # тут не видаляємо: сліпий /file remove кидав «file does not exist»,
       # весь on-error блок падав у FAILED попри успішний імпорт.
-      cmd=":local mgrKeyUser [/user find where name=$user_q]; :if ([:len \$mgrKeyUser] = 0) do={ :error \"SSH target user $n missing\" }; :local mgrOldKeyFile [/file find where name=$(q "$key_file")]; :if ([:len \$mgrOldKeyFile] > 0) do={ /file remove \$mgrOldKeyFile }; /file add name=$(q "$key_file") contents=$(q "$pub"); :local mgrKeyFile [/file find where name=$(q "$key_file")]; :if ([:len \$mgrKeyFile] = 0) do={ :error \"SSH public key file missing\" }; :local mgrExistingKey [/user ssh-keys find where user=$user_q and fingerprint=$(q "$key_fp")]; :if ([:len \$mgrExistingKey] = 0) do={ /user ssh-keys import public-key-file=$(q "$key_file") user=$user_q }; :local mgrImportedKey [/user ssh-keys find where user=$user_q and fingerprint=$(q "$key_fp")]; :if ([:len \$mgrImportedKey] = 0) do={ :error \"SSH key import verification failed for $n\" }"
-      rs "$cmd" "users: import SSH key $n#$key_index"
+      # Кожен крок — окремий rs() з власною міткою: RouterOS не віддає текст
+      # помилки в on-error, тож окремі мітки локалізують крок відмови в журналі.
+      rs ":if ([:len [/user find where name=$user_q]] = 0) do={ :error \"SSH target user $n missing\" }" "sshkey: target user $n#$key_index"
+      rs ":if ([:len [/file find where name=$(q "$key_file")]] > 0) do={ /file remove [/file find where name=$(q "$key_file")] }" "sshkey: remove stale file $n#$key_index"
+      rs "/file add name=$(q "$key_file") contents=$(q "$pub")" "sshkey: add file $n#$key_index"
+      rs ":if ([:len [/file find where name=$(q "$key_file")]] = 0) do={ :error \"SSH public key file missing\" }" "sshkey: verify file $n#$key_index"
+      rs ":if ([:len [/user ssh-keys find where user=$user_q and fingerprint=$(q "$key_fp")]] = 0) do={ /user ssh-keys import public-key-file=$(q "$key_file") user=$user_q }" "sshkey: import $n#$key_index"
+      rs ":if ([:len [/user ssh-keys find where user=$user_q and fingerprint=$(q "$key_fp")]] = 0) do={ :error \"SSH key import verification failed for $n\" }" "sshkey: verify import $n#$key_index"
     done
   done
   # Лише після створення активних користувачів та імпорту їхніх ключів.
@@ -994,6 +1017,32 @@ gen_all() {
   fi
 }
 
+# RouterOS 7.24 перейменував address → available-from у /ip service
+# (backwards-compat через deprecation; згодом параметр address буде вилучено).
+# Тому новий синтаксис генеруємо лише для версій target >= 7.24.
+SERVICE_AVAIL_FROM_MIN="7.24"
+target_routeros_version() {  # → "X.Y" або "" для unknown
+  local raw; raw=$(cfg generated_for unknown)
+  printf '%s' "$raw" | sed -n 's/[^0-9]*\([0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/p'
+}
+ver_ge() {  # ver_ge <"X.Y"|""> <"X.Y"> → 0/1
+  local v=${1:-} min=$2 vp vm mp mm
+  [[ $v =~ ^[0-9]{1,3}\.[0-9]{1,3}$ ]] || return 1
+  vp=${v%%.*}; vm=${v#*.}; mp=${min%%.*}; mm=${min#*.}
+  (( 10#$vp != 10#$mp )) && (( 10#$vp > 10#$mp )) && return 0
+  (( 10#$vp < 10#$mp )) && return 1
+  (( 10#$vm >= 10#$mm ))
+}
+service_addr_keyword() {  # → доступний для generated_for версії параметр /ip service
+  local v
+  v=$(target_routeros_version)
+  if ver_ge "$v" "$SERVICE_AVAIL_FROM_MIN"; then
+    printf 'available-from'
+  else
+    if [[ -z $v ]]; then warn "generated_for не містить версії RouterOS; використовуємо старий синтаксис /ip service address="; fi
+    printf 'address'
+  fi
+}
 # ------------------------------------------------------------
 # Команди
 # ------------------------------------------------------------
@@ -1025,31 +1074,44 @@ profile_secrets_sha256() {
   } | sha256sum | awk '{print $1}'
 }
 
+# ------------------------------------------------------------
+# Спільні хелпери шляхів — єдине джерело правила для paths.*.
+# ------------------------------------------------------------
+rel_dir_checked() {  # rel_dir_checked <значення> <local|remote> <назва поля> → значення або die
+  local v=$1 field=$3
+  local kind=$2
+  if [[ $kind == local ]]; then
+    [[ $v != /* && $v != .. && $v != ../* && $v != */../* && $v != */.. ]] || die "$field має бути відносним каталогом профілю"
+  else
+    [[ $v != /* && $v != *".."* ]] || die "$field має бути відносним каталогом на роутері без '..'"
+  fi
+  printf '%s' "$v"
+}
+
+ensure_private_dir() {  # права обмежуємо лише на щойно створеному каталозі; існуючі не чіпаємо
+  [[ -d $1 ]] && return 0
+  mkdir -p -- "$1"
+  chmod 700 -- "$1"
+  chmod g-s -- "$1"
+}
+
 build_profile() {  # build_profile <profile> [name.rsc]
   load_profile "$1"
   RSC_CONFIG_SHA256=$(profile_config_sha256) || die "Не вдалося обчислити SHA-256 TOML профілю"
   RSC_SECRETS_SHA256=$(profile_secrets_sha256) || die "Не вдалося обчислити SHA-256 секретів профілю"
   RSC_APPLY_TOKEN=$(printf '%s:%s:%s' "$(date +%s)" "$$" "$RANDOM" | sha256sum | cut -c1-20)
   RSC_NAME=${2:-$PROFILE.rsc}
-  local output_dir outdir
+  local outdir
   if [[ -n $OUTPUT_OVERRIDE ]]; then
     outdir=$OUTPUT_OVERRIDE
     [[ $outdir == /* ]] || outdir="$PWD/$outdir"
   else
-    output_dir=$(cfg paths.output_dir output)
-    [[ $output_dir != /* && $output_dir != .. && $output_dir != ../* && $output_dir != */../* && $output_dir != */.. ]] || die "paths.output_dir має бути відносним каталогом профілю"
-    outdir="$PROFILE_DIR/$output_dir"
+    outdir="$PROFILE_DIR/$(rel_dir_checked "$(cfg paths.output_dir output)" local 'paths.output_dir')"
   fi
   RSC_OUT="$outdir/$RSC_NAME"
-  local remote_dir; remote_dir=$(cfg paths.remote_dir "")
-  [[ $remote_dir != /* && $remote_dir != *".."* ]] || die "paths.remote_dir має бути відносним каталогом на роутері без '..'"
-  RSC_REMOTE="${remote_dir:+${remote_dir%/}/}$RSC_NAME"
-  if [[ ! -d $outdir ]]; then
-    mkdir -p -- "$outdir"
-    # Обмежуємо права лише на щойно створеному каталозі; існуючі каталоги не чіпаємо.
-    chmod 700 -- "$outdir"
-    chmod g-s -- "$outdir"
-  fi
+  RSC_REMOTE="$(rel_dir_checked "$(cfg paths.remote_dir "")" remote 'paths.remote_dir')"
+  RSC_REMOTE="${RSC_REMOTE:+${RSC_REMOTE%/}/}$RSC_NAME"
+  ensure_private_dir "$outdir"
   if (( VERBOSE )); then info "Каталог локального RSC: $outdir"; fi
   RSC_TMP=$(mktemp "$outdir/.build.XXXXXX")
   gen_all "$RSC_REMOTE"
@@ -1061,19 +1123,16 @@ build_profile() {  # build_profile <profile> [name.rsc]
 resolve_existing_rsc() {  # resolve_existing_rsc <profile> [name.rsc]
   load_profile "$1"
   RSC_NAME=${2:-$PROFILE.rsc}
-  local output_dir outdir remote_dir
+  local outdir
   if [[ -n $OUTPUT_OVERRIDE ]]; then
     outdir=$OUTPUT_OVERRIDE
     [[ $outdir == /* ]] || outdir="$PWD/$outdir"
   else
-    output_dir=$(cfg paths.output_dir output)
-    [[ $output_dir != /* && $output_dir != .. && $output_dir != ../* && $output_dir != */../* && $output_dir != */.. ]] || die "paths.output_dir має бути відносним каталогом профілю"
-    outdir="$PROFILE_DIR/$output_dir"
+    outdir="$PROFILE_DIR/$(rel_dir_checked "$(cfg paths.output_dir output)" local 'paths.output_dir')"
   fi
   RSC_OUT="$outdir/$RSC_NAME"
-  remote_dir=$(cfg paths.remote_dir "")
-  [[ $remote_dir != /* && $remote_dir != *".."* ]] || die "paths.remote_dir має бути відносним каталогом на роутері без '..'"
-  RSC_REMOTE="${remote_dir:+${remote_dir%/}/}$RSC_NAME"
+  RSC_REMOTE="$(rel_dir_checked "$(cfg paths.remote_dir "")" remote 'paths.remote_dir')"
+  RSC_REMOTE="${RSC_REMOTE:+${RSC_REMOTE%/}/}$RSC_NAME"
   [[ -f $RSC_OUT && -r $RSC_OUT ]] || die "RSC не знайдено: $RSC_OUT. Спочатку виконайте --build --profile $PROFILE${NAME:+ --name $NAME}${OUTPUT_OVERRIDE:+ --output $OUTPUT_OVERRIDE}"
   [[ -s $RSC_OUT ]] || die "RSC порожній: $RSC_OUT"
 }
@@ -1104,7 +1163,7 @@ ssh_setup() {
   [[ $shk =~ ^(yes|no|accept-new|ask)$ ]] || die "connection.strict_host_key_checking: yes|accept-new|no|ask"
   local port; port=$(cfg connection.port 22); is_port "$port" || die "connection.port некоректний"
   local timeout; timeout=$(cfg connection.timeout_seconds 10)
-  [[ $timeout =~ ^[0-9]+$ ]] && (( timeout >= 1 && timeout <= 300 )) || die "connection.timeout_seconds має бути 1..300"
+  [[ $timeout =~ ^[0-9]+$ ]] && (( 10#$timeout >= 1 && 10#$timeout <= 300 )) || die "connection.timeout_seconds має бути 1..300"
   local common=(-o "ConnectTimeout=$timeout" -o "StrictHostKeyChecking=$shk")
   if [[ $shk == no ]]; then
     warn "strict_host_key_checking=no: ризик MITM (лише для контрольованої лабораторії)"
@@ -1123,15 +1182,8 @@ ssh_setup() {
 do_backup() {
   local ts base dst
   ts=$(date +%Y%m%d-%H%M%S); base="$PROFILE-pre-reset-$ts"
-  local backup_dir; backup_dir=$(cfg paths.backup_dir backups)
-  [[ $backup_dir != /* && $backup_dir != .. && $backup_dir != ../* && $backup_dir != */../* && $backup_dir != */.. ]] || die "paths.backup_dir має бути відносним каталогом профілю"
-  dst="$PROFILE_DIR/$backup_dir"
-  if [[ ! -d $dst ]]; then
-    mkdir -p -- "$dst"
-    # Не змінюємо права на вже наявному каталозі профілю або backup.
-    chmod 700 -- "$dst"
-    chmod g-s -- "$dst"
-  fi
+  dst="$PROFILE_DIR/$(rel_dir_checked "$(cfg paths.backup_dir backups)" local 'paths.backup_dir')"
+  ensure_private_dir "$dst"
   info "Backup → $dst/$base.{backup,rsc}"
   if is_true backup.encrypt false; then
     need backup.password_file backup.password_key
@@ -1143,7 +1195,7 @@ do_backup() {
   fi
   ssh "${SSH_OPTS[@]}" -- "$TARGET" "/export file=$base"
   local settle; settle=$(cfg connection.transfer_settle_seconds 2)
-  [[ $settle =~ ^[0-9]+$ ]] && (( settle >= 0 && settle <= 30 )) || die "connection.transfer_settle_seconds має бути 0..30"
+  [[ $settle =~ ^[0-9]+$ ]] && (( 10#$settle >= 0 && 10#$settle <= 30 )) || die "connection.transfer_settle_seconds має бути 0..30"
   sleep "$settle"
   scp -q "${SCP_OPTS[@]}" -- "$TARGET:$base.backup" "$dst/"
   scp -q "${SCP_OPTS[@]}" -- "$TARGET:$base.rsc" "$dst/"
@@ -1172,13 +1224,6 @@ cmd_backup() {
   do_backup
 }
 
-wait_for_reset_apply() {
-  # Код 255 після reset часто означає, що SSH обірвався під час перезавантаження.
-  # Опитування журналу прибрано: менеджер не чекає; результат перевіряйте
-  # вручну в журналі роутера (mgr: apply done / apply failed token=<token>).
-  return 0
-}
-
 cmd_upload() {
   if (( BUILD && ! BUILT )); then
     build_profile "$PROFILE_ARG" "$NAME"
@@ -1200,18 +1245,24 @@ cmd_upload() {
   scp -q "${SCP_OPTS[@]}" -- "$RSC_OUT" "$TARGET:$RSC_REMOTE"
   rsc_sha_after=$(sha256sum "$RSC_OUT" | awk '{print $1}')
   [[ $rsc_sha_before == "$rsc_sha_after" ]] || die "Локальний RSC змінився під час передачі; файл на роутері не застосовувався. Повторіть build/upload."
-  if (( RESET )); then verify_rsc_token; fi
+  # apply-token перевірено один раз до scp; локальний RSC під час передачі не змінюється.
   if (( RESET )); then
     info "Reset з run-after-reset=$RSC_REMOTE (без backup RouterOS: skip-backup=yes) ..."
+    # Preflight: код 255 — це «всі» помилки OpenSSH (timeout, авторизація, хост),
+    # не лише розрив при reboot. Перевіряємо канал до reset; якщо він неисправний,
+    # reset не відправляємо взагалі.
+    if ! ssh "${SSH_OPTS[@]}" -- "$TARGET" ":put 'mgr-preflight-ok'" >/dev/null 2>&1; then
+      die "SSH-канал до $TARGET недоступний (preflight не пройшов); reset НЕ відправлено"
+    fi
     local reset_rc=0
     printf 'y\n' | ssh "${SSH_OPTS[@]}" -- "$TARGET" \
       "/system reset-configuration no-defaults=$(yn "$(cfg reset.no_defaults true)") skip-backup=$(yn "$(cfg reset.skip_backup true)") run-after-reset=$RSC_REMOTE" || reset_rc=$?
     if (( reset_rc == 255 )); then
-      warn "SSH повернув код 255 під час reset; це може бути очікуваний розрив на перезавантаженні."
+      # Preflight пройдено, тому це значення трактується як очікуваний розрив при reboot.
+      warn "SSH повернув 255 після reset; preflight перед reset пройшов — ймовірно очікуваний розрив на перезавантаженні."
     elif (( reset_rc != 0 )); then
       die "Команда reset завершилася з кодом $reset_rc; стан роутера потрібно перевірити вручну"
     fi
-    wait_for_reset_apply
     info "Reset відправлено. Результат перевірте в журналі роутера: mgr: apply done / apply failed token=$RSC_APPLY_TOKEN (host key SSH зміниться — ssh-keygen -R)."
   else
     info "Файл завантажено. Застосувати вручну: /import file-name=$RSC_REMOTE"
@@ -1363,6 +1414,7 @@ main() {
 
   if (( VALIDATE )); then
     load_profile "$PROFILE_ARG"
+    check_secret_perms
     info "PASS: профіль '$PROFILE' валідний"
     return
   fi

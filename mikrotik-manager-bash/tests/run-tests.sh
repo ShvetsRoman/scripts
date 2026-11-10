@@ -325,7 +325,9 @@ check '--output newly created directory mode 700' bash -c '[[ $(stat -c %a "$1")
 check 'CHR management IP is 192.168.56.2/24' grep -q 'address=192.168.56.2/24' "$CHR_RSC"
 check 'CHR LAN is 192.168.88.1/24' grep -q 'address=192.168.88.1/24' "$CHR_RSC"
 check 'CHR management firewall list is used' grep -q 'in-interface-list="MGMT"' "$CHR_RSC"
-check 'CHR SSH service is limited to management subnet' grep -q 'name=ssh.*address="192.168.56.0/24"' "$CHR_RSC"
+# RouterOS 7.24 перейменував address → available-from; CHR (7.24.6) має новий синтаксис.
+check 'CHR SSH service is limited to management subnet (available-from syntax)' grep -q 'name=ssh.*available-from="192.168.56.0/24"' "$CHR_RSC"
+check 'CHR no deprecated service address= keyword' bash -c '! grep -Eq "name=ssh.*address=\"192" "$1"' _ "$CHR_RSC"
 check 'UPnP/proxy/socks/bandwidth-server deterministically disabled' bash -c 'g() { grep -c "$1" "$2"; }; [[ $(g "/ip upnp set enabled=no" "$1") -eq 1 && $(g "/ip proxy set enabled=no" "$1") -eq 1 && $(g "/ip socks set enabled=no" "$1") -eq 1 && $(g "/tool bandwidth-server set enabled=no" "$1") -eq 1 ]]' _ "$CHR_RSC"
 check 'clock timezone autodetect disabled' grep -q 'time-zone-autodetect=no' "$CHR_RSC"
 check 'CHR WAN DHCP client uses ether6' grep -q '/ip dhcp-client add interface="02_wan"' "$CHR_RSC"
@@ -338,6 +340,19 @@ check 'CHR DHCP clients use router DNS' grep -q 'dns-server=192.168.88.1' "$CHR_
 check 'CHR wireless omitted' grep -q '^# wireless: driver none - skipped$' "$CHR_RSC"
 check 'RouterOS errors are counted' grep -q ':set mgrErrors (\$mgrErrors + 1)' "$CHR_RSC"
 check 'CHR skips unsupported RouterBOARD settings' grep -q 'mgr: SKIP: RouterBOARD settings are not supported' "$CHR_RSC"
+# Октальний префікс: Python приймає /08 — bash зобов'язаний не падати і нормалізувати.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.octal"
+sed 's|address = "192.168.88.1/24"|address = "192.168.88.1/08"|' "$TMP/chr-config.octal" > "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'leading-zero CIDR prefix validates' run_ok "$M" --validate --profile "$CHR_PROFILE"
+check 'leading-zero CIDR prefix builds' run_ok "$M" --build --profile "$CHR_PROFILE" --name octal-test.rsc
+check 'leading-zero CIDR prefix normalized' grep -q '192.0.0.0/8' "$TMP/project/profiles/$CHR_PROFILE/output/octal-test.rsc"
+mv "$TMP/chr-config.octal" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+# Leading-zero цілих у TOML неможливі (TOMLDecodeError), тож bash-арифметика
+# цих полів недосяжна для значень типу «018» — негативний тест фіксує це.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.zero-lim"
+sed 's/^icmp_limit_per_second = 10.*/icmp_limit_per_second = 010/' "$TMP/chr-config.zero-lim" > "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'negative: leading-zero integer in TOML rejected' run_fail "$M" --validate --profile "$CHR_PROFILE"
+mv "$TMP/chr-config.zero-lim" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 check 'CHR does not execute RouterBOARD settings command' not_contains "$CHR_RSC" '/system routerboard settings set'
 check 'CHR enabled user SSH key is imported' grep -q 'public-key-file=\"mgr-roman-1.pub\" user=\"roman\"' "$CHR_RSC"
 check 'CHR admin key import uses SSH fingerprint' grep -Eq 'fingerprint="SHA256:[A-Za-z0-9+/=]{40,60}"' "$CHR_RSC"
@@ -345,11 +360,14 @@ check 'create=false does not emit user-add for admin' not_contains "$CHR_RSC" '/
 check 'admin password is not changed when no secret is configured' not_contains "$CHR_RSC" '/user add name="admin" group='
 check 'CHR admin key import is independent of create=false' grep -q 'user admin not found; create=false' "$CHR_RSC"
 check 'CHR roman user is ensured before admin disable' bash -c 'u=$(grep -n -m1 "users: ensure roman" "$1" | cut -d: -f1); d=$(grep -n -m1 "users: disable admin (deferred)" "$1" | cut -d: -f1); [[ -n $u && -n $d && $u -lt $d ]]' _ "$CHR_RSC"
-check 'CHR SSH key import precedes deferred admin disable' bash -c 'k=$(grep -n -m1 "users: import SSH key roman#1" "$1" | cut -d: -f1); d=$(grep -n -m1 "users: disable admin (deferred)" "$1" | cut -d: -f1); [[ -n $k && -n $d && $k -lt $d ]]' _ "$CHR_RSC"
+check 'CHR SSH key import precedes deferred admin disable' bash -c 'k=$(grep -n -m1 "sshkey: import roman#1" "$1" | cut -d: -f1); d=$(grep -n -m1 "users: disable admin (deferred)" "$1" | cut -d: -f1); [[ -n $k && -n $d && $k -lt $d ]]' _ "$CHR_RSC"
 check 'admin disable is guarded by zero prior apply errors' grep -Fq ':if ($mgrErrors = 0) do=' "$CHR_RSC"
-check 'SSH key is verified (no blind temporary file cleanup)' bash -c 'line=$(grep -n -m1 "users: import SSH key roman#1" "$1" | cut -d: -f1); sed -n "${line}p" "$1" | grep -q "SSH key import verification failed" && ! sed -n "${line}p" "$1" | grep -qF "/file remove \$mgrKeyFile"' _ "$CHR_RSC"
+check 'SSH key is verified (no blind temporary file cleanup)' bash -c 'line=$(grep -n -m1 "sshkey: verify import roman#1" "$1" | cut -d: -f1); sed -n "${line}p" "$1" | grep -q "SSH key import verification failed" && ! sed -n "${line}p" "$1" | grep -qF "/file remove \$mgrKeyFile"' _ "$CHR_RSC"
 check 'SSH import failure keeps temporary public key for diagnosis' grep -q 'SSH key import verification failed for roman' "$CHR_RSC"
-check 'user operation errors have safe descriptive labels' grep -q 'mgr: FAILED: users: import SSH key roman#1' "$CHR_RSC"
+check 'user operation errors have safe descriptive labels' grep -q 'mgr: FAILED: sshkey: import roman#1' "$CHR_RSC"
+check 'SSH key re-add is idempotent (stale file removed by guarded lookup)' grep -q 'do={ /file remove \[/file find where name="mgr-roman-1.pub"\] }' "$CHR_RSC"
+check 'SSH import steps are separate commands (localizable failure)' bash -c '[[ $(grep -c "FAILED: sshkey: " "$1") -ge 5 ]]' _ "$CHR_RSC"
+check 'SSH import target-user check has its own labeled step' grep -q 'mgr: FAILED: sshkey: target user roman#1' "$CHR_RSC"
 check 'apply-done is conditional on zero errors' grep -Fq ':if ($mgrErrors = 0) do=' "$CHR_RSC"
 
 # Home profile test uses synthetic disposable secrets only in the temporary project copy.
@@ -361,6 +379,8 @@ EOF
 chmod 600 "$TMP/project/profiles/$HOME_PROFILE/.secrets"
 check 'physical profile build with temporary test secrets' run_ok "$M" --build --profile "$HOME_PROFILE"
 HOME_RSC="$TMP/project/profiles/$HOME_PROFILE/output/$HOME_PROFILE.rsc"
+# Home-профіль target 7.23.8 (< 7.24) → deprecated, але сумісний синтаксис address=.
+check 'home profile RouterOS 7.23 uses legacy service address= syntax' grep -q 'name=ssh.*address="192.168.' "$HOME_RSC"
 # На профілі з WAN перевіряємо порядок секцій, не підключаючись до RouterOS.
 HOME_RSC_ORDER="$TMP/project/profiles/$HOME_PROFILE/output/$HOME_PROFILE.rsc"
 USER_LINE=$(grep -n -m1 '/user ' "$HOME_RSC_ORDER" | cut -d: -f1)
@@ -610,6 +630,18 @@ ssh_keys = ["~/.ssh/backup.pub"]
 EOF
 check 'multi-user profile validates' run_ok "$M" --validate --profile "$CHR_PROFILE"
 check 'multi-user profile builds' run_ok "$M" --build --profile "$CHR_PROFILE" --name users-test.rsc
+# Lockout-контракт: connection.user має посилатися на активного користувача профілю.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.lockout"
+sed 's/^user = "roman"$/user = "disabled-existing"/' "$TMP/chr-config.lockout" > "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'negative: connection.user pointing at disabled user rejected' run_fail "$M" --validate --profile "$CHR_PROFILE"
+sed 's/^user = "roman"$/user = "nonexistent-user"/' "$TMP/chr-config.lockout" > "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'negative: unknown connection.user rejected' run_fail "$M" --validate --profile "$CHR_PROFILE"
+mv "$TMP/chr-config.lockout" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+# Allowlist: [services] приймає лише стандартні IP-служби RouterOS.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.services"
+printf '\n[services.reverse-proxy]\nenabled = true\nport = 8118\nlimit_to_lan = true\n' >> "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'negative: non-standard service name rejected' run_fail "$M" --validate --profile "$CHR_PROFILE"
+mv "$TMP/chr-config.services" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 USERS_RSC="$TMP/project/profiles/$CHR_PROFILE/output/users-test.rsc"
 check 'test user gets first configured SSH key' grep -q 'public-key-file=\"mgr-test-roman-1.pub\" user=\"test-roman\"' "$USERS_RSC"
 check 'test user gets second configured SSH key' grep -q 'public-key-file=\"mgr-test-roman-2.pub\" user=\"test-roman\"' "$USERS_RSC"
@@ -663,7 +695,7 @@ check '--name empty value rejected' run_fail "$M" --build --profile "$CHR_PROFIL
 check '--output empty value rejected' run_fail "$M" --build --profile "$CHR_PROFILE" --output=
 check '--output without build/upload rejected' run_fail "$M" --validate --profile "$CHR_PROFILE" --output ./dist
 check '--name without build/upload rejected' run_fail "$M" --validate --profile "$CHR_PROFILE" --name bad.rsc
-check 'backup path is profile-local in source' grep -q 'PROFILE_DIR/\$backup_dir' "$M"
+check 'backup path is profile-local in source' grep -q 'PROFILE_DIR/$(rel_dir_checked' "$M"
 check 'environment overrides removed' bash -c '! grep -Eq "BACKUP_DIR=\$\{|OUTPUT_DIR=\$\{|REMOTE_DIR=\$\{|KEEP_RSC_ON_ROUTER=\$\{" "$1"' _ "$M"
 
 # Mocked transport: verifies local-file selection and operation ordering without a router.
@@ -767,7 +799,7 @@ check 'backup password is delivered through SSH stdin' grep -Fq 'ssh-stdin /syst
 check 'backup password appears only in SSH stdin payload' bash -c 'grep -F MockBackupSecret-Only "$1" | grep -q "^ssh-stdin " && ! grep -F MockBackupSecret-Only "$1" | grep -q "^ssh-argv "' _ "$MOCK_TRANSPORT_LOG"
 mv "$TMP/chr-config.backup" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 
-# Мок reset: імітуємо SSH 255 під час reboot.
+# Мок reset: імітуємо SSH 255 під час reboot, preflight проходить успішно.
 mkdir -p "$TMP/reset-bin"
 cat > "$TMP/reset-bin/ssh" <<'EOF'
 #!/usr/bin/env bash
@@ -788,10 +820,29 @@ export PATH="$TMP/reset-bin:$TMP/test-bin:$PATH"
 : > "$MOCK_RESET_LOG"
 check 'mock reset tolerates SSH 255 mid-reboot' run_ok "$M" --upload --reset --yes --profile "$CHR_PROFILE" --name reset-test.rsc
 check 'mock reset sends only one reset command' bash -c '[[ $(grep -c reset-configuration "$1") -eq 1 ]]' _ "$MOCK_RESET_LOG"
+check 'mock reset runs read-only preflight before reset' bash -c "p=\$(grep -n 'mgr-preflight-ok' \"\$1\" | head -n1 | cut -d: -f1); r=\$(grep -n reset-configuration \"\$1\" | head -n1 | cut -d: -f1); [[ -n \$p && -n \$r && \$p -lt \$r ]]" _ "$MOCK_RESET_LOG"
 : > "$MOCK_RESET_LOG"
 check 'same RSC/apply-token is not blocked by one-time state' run_ok "$M" --upload --reset --yes --profile "$CHR_PROFILE" --name reset-test.rsc
 check 'repeated reset is sent to mock transport' grep -q reset-configuration "$MOCK_RESET_LOG"
 check 'RESET creates no one-time marker sidecar' test ! -e "$TMP/project/profiles/$CHR_PROFILE/output/reset-test.rsc.reset-attempted"
+# Негативний сценарій: SSH-канал недоступний — reset НЕ відправляється з кодом 0.
+mkdir -p "$TMP/down-bin"
+cat > "$TMP/down-bin/ssh" <<'EOF'
+#!/usr/bin/env bash
+args="$*"
+printf 'down-mock-ssh %s\n' "$args" >> "$MOCK_RESET_LOG"
+if [[ $args == *reset-configuration* ]]; then exit 255; fi
+exit 1
+EOF
+cat > "$TMP/down-bin/scp" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod 755 "$TMP/down-bin/ssh" "$TMP/down-bin/scp"
+: > "$MOCK_RESET_LOG"
+check 'SSH unavailable before reset aborts run' run_fail env PATH="$TMP/down-bin:$TMP/test-bin:/usr/bin:/bin" "$M" --upload --reset --yes --profile "$CHR_PROFILE" --name reset-test.rsc
+check 'SSH unavailable aborts without sending reset' bash -c '! grep -q reset-configuration "$1"' _ "$MOCK_RESET_LOG"
+check 'fresh build creates a new reset correlation token' run_ok "$M" --build --profile "$CHR_PROFILE" --name reset-test.rsc
 check 'fresh build creates a new reset correlation token' run_ok "$M" --build --profile "$CHR_PROFILE" --name reset-test.rsc
 printf '%s\n' '[5] Router integration'
 skip 'SSH upload' 'не виконувалось: не підключаємося до роутера в локальному тестовому прогоні'

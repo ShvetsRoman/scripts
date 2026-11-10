@@ -19,6 +19,8 @@ from typing import Any
 SCHEMA_FILE = Path(__file__).resolve().parent / "schema.json"
 if not SCHEMA_FILE.is_file():
     raise SystemExit(f"ERROR: TOML schema not found: {SCHEMA_FILE}")
+# Стандартний набір IP-служб RouterOS; тільки ці імена дозволені у [services.*].
+SERVICE_ALLOWLIST = frozenset({"api", "api-ssl", "api-rest", "ftp", "ssh", "telnet", "winbox", "www", "www-ssl", "grpc", "grpc-ssl"})
 try:
     _schema = json.loads(SCHEMA_FILE.read_text(encoding="utf-8"))
     ROOT_KEYS: dict[str, str] = _schema["root_keys"]
@@ -224,6 +226,15 @@ def validate(data: dict[str, Any], source: str) -> tuple[dict[str, Any], list[st
             fail(f"{source}: users.{user_key}.ssh_keys не може містити порожні шляхи")
         if len(keys) != len(set(keys)):
             fail(f"{source}: users.{user_key}.ssh_keys містить дубль шляхів")
+    # connection.user має бути користувачем профілю, який залишиться активним:
+    # у разі reset вимкнений користувач керування = повний lockout.
+    conn_user = (data.get("connection") or {}).get("user")
+    if conn_user:
+        owner_key = next((k for k, u in data.get("users", {}).items() if u.get("name") == conn_user), None)
+        if owner_key is None:
+            fail(f"{source}: connection.user '{conn_user}' не належить жодному [users.*]")
+        elif not data["users"][owner_key].get("enabled"):
+            fail(f"{source}: connection.user '{conn_user}' збігається з вимкненим користувачем users.{owner_key}; після reset доступ буде втрачено (lockout)")
     # Міжсекційні залежності описані в schema.json і застосовуються до TOML.
     for relation in SCHEMA_CONSTRAINTS.get("matching_table_keys", []):
         source_table = data.get(relation["source"], {})
@@ -323,8 +334,13 @@ def validate(data: dict[str, Any], source: str) -> tuple[dict[str, Any], list[st
     if data.get("management", {}).get("on_lan") is False and "management" not in data.get("lists", {}):
         fail(f"{source}: management.on_lan=false потребує [lists.management]")
     for service_name, service in data.get("services", {}).items():
-        if isinstance(service, dict) and service.get("enabled"):
-            if service_name == "reverse-proxy": fail(f"{source}: services.reverse-proxy не є стандартною IP-службою RouterOS")
+        if not isinstance(service, dict):
+            continue
+        # Стандартний набір IP-служб RouterOS (CHANGELOG 2026-11-06);
+        # без allowlist ім'я служби потрапляло б у RSC без лапок.
+        if service_name not in SERVICE_ALLOWLIST:
+            fail(f"{source}: services.{service_name} не входить у стандартний набір IP-служб RouterOS ({', '.join(sorted(SERVICE_ALLOWLIST))})")
+        if service.get("enabled"):
             if "port" not in service: fail(f"{source}: services.{service_name}.port обов'язковий для активної служби")
             if "limit_to_lan" not in service: fail(f"{source}: services.{service_name}.limit_to_lan обов'язковий для активної служби")
             if not 1 <= service["port"] <= 65535: fail(f"{source}: services.{service_name}.port має бути 1..65535")

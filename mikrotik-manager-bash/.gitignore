@@ -5,6 +5,9 @@
 profiles/*/output/*.rsc
 profiles/*/backups/*
 
+# Журнали RouterOS: приватна топологія (IP/MAC/fingerprint) не для репозиторію
+log.txt
+
 # Python
 __pycache__/
 *.py[cod]
