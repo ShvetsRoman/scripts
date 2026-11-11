@@ -79,10 +79,6 @@ Backup з довільного місця:
   TYPE: home (~/ або ${HOME}/), system (/etc/...), порожній (абсолютний PATH)
   ./backup-install_manager.sh sources remove NAME
 
-Міграція старих файлів у нову структуру (одноразово):
-  bash tools/migrate-dotfiles-v1410.sh --dry-run
-  bash tools/migrate-dotfiles-v1410.sh --apply
-
 Архіви / Recovery:
   ./backup-install_manager.sh archive list|create|restore NAME
   ./backup-install_manager.sh recovery list|verify ID|plan ID|restore ID [ШЛЯХ...]|delete ID
@@ -225,7 +221,7 @@ cli_dotfiles_execute() {
                 good=false
                 for member in "${members[@]}"; do
                     sources_find "$member" || return 2
-                    if [[ "$filter" == "$S_NAME" || "$filter" == "$S_SRC" || "$filter" == "$S_REPO_REL" ]]; then
+                    if sync_row_selected "$filter"; then
                         good=true
                         selected+=("$member")
                         break

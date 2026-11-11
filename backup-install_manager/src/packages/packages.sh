@@ -76,7 +76,6 @@ pkgs_install() {
     fi
     ((${#available[@]})) || return 0
     log step "Встановлення $type: ${available[*]}"
-    if [[ "${DRY_RUN:-false}" == true ]]; then log info "[DRY-RUN] $type"; return 0; fi
     if [[ "$type" == pacman ]]; then
         local -a pacman_flags=(-S --needed)
         [[ "${SETUP_ASSUME_YES:-false}" == true ]] && pacman_flags+=(--noconfirm)

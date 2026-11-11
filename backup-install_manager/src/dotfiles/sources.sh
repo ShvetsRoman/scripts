@@ -14,7 +14,7 @@ sources_parse() {
     _trim_r "$S_SRC"; S_SRC="$REPLY"
     # Єдине місце розгортання HOME та формування репозиторного шляху.
     path_resolve "$S_MODE" "$S_SRC"
-    # Використовується sync.sh, меню та одноразовою міграцією.
+    # Використовується sync.sh та меню.
     # shellcheck disable=SC2034
     S_REPO_REL="$PATH_REL"
 }
@@ -128,6 +128,11 @@ sources_remove() {
     local name="${1:-}" line tmp file
     [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || return 2
     sources_load || return 2
+    # Неіснуючий ID — помилка, а не хибний успіх; стосується і DRY-RUN.
+    if ! sources_find "$name"; then
+        log error "Не знайдено в реєстрі: $name"
+        return 1
+    fi
     file="$(sources_file)"
     if [[ "${DRY_RUN:-false}" == true ]]; then log info "[DRY-RUN] sources remove: $name"; return 0; fi
     tmp="$(mktemp "${file}.tmp.XXXXXXXX")" || return 2

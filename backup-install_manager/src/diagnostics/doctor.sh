@@ -38,6 +38,8 @@ smart_main() {
     doctor_main || { log error 'Doctor не пройдено'; return 1; }
     log info 'Smart Setup: програми + конфіги.'
     local -a args=("$@")
-    ((${#args[@]})) || args=(--dry-run all)
+    # Без аргументів — задокументований dry-run усіх модулів.
+    # Прапорець передаємо глобальною змінною: packages_main не розбирає --dry-run.
+    ((${#args[@]})) || { DRY_RUN=true; export DRY_RUN; args=(all); }
     packages_main "${args[@]}"
 }

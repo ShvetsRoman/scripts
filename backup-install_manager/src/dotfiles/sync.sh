@@ -15,20 +15,7 @@ sync_run() {
     ((${#SRC_ROWS[@]})) || { log info 'Реєстр порожній.'; return 0; }
 
     # Невідомі фільтри — помилка, а не хибний успіх без дій.
-    local filter_item known check_row
-    for filter_item in "${filter[@]}"; do
-        known=false
-        for check_row in "${SRC_ROWS[@]}"; do
-            sources_parse "$check_row"
-            if [[ "$filter_item" == "$S_NAME" || "$filter_item" == "$S_SRC" || "$filter_item" == "$S_REPO_REL" ]]; then
-                known=true; break
-            fi
-        done
-        if [[ "$known" == false ]]; then
-            log error "Немає шляху в реєстрі: $filter_item"
-            return 2
-        fi
-    done
+    sync_validate_filter "${filter[@]}" || return 2
 
     # Заголовок із назвою операції.
     local title
@@ -46,14 +33,7 @@ sync_run() {
     local row changed=0 unchanged=0 missing=0 failed=0
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
-
-        if ((${#filter[@]})); then
-            local matched=false f
-            for f in "${filter[@]}"; do
-                [[ "$S_NAME" == "$f" || "$S_SRC" == "$f" || "$S_REPO_REL" == "$f" ]] && matched=true
-            done
-            $matched || continue
-        fi
+        sync_row_selected "${filter[@]}" || continue
 
         local src dst group
         if [[ "$mode" == backup ]]; then
@@ -278,6 +258,30 @@ sync_classify() {
     return 0
 }
 
+# Спільний рендер класифікованого рядка для status/verify/diff.
+# Аргументи: home repo v_missing v_only_home v_only_repo v_equal v_changed v_failed.
+# Лічильники викликача оновлюються через nameref.
+# Повертає 0 — рядок оброблено повністю (друкувати нічого),
+# 1 — SAME (у status/verify варто надрукувати OK, у diff — нічого),
+# 2 — CHANGED (повідомлення надруковано; у diff лишається рендер різниці).
+sync_report_class() {
+    local home="$1" repo="$2"
+    local -n c_missing="$3" c_only_home="$4" c_only_repo="$5" c_equal="$6" c_changed="$7" c_failed="$8"
+    case "$SYNC_CLASS" in
+        MISSING) log_state MISSING "$S_NAME — немає ні в HOME, ні в dotfiles"; ((c_missing+=1)); return 0 ;;
+        TARGET_ONLY) log_state DEL "$S_NAME — є в dotfiles, немає в HOME"; ((c_only_repo+=1)); return 0 ;;
+        SOURCE_ONLY) log_state NEW "$S_NAME — є в HOME, немає в dotfiles"; ((c_only_home+=1)); return 0 ;;
+        UNSAFE) log error "$S_NAME — небезпечний шлях"; ((c_failed+=1)); return 0 ;;
+        SAME) ((c_equal+=1)); return 1 ;;
+        CHANGED)
+            log_state CHANGED "$S_NAME — є відмінності між HOME і dotfiles"
+            ((c_changed+=1))
+            sync_report_nested_missing "$home" "$repo" "$S_NAME" c_only_home c_only_repo
+            return 2 ;;
+        ERROR) log error "$S_NAME — помилка порівняння"; ((c_failed+=1)); return 0 ;;
+    esac
+}
+
 # Відмінність або відсутність — це стан, не помилка: код 0.
 # Код 2 — некоректний запит / неможливе порівняння.
 sync_status() {
@@ -285,25 +289,16 @@ sync_status() {
     sources_load || return 2
     sync_validate_filter "${filters[@]}" || return 2
     header '✦  status    HOME ↔ dotfiles'
-    local row home repo failed=0 equal=0 changed=0 only_home=0 only_repo=0 missing=0 untracked=0
+    local row home repo failed=0 equal=0 changed=0 only_home=0 only_repo=0 missing=0 untracked=0 render_rc=0
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
         sync_row_selected "${filters[@]}" || continue
         home="$(path_live_for "$S_MODE" "$S_SRC")"
         repo="$(path_repo_for "$S_MODE" "$S_SRC")"
         sync_classify "$home" "$repo"
-        case "$SYNC_CLASS" in
-            MISSING) log_state MISSING "$S_NAME — немає ні в HOME, ні в dotfiles"; ((missing+=1)) ;;
-            TARGET_ONLY) log_state DEL "$S_NAME — є в dotfiles, немає в HOME"; ((only_repo+=1)) ;;
-            SOURCE_ONLY) log_state NEW "$S_NAME — є в HOME, немає в dotfiles"; ((only_home+=1)) ;;
-            UNSAFE) log error "$S_NAME — небезпечний шлях"; ((failed+=1)) ;;
-            SAME) log_state OK "$S_NAME"; ((equal+=1)) ;;
-            CHANGED)
-                log_state CHANGED "$S_NAME — є відмінності між HOME і dotfiles"
-                ((changed+=1))
-                sync_report_nested_missing "$home" "$repo" "$S_NAME" only_home only_repo ;;
-            ERROR) log error "$S_NAME — помилка порівняння"; ((failed+=1)) ;;
-        esac
+        render_rc=0
+        sync_report_class "$home" "$repo" missing only_home only_repo equal changed failed || render_rc=$?
+        if ((render_rc == 1)); then log_state OK "$S_NAME"; fi
     done
     if ((${#filters[@]} == 0)); then
         sync_report_untracked untracked
@@ -323,7 +318,7 @@ sync_diff() {
     ((${#filter[@]})) && title+="  [${filter[*]}]"
     header "$title"
 
-    local row total=0 changed=0 missing=0 failed=0 only_home=0 only_repo=0
+    local row total=0 changed=0 missing=0 failed=0 only_home=0 only_repo=0 equal=0 render_rc=0
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
         sync_row_selected "${filter[@]}" || continue
@@ -332,16 +327,11 @@ sync_diff() {
         hp="$(path_live_for "$S_MODE" "$S_SRC")"
         rp="$(path_repo_for "$S_MODE" "$S_SRC")"
         sync_classify "$hp" "$rp"
-        case "$SYNC_CLASS" in
-            MISSING) log_state MISSING "$S_NAME — немає ні в HOME, ні в dotfiles"; ((missing+=1)); continue ;;
-            TARGET_ONLY) log_state DEL "$S_NAME — є в dotfiles, немає в HOME"; ((only_repo+=1)); continue ;;
-            SOURCE_ONLY) log_state NEW "$S_NAME — є в HOME, немає в dotfiles"; ((only_home+=1)); continue ;;
-            UNSAFE) log error "$S_NAME — небезпечний шлях"; ((failed+=1)); continue ;;
-            SAME) continue ;;
-            CHANGED) ((changed+=1)); log_state CHANGED "$S_NAME — є відмінності між HOME і dotfiles" ;;
-            ERROR) log error "$S_NAME — помилка порівняння"; ((failed+=1)); continue ;;
-        esac
-        sync_report_nested_missing "$hp" "$rp" "$S_NAME" only_home only_repo
+        render_rc=0
+        sync_report_class "$hp" "$rp" missing only_home only_repo equal changed failed || render_rc=$?
+        # 0 — рядок оброблено, 1 — SAME (у diff нічого не друкуємо),
+        # 2 — CHANGED: далі рендеримо саму різницю.
+        ((render_rc == 2)) || continue
         local color_opt=--color=never
         _ui_tty 1 && color_opt=--color=always
         diff_rc=0
@@ -404,7 +394,7 @@ sync_verify() {
     sources_load || return 2
     sync_validate_filter "${filters[@]}" || return 2
     header '✓  verify    HOME ↔ dotfiles (без змін)'
-    local row home repo total=0 equal=0 changed=0 missing=0 failed=0 only_home=0 only_repo=0
+    local row home repo total=0 equal=0 changed=0 missing=0 failed=0 only_home=0 only_repo=0 render_rc=0
     for row in "${SRC_ROWS[@]}"; do
         sources_parse "$row"
         sync_row_selected "${filters[@]}" || continue
@@ -412,18 +402,9 @@ sync_verify() {
         home="$(path_live_for "$S_MODE" "$S_SRC")"
         repo="$(path_repo_for "$S_MODE" "$S_SRC")"
         sync_classify "$home" "$repo"
-        case "$SYNC_CLASS" in
-            MISSING) log_state MISSING "$S_NAME — немає ні в HOME, ні в dotfiles"; ((missing+=1)) ;;
-            TARGET_ONLY) log_state DEL "$S_NAME — є в dotfiles, немає в HOME"; ((only_repo+=1)) ;;
-            SOURCE_ONLY) log_state NEW "$S_NAME — є в HOME, немає в dotfiles"; ((only_home+=1)) ;;
-            UNSAFE) log error "$S_NAME — небезпечний шлях"; ((failed+=1)) ;;
-            SAME) log_state OK "$S_NAME"; ((equal+=1)) ;;
-            CHANGED)
-                log_state CHANGED "$S_NAME — є відмінності між HOME і dotfiles"
-                ((changed+=1))
-                sync_report_nested_missing "$home" "$repo" "$S_NAME" only_home only_repo ;;
-            ERROR) log error "$S_NAME — помилка порівняння"; ((failed+=1)) ;;
-        esac
+        render_rc=0
+        sync_report_class "$home" "$repo" missing only_home only_repo equal changed failed || render_rc=$?
+        if ((render_rc == 1)); then log_state OK "$S_NAME"; fi
     done
     printf '\n'
     log info "Verify: записів $total, однакових $equal, змінених $changed, тільки в HOME $only_home, тільки в dotfiles $only_repo, відсутніх $missing, помилок $failed"

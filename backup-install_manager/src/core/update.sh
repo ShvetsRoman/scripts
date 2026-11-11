@@ -24,6 +24,11 @@ setup_update() {
     fi
     command -v python3 >/dev/null || { log error 'Потрібен python3'; return 1; }
     local -a args=("$archive" "$ROOT_DIR")
-    [[ "$mode" == --dry-run ]] && args+=(--dry-run)
+    if [[ "$mode" == --dry-run || "${DRY_RUN:-false}" == true ]]; then
+        args+=(--dry-run)
+    else
+        # Контракт мутуючих операцій: код змінюється лише після підтвердження.
+        setup_confirm "Оновити код із $archive?" || return 0
+    fi
     python3 "$(path_release_tool)" "${args[@]}"
 }

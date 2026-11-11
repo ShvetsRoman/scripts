@@ -57,7 +57,16 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 export SETUP_LOG_FILE="$_test_log_dir/setup-tests.log"
 pass() { runner_pass=$((runner_pass + 1)); printf '[PASS] %s\n' "$*"; }
-fail() { runner_fail=$((runner_fail + 1)); runner_failed_tests+=("$*"); printf '[FAIL] %s\n' "$*" >&2; exit 1; }
+# Політика невдач: за замовчуванням набір не зупиняється на першому FAIL,
+# щоб за один прогін побачити всі проблеми (підсумок перелічує всі невдачі).
+# SETUP_TEST_STOP_ON_FAIL=true повертає попередню поведінку fail-fast.
+stop_on_fail="${SETUP_TEST_STOP_ON_FAIL:-false}"
+fail() {
+    runner_fail=$((runner_fail + 1))
+    runner_failed_tests+=("$*")
+    printf '[FAIL] %s\n' "$*" >&2
+    if [[ "$stop_on_fail" == true ]]; then exit 1; fi
+}
 
 # 1. Синтаксис усіх .sh.
 while IFS= read -r -d '' f; do
@@ -99,7 +108,7 @@ if (( SETUP_TEST_TIMEOUT > 0 )) && ! command -v timeout >/dev/null 2>&1; then
 fi
 
 # 5. Підтести. За потреби запускаємо лише вибрані через SETUP_TEST_ONLY.
-ALL_TESTS=(test-docs-menu-v202 test-backups-menu-hints-v201 test-backups-menu-lock-v201 test-entrypoint-rename test-packages-empty-stage-v201 test-dotfiles-status-ui-v201 test-module-graph-v200 test-reports-v200 test-update-safety-v151 test-release-contract-v1440 test-cli-contract-v1439 test-hooks-contract-v1438 test-packages-contract-v1437 test-recovery-integrity-v1436 test-fs-safety-v1435 test-exit-cleanup-v1434 test-hook-isolation-v1433 test-dependency-order-v1432 test-source-audit-v1431 test-release-layout-v1430 test-audit-functions-v1429 test-configs-executor-v1428 test-registry-reload-v1427 test-cli-flags-v1426 test-structure-audit-v1425 test-structure-v1424 test-bootstrap-v1423 test-hook-runtime-v1422 test-runner-report-v1421 test-runner-summary-v1420 test-runner-timeout-v1419 test-packages-unified-doctor-v1418 test-packages-syntax-v1417 test-packages-diagnostics-v1416 test-configs-dedup-v1415 test-packages-validation-v1414 test-configs-group-v1413 test-menu-escape-v1412 test-dotfiles-menu-groups-v1411 test-path-context-v1410 test-migration-v1410 test-path-registry-v1410 test-path-operations-v1410 test-path test-fs test-apply test-sources test-sync test-archive test-recovery test-scan test-safety test-lock test-validation test-cli test-plan test-verify test-recovery-integrity test-no-clear test-backup-changed test-rollback-v3 test-recovery-selective test-rotation-v3 test-backups-v3 test-logs-v3 test-status-color test-status-counts test-snapper test-sources-v4 test-dotfiles-groups-v149 test-registry-order test-packages-batch test-packages-failure-v144 test-packages-bound-v145 test-packages-config-bound-v146 test-packages-stage-order-v147 test-packages-config-failure-v148 test-symlinks-v4 test-sync-classify-v4 test-system-restore-v4 test-system-copy-v4 test-transaction-safety-v4 test-rollback-verify-v4 test-menu-layout-v4 test-packages-config-v4 test-packages-doctor-v141 test-hooks-standalone-v4 test-hooks-failure-v142 test-unified-logging-v4 test-log-lifecycle-v143)
+ALL_TESTS=(test-docs-menu-v202 test-smart-v202 test-update-confirm-v202 test-backups-menu-hints-v201 test-backups-menu-lock-v201 test-entrypoint-rename test-packages-empty-stage-v201 test-dotfiles-status-ui-v201 test-module-graph-v200 test-reports-v200 test-update-safety-v151 test-release-contract-v1440 test-cli-contract-v1439 test-hooks-contract-v1438 test-packages-contract-v1437 test-recovery-integrity-v1436 test-fs-safety-v1435 test-exit-cleanup-v1434 test-hook-isolation-v1433 test-dependency-order-v1432 test-source-audit-v1431 test-release-layout-v1430 test-audit-functions-v1429 test-configs-executor-v1428 test-registry-reload-v1427 test-cli-flags-v1426 test-structure-audit-v1425 test-structure-v1424 test-bootstrap-v1423 test-hook-runtime-v1422 test-runner-report-v1421 test-runner-summary-v1420 test-runner-timeout-v1419 test-packages-unified-doctor-v1418 test-packages-syntax-v1417 test-packages-diagnostics-v1416 test-configs-dedup-v1415 test-packages-validation-v1414 test-configs-group-v1413 test-menu-escape-v1412 test-dotfiles-menu-groups-v1411 test-path-context-v1410 test-path-registry-v1410 test-path-operations-v1410 test-path test-fs test-apply test-sources test-sync test-archive test-recovery test-scan test-safety test-lock test-validation test-cli test-plan test-verify test-recovery-integrity test-no-clear test-backup-changed test-rollback-v3 test-recovery-selective test-rotation-v3 test-backups-v3 test-logs-v3 test-status-color test-status-counts test-snapper test-sources-v4 test-dotfiles-groups-v149 test-registry-order test-packages-batch test-packages-failure-v144 test-packages-bound-v145 test-packages-config-bound-v146 test-packages-stage-order-v147 test-packages-config-failure-v148 test-symlinks-v4 test-sync-classify-v4 test-system-restore-v4 test-system-copy-v4 test-transaction-safety-v4 test-rollback-verify-v4 test-menu-layout-v4 test-packages-config-v4 test-packages-doctor-v141 test-hooks-standalone-v4 test-hooks-failure-v142 test-unified-logging-v4 test-log-lifecycle-v143)
 SELECTED_TESTS=("${ALL_TESTS[@]}")
 
 if [[ -n "${SETUP_TEST_ONLY:-}" ]]; then
@@ -136,13 +145,15 @@ for t in "${SELECTED_TESTS[@]}"; do
         runner_fail=$((runner_fail + 1))
         runner_failed_tests+=("$t — тайм-аут ${SETUP_TEST_TIMEOUT} с")
         printf '[FAIL] %s: перевищено ліміт %s с (SETUP_TEST_TIMEOUT)\n' "$t" "$SETUP_TEST_TIMEOUT" >&2
-        exit 1
+        if [[ "$stop_on_fail" == true ]]; then exit 1; fi
+        continue
     fi
     if (( rc != 0 )); then
         runner_fail=$((runner_fail + 1))
         runner_failed_tests+=("$t — код $rc")
         printf '[FAIL] %s (код %s, %s с)\n' "$t" "$rc" "$elapsed" >&2
-        exit 1
+        if [[ "$stop_on_fail" == true ]]; then exit 1; fi
+        continue
     fi
     runner_pass=$((runner_pass + 1))
     printf '[DONE] %s (%s с)\n' "$t" "$elapsed"
@@ -159,4 +170,8 @@ else
     printf '[SKIP] ShellCheck\n'
 fi
 
-printf '\n[PASS] Усі перевірки пройдено\n'
+if (( runner_fail == 0 )); then
+    printf '\n[PASS] Усі перевірки пройдено\n'
+else
+    exit 1
+fi

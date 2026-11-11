@@ -36,7 +36,7 @@ for file in "$root"/hooks/*.sh; do
     grep -Eq '^hook_main\(\)' "$file" || fail "Відсутня функція hook_main у ${file#"$root"/}"
 done
 
-for file in archive_safe.py recovery_safe.py update_safe.py migrate-dotfiles-v1410.sh; do
+for file in archive_safe.py recovery_safe.py update_safe.py; do
     [[ -f "$root/tools/$file" ]] || fail "Відсутній tools/$file"
 done
 
