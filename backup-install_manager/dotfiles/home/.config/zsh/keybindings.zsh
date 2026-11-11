@@ -5,8 +5,11 @@ bindkey -e
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
+# Дві послідовності: DECCKM (kitty, smkx) та звичайний режим.
 bindkey '^[[A' up-line-or-beginning-search
 bindkey '^[[B' down-line-or-beginning-search
+bindkey '^[OA' up-line-or-beginning-search
+bindkey '^[OB' down-line-or-beginning-search
 
 # Esc Esc: додати або зняти sudo з командного рядка.
 sudo-command-line() {

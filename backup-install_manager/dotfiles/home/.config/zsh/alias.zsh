@@ -64,13 +64,13 @@ alias vim='nvim'
 
 # ZSH CONFIG
 # Основний .zshrc.
-alias nzc='${EDITOR:-nvim} "$HOME/.config/zsh/.zshrc"'
+alias nzc='nvim "$HOME/.config/zsh/.zshrc"'
 # Alias.
-alias nza='${EDITOR:-nvim} "$HOME/.config/zsh/alias.zsh"'
+alias nza='nvim "$HOME/.config/zsh/alias.zsh"'
 # PATH / environment.
-alias nzp='${EDITOR:-nvim} "$HOME/.config/zsh/path.zsh"'
+alias nzp='nvim "$HOME/.config/zsh/path.zsh"'
 # Каталог додаткових Zsh-скриптів.
-alias nzs='${EDITOR:-nvim} "$HOME/.config/zsh/scripts"'
+alias nzs='nvim "$HOME/.config/zsh/scripts"'
 
 # FASTFETCH
 # Сумісність зі старою звичкою викликати neofetch.
@@ -192,14 +192,18 @@ alias spr='sudo pacman -R'
 alias sprns='sudo pacman -Rns'
 
 # ORPHAN PACKAGES
-# Показує пакети, які:
+# Допоміжна функція: список orphan-пакетів, які:
 #   - були встановлені як залежності
 #   - більше не потрібні жодному встановленому пакету
+_orphan_packages() {
+    pacman -Qtdq 2>/dev/null
+}
+
 sprs() {
     local -a packages
     local answer
     # Отримати список orphan-пакетів
-    packages=("${(@f)$(pacman -Qtdq 2>/dev/null)}")
+    packages=("${(@f)$(_orphan_packages)}")
     # Якщо orphan-пакетів немає
     if ((${#packages[@]} == 0)); then
         printf 'Orphan-пакети не знайдено.\n'
@@ -230,7 +234,7 @@ sprs() {
 
 sprsl() {
     local -a packages
-    packages=("${(@f)$(pacman -Qtdq 2>/dev/null)}")
+    packages=("${(@f)$(_orphan_packages)}")
     if ((${#packages[@]} == 0)); then
         printf 'Orphan-пакети не знайдено.\n'
         return 0

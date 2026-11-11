@@ -14,10 +14,8 @@ autoload -Uz compinit
 # Перший запуск будує кеш, наступні використовують його повторно.
 compinit -d "$ZSH_CACHE_DIR/zcompdump"
 
-# Показувати список, якщо відповідників декілька.
-setopt AUTO_LIST
-setopt AUTO_MENU
-setopt COMPLETE_IN_WORD
+# Поведінкові setopt (AUTO_LIST, AUTO_MENU, COMPLETE_IN_WORD)
+# налаштовуються в options.zsh — тут лише zstyle та compinit.
 
 # Tab відкриває меню, у якому можна обрати варіант.
 zstyle ':completion:*' menu select

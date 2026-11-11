@@ -20,14 +20,10 @@ export TERMINAL="kitty"
 export BROWSER="google-chrome-stable"
 
 # XDG BASE DIRECTORIES
-# Конфігураційні файли.
-export XDG_CONFIG_HOME="$HOME/.config"
-# Дані програм.
-export XDG_DATA_HOME="$HOME/.local/share"
-# Кеш програм.
-export XDG_CACHE_HOME="$HOME/.cache"
-# Постійний runtime/state стан програм.
-export XDG_STATE_HOME="$HOME/.local/state"
+# Стандартні дефолти з XDG Base Directory spec не експортуємо навмисно:
+# будь-яка програма бере їх сама, тому явні $HOME/.config тощо — дублювання.
+# Якщо колись знадобляться НЕСТАНДАРТНІ шляхи — експортувати їх тут
+# і синхронно оновити fallback у .zshrc (рядки з ZSH_CACHE_DIR/ZSH_STATE_DIR).
 
 # PATH
 # Локальні користувацькі програми мають пріоритет над системними.

@@ -4,6 +4,9 @@
 
 # Не робимо глобальні readonly, щоб повторний source працював.
 typeset -g ZSH_CONFIG_DIR="${ZDOTDIR:-$HOME/.config/zsh}"
+# XDG_CACHE_HOME/XDG_STATE_HOME тут явно не встановлюються (див. path.zsh):
+# fallback-значення нижче збігаються зі стандартними дефолтами XDG spec.
+# Якщо колись зміните дефолти в path.zsh — оновіть і ці рядки.
 typeset -g ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 typeset -g ZSH_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/zsh"
 mkdir -p -- "$ZSH_CACHE_DIR" "$ZSH_STATE_DIR" || return 1

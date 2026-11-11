@@ -29,46 +29,31 @@ ex() {
     printf 'Архів:  %s\n' "$archive"
     printf 'Папка:  %s\n' "$target_dir"
     printf '\n'
+    # tar потрібен більшості форматів; перевіряємо один раз перед case.
+    if ! command -v tar >/dev/null 2>&1; then
+        printf 'Помилка: команда tar не знайдена\n'
+        return 1
+    fi
     # Визначення типу архіву
     case "${archive:l}" in
         # TAR
         *.tar)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -xf "$archive" -C "$target_dir"
             ;;
         # TAR.GZ / TGZ
         *.tar.gz | *.tgz)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -xzf "$archive" -C "$target_dir"
             ;;
         # TAR.BZ2 / TBZ / TBZ2
         *.tar.bz2 | *.tbz | *.tbz2)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -xjf "$archive" -C "$target_dir"
             ;;
         # TAR.XZ / TXZ
         *.tar.xz | *.txz)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -xJf "$archive" -C "$target_dir"
             ;;
         # TAR.ZST / TZST
         *.tar.zst | *.tzst)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar --zstd -xf "$archive" -C "$target_dir"
             ;;
         # ZIP
@@ -114,6 +99,10 @@ ex() {
             fi
             local output_name
             output_name="${archive:t:r}"
+            if [[ -e "$target_dir/$output_name" ]]; then
+                printf 'Помилка: файл уже існує: %s\n' "$target_dir/$output_name"
+                return 1
+            fi
             gzip -dc -- "$archive" >"$target_dir/$output_name"
             ;;
         # BZIP2
@@ -124,6 +113,10 @@ ex() {
             fi
             local output_name
             output_name="${archive:t:r}"
+            if [[ -e "$target_dir/$output_name" ]]; then
+                printf 'Помилка: файл уже існує: %s\n' "$target_dir/$output_name"
+                return 1
+            fi
             bzip2 -dc -- "$archive" >"$target_dir/$output_name"
             ;;
         # XZ
@@ -134,6 +127,10 @@ ex() {
             fi
             local output_name
             output_name="${archive:t:r}"
+            if [[ -e "$target_dir/$output_name" ]]; then
+                printf 'Помилка: файл уже існує: %s\n' "$target_dir/$output_name"
+                return 1
+            fi
             xz -dc -- "$archive" >"$target_dir/$output_name"
             ;;
         # Невідомий формат
@@ -205,46 +202,31 @@ pk() {
         printf '  %s\n' "$source"
     done
     printf '\n'
+    # tar потрібен більшості форматів; перевіряємо один раз перед case.
+    if ! command -v tar >/dev/null 2>&1; then
+        printf 'Помилка: команда tar не знайдена\n'
+        return 1
+    fi
     # Визначення типу архіву
     case "${archive:l}" in
         # TAR
         *.tar)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -cf "$archive" -- "${sources[@]}"
             ;;
         # TAR.GZ
         *.tar.gz | *.tgz)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -czf "$archive" -- "${sources[@]}"
             ;;
         # TAR.BZ2
         *.tar.bz2 | *.tbz | *.tbz2)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -cjf "$archive" -- "${sources[@]}"
             ;;
         # TAR.XZ
         *.tar.xz | *.txz)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             tar -cJf "$archive" -- "${sources[@]}"
             ;;
         # TAR.ZST
         *.tar.zst | *.tzst)
-            if ! command -v tar >/dev/null 2>&1; then
-                printf 'Помилка: команда tar не знайдена\n'
-                return 1
-            fi
             if ! command -v zstd >/dev/null 2>&1; then
                 printf 'Помилка: команда zstd не знайдена\n'
                 printf 'Встановлення: sudo pacman -S --needed zstd\n'

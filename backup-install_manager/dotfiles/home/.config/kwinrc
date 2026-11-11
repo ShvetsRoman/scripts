@@ -69,6 +69,10 @@ tileMargin=5
 toolBarEnabled=false
 verticalAlignment=0
 
+[TabBox]
+DelayTime=0
+LayoutName=big_icons
+
 [TabBoxAlternative]
 LayoutName=big_icons
 
@@ -108,6 +112,7 @@ WindowSnapZone=15
 Scale=1.65
 
 [org.kde.kdecoration2]
+BorderSize=None
 BorderSizeAuto=false
 ButtonsOnLeft=
 ButtonsOnRight=IAX
