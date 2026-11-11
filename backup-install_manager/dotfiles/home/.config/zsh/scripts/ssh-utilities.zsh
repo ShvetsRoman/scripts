@@ -1,13 +1,31 @@
 # ============================================================
-# SSH UTILITIES v1.0
-# Набір команд для керування SSH у Zsh
-# Arch Linux
+# КОМАНДИ ТА ЇХ ПРИЗНАЧЕННЯ
+# ============================================================
+# ssh-list
+#   Показує список налаштованих SSH-підключень:
+#   Host, HostName, User, Port.
+#
+# ssh-check [host ...]
+#   Перевіряє доступність SSH-серверів.
+#   Без аргументів перевіряє всі хости з ~/.ssh/config.
+#   З аргументами перевіряє лише вказані хости.
+#
+# ssh-info
+#   Показує інформацію про SSH Agent та ключі:
+#   стан агента, відбитки ключів, наявність .pub файлів.
+#
+# ssh-copy-key <host> [public-key]
+#   Копіює публічний SSH-ключ на сервер через ssh-copy-id.
+#   Якщо ключ не вказаний, використовує ~/.ssh/id_ed25519.pub.
+#
+# ssh-agent-status
+#   Перевіряє стан SSH Agent:
+#   SSH_AUTH_SOCK, Unix Socket, Keychain та завантажені ключі.
 # ============================================================
 
 # ============================================================
 # КОЛЬОРОВА ПАЛІТРА
 # ============================================================
-
 # Автоматично вимикаємо кольори, якщо:
 # - вивід перенаправлений;
 # - встановлена змінна NO_COLOR.
@@ -35,31 +53,30 @@ fi
 # ============================================================
 # ДОПОМІЖНІ ФУНКЦІЇ
 # ============================================================
-
+# Усі повідомлення виводимо через printf.
+# Формат %s запобігає інтерпретації спеціальних символів
+# та форматних специфікаторів у тексті користувача.
 # Виведення повідомлення про успіх.
-# Друк через print -r, а не print -P: кольори вже містять готові
-# ANSI-послідовності, а print -P розгортав би prompt-escape (%d, %n
-# тощо) у даних користувача, наприклад у шляхах до ключів.
 _ssh_success() {
-    print -r -- "${SSH_COLOR_GREEN}✔${SSH_COLOR_RESET} $*"
+    printf '%s\n' "${SSH_COLOR_GREEN}✔${SSH_COLOR_RESET} $*"
 }
 
-# Виведення попередження
+# Виведення попередження.
 _ssh_warning() {
-    print -r -- "${SSH_COLOR_YELLOW}⚠${SSH_COLOR_RESET} $*"
+    printf '%s\n' "${SSH_COLOR_YELLOW}⚠${SSH_COLOR_RESET} $*"
 }
 
-# Виведення помилки
+# Виведення помилки у stderr.
 _ssh_error() {
-    print -r -- "${SSH_COLOR_RED}✘${SSH_COLOR_RESET} $*" >&2
+    printf '%s\n' "${SSH_COLOR_RED}✘${SSH_COLOR_RESET} $*" >&2
 }
 
-# Виведення інформації
+# Виведення інформації.
 _ssh_info() {
-    print -r -- "${SSH_COLOR_CYAN}ℹ${SSH_COLOR_RESET} $*"
+    printf '%s\n' "${SSH_COLOR_CYAN}ℹ${SSH_COLOR_RESET} $*"
 }
 
-# Перевірка наявності SSH-клієнта
+# Перевірка наявності SSH-клієнта.
 _ssh_require_client() {
     if ! command -v ssh >/dev/null 2>&1; then
         _ssh_error "SSH-клієнт не встановлений."
@@ -67,7 +84,7 @@ _ssh_require_client() {
     fi
 }
 
-# Перевірка наявності конфігурації
+# Перевірка наявності конфігурації.
 _ssh_require_config() {
     if [[ ! -f "$HOME/.ssh/config" ]]; then
         _ssh_error "Файл ~/.ssh/config не знайдений."
@@ -76,8 +93,8 @@ _ssh_require_config() {
 }
 
 # Витягує імена хостів із ~/.ssh/config.
-# Спільна логіка для ssh-list та ssh-check: виключає коментарі,
-# wildcard-шаблони (*, ?) та заперечення (!host).
+# Спільна логіка для ssh-list та ssh-check:
+# виключає коментарі, wildcard-шаблони (*, ?) та заперечення (!host).
 _ssh_config_hosts() {
     awk '
         /^[[:space:]]*#/ { next }
@@ -95,7 +112,6 @@ _ssh_config_hosts() {
 # 1. SSH-LIST
 # Список налаштованих SSH-підключень
 # ============================================================
-
 ssh-list() {
     _ssh_require_client || return 1
     _ssh_require_config || return 1
@@ -107,10 +123,10 @@ ssh-list() {
     local port
     local count=0
 
-    print
-    print -r -- "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH CONNECTIONS${SSH_COLOR_RESET}"
-    print -r -- "${SSH_COLOR_GRAY}Налаштовані SSH-підключення${SSH_COLOR_RESET}"
-    print
+    printf '\n'
+    printf '%s\n' "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH CONNECTIONS${SSH_COLOR_RESET}"
+    printf '%s\n' "${SSH_COLOR_GRAY}Налаштовані SSH-підключення${SSH_COLOR_RESET}"
+    printf '\n'
 
     # Отримуємо назви Host з конфігурації.
     # Виключаємо шаблони та wildcard-записи.
@@ -119,30 +135,29 @@ ssh-list() {
         [[ -z "$host" ]] && continue
 
         # ssh -G повертає ефективну конфігурацію для хоста.
-        # Він не перевіряє доступність (завжди завершується успішно
-        # з дефолтними значеннями), тому аналізуємо лише результат.
+        # Він не перевіряє доступність, тому аналізуємо результат.
         details="$(ssh -G "$host" 2>/dev/null)"
         [[ -n "$details" ]] || continue
 
-        hostname="$(print -r -- "$details" |
+        hostname="$(printf '%s\n' "$details" |
             awk '$1 == "hostname" {print $2; exit}')"
 
-        username="$(print -r -- "$details" |
+        username="$(printf '%s\n' "$details" |
             awk '$1 == "user" {print $2; exit}')"
 
-        port="$(print -r -- "$details" |
+        port="$(printf '%s\n' "$details" |
             awk '$1 == "port" {print $2; exit}')"
 
-        printf "  ${SSH_COLOR_GREEN}%-20s${SSH_COLOR_RESET} %s\n" \
-            "$host" "$hostname"
+        printf '  %s%-20s%s %s\n' \
+            "$SSH_COLOR_GREEN" "$host" "$SSH_COLOR_RESET" "$hostname"
 
-        printf "  ${SSH_COLOR_GRAY}%-20s${SSH_COLOR_RESET} %s\n" \
-            "User:" "$username"
+        printf '  %s%-20s%s %s\n' \
+            "$SSH_COLOR_GRAY" "User:" "$SSH_COLOR_RESET" "$username"
 
-        printf "  ${SSH_COLOR_GRAY}%-20s${SSH_COLOR_RESET} %s\n" \
-            "Port:" "$port"
+        printf '  %s%-20s%s %s\n' \
+            "$SSH_COLOR_GRAY" "Port:" "$SSH_COLOR_RESET" "$port"
 
-        print
+        printf '\n'
         ((count++))
 
     done < <(_ssh_config_hosts)
@@ -160,7 +175,6 @@ ssh-list() {
 # 2. SSH-CHECK
 # Перевірка доступності SSH-серверів
 # ============================================================
-
 ssh-check() {
     _ssh_require_client || return 1
 
@@ -170,16 +184,19 @@ ssh-check() {
     local failed=0
 
     if (($# > 0)); then
-        # Кожен аргумент — окремий хост. Пробіли у destination
-        # для ssh некоректні, тому відхиляємо їх одразу
-        # з зрозумілим повідомленням замість загадкового FAIL.
+        # Кожен аргумент — окремий хост.
+        # Пробіли у destination для ssh некоректні,
+        # тому відхиляємо їх одразу.
+
         local host_arg
+
         for host_arg in "$@"; do
             if [[ "$host_arg" == *[[:space:]]* ]]; then
                 _ssh_error "Некоректний хост (містить пробіли): $host_arg"
                 return 1
             fi
         done
+
         local hosts=("$@")
     else
         _ssh_require_config || return 1
@@ -192,15 +209,18 @@ ssh-check() {
         return 1
     fi
 
-    print
-    print -r -- "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH CONNECTIVITY CHECK${SSH_COLOR_RESET}"
-    print
+    printf '\n'
+    printf '%s\n' "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH CONNECTIVITY CHECK${SSH_COLOR_RESET}"
+    printf '\n'
 
-    # Паралельна перевірка: кожен хост у фоновому job, тому
-    # недоступний сервер не блокує решту на 5 секунд (ConnectTimeout).
-    # Фоновий процес не може змінювати змінні оболонки, тому
-    # коди виходу зберігаються у тимчасові файли за індексом.
+    # Паралельна перевірка: кожен хост у фоновому job.
+    # Недоступний сервер не блокує решту на 5 секунд.
+    #
+    # Коди виходу зберігаються у тимчасові файли за індексом,
+    # оскільки фоновий процес не може змінювати змінні оболонки.
+
     local tmpdir
+
     if ! tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/ssh-check.XXXXXXXX"); then
         _ssh_error "Не вдалося створити тимчасовий каталог."
         return 1
@@ -211,6 +231,7 @@ ssh-check() {
 
     for host in "${hosts[@]}"; do
         ((index++))
+
         (
             ssh \
                 -o BatchMode=yes \
@@ -218,36 +239,42 @@ ssh-check() {
                 -o ConnectionAttempts=1 \
                 -o LogLevel=ERROR \
                 "$host" true >/dev/null 2>&1
-            printf '%d' $? > "$tmpdir/$index"
+
+            printf '%d' "$?" >"$tmpdir/$index"
         ) &
+
         job_pids+=($!)
     done
 
     wait "${job_pids[@]}"
 
     index=0
+
     for host in "${hosts[@]}"; do
         ((checked++))
         ((index++))
-        printf "  %-22s " "$host"
+
+        printf '  %-22s ' "$host"
 
         exit_code=$(<"$tmpdir/$index")
 
         if ((exit_code == 0)); then
-            print -r -- "${SSH_COLOR_GREEN}PASS${SSH_COLOR_RESET}"
+            printf '%s\n' "${SSH_COLOR_GREEN}PASS${SSH_COLOR_RESET}"
         else
-            print -r -- "${SSH_COLOR_RED}FAIL${SSH_COLOR_RESET} ${SSH_COLOR_GRAY}(код: $exit_code)${SSH_COLOR_RESET}"
+            printf '%s\n' \
+                "${SSH_COLOR_RED}FAIL${SSH_COLOR_RESET} ${SSH_COLOR_GRAY}(код: $exit_code)${SSH_COLOR_RESET}"
+
             ((failed++))
         fi
     done
 
     rm -rf -- "$tmpdir"
 
-    print
-    print "Перевірено: $checked"
-    print "Успішно:    $((checked - failed))"
-    print "Помилок:    $failed"
-    print
+    printf '\n'
+    printf 'Перевірено: %d\n' "$checked"
+    printf 'Успішно:    %d\n' "$((checked - failed))"
+    printf 'Помилок:    %d\n' "$failed"
+    printf '\n'
 
     if ((failed == 0)); then
         _ssh_success "Усі SSH-підключення доступні."
@@ -262,7 +289,6 @@ ssh-check() {
 # 3. SSH-INFO
 # Інформація про SSH-ключі
 # ============================================================
-
 ssh-info() {
     _ssh_require_client || return 1
 
@@ -271,20 +297,20 @@ ssh-info() {
     local key_count=0
     local key_locked
 
-    print
-    print -r -- "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH KEY INFORMATION${SSH_COLOR_RESET}"
-    print
+    printf '\n'
+    printf '%s\n' "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH KEY INFORMATION${SSH_COLOR_RESET}"
+    printf '\n'
 
     # --------------------------------------------------------
     # SSH AGENT
     # --------------------------------------------------------
 
-    print -r -- "${SSH_COLOR_BOLD}SSH Agent:${SSH_COLOR_RESET}"
+    printf '%s\n' "${SSH_COLOR_BOLD}SSH Agent:${SSH_COLOR_RESET}"
 
     if [[ -n "${SSH_AUTH_SOCK:-}" && -S "$SSH_AUTH_SOCK" ]]; then
         _ssh_success "SSH Agent доступний."
 
-        print "  Socket: $SSH_AUTH_SOCK"
+        printf '  Socket: %s\n' "$SSH_AUTH_SOCK"
 
         ssh-add -l 2>/dev/null
         local agent_status=$?
@@ -298,37 +324,34 @@ ssh-info() {
         _ssh_error "SSH Agent недоступний."
     fi
 
-    print
+    printf '\n'
 
     # --------------------------------------------------------
     # ПРИВАТНІ ТА ПУБЛІЧНІ КЛЮЧІ
     # --------------------------------------------------------
 
-    print -r -- "${SSH_COLOR_BOLD}SSH Keys:${SSH_COLOR_RESET}"
+    printf '%s\n' "${SSH_COLOR_BOLD}SSH Keys:${SSH_COLOR_RESET}"
 
     # Приватні ключі: уся ~/.ssh та ~/.ssh/keys.
-    # Публічні (*.pub) та службові файли пропускаємо, тож тут
-    # потрапляють і id_rsa, id_ecdsa, id_dsa — не лише id_ed25519.
+    # Публічні (*.pub) та службові файли пропускаємо.
 
-    for key in \
-        "$HOME/.ssh/"*(N) \
-        "$HOME/.ssh/keys/"*(N); do
+    for key in ${HOME}/.ssh/*(N) ${HOME}/.ssh/keys/*(N); do
+
         [[ -f "$key" ]] || continue
         [[ "$key" == *.pub ]] && continue
 
         # Службові файли, які не є приватними ключами.
         case "${key:t}" in
-            known_hosts|known_hosts.*|authorized_keys*|config) continue ;;
+            known_hosts | known_hosts.* | authorized_keys* | config) continue ;;
         esac
 
-        # Перевіряємо, що вміст приватного ключа доступний без
-        # розшифрування. -P '' забороняє ssh-keygen запитувати пароль
-        # з терміналу: для зашифрованих ключів перевірка одразу
-        # завершується помилкою без блокування сеансу.
+        # Перевіряємо доступність вмісту приватного ключа
+        # без запиту парольної фрази.
+
         key_locked=0
+
         if ! ssh-keygen -y -P '' -f "$key" >/dev/null 2>&1; then
             if ssh-keygen -lf "$key" >/dev/null 2>&1; then
-                # Файл коректний, але захищений парольною фразою.
                 key_locked=1
             else
                 _ssh_warning "Не вдалося перевірити ключ: ${key:t}"
@@ -336,11 +359,13 @@ ssh-info() {
             fi
         fi
 
-        # -lf не потребує розшифрування, тож відбиток доступний завжди.
+        # Відбиток доступний навіть для зашифрованого ключа.
         fingerprint="$(ssh-keygen -lf "$key" 2>/dev/null)"
 
-        print -r -- "  ${SSH_COLOR_GREEN}${key:t}${SSH_COLOR_RESET}"
-        print "  $fingerprint"
+        printf '  %s%s%s\n' \
+            "$SSH_COLOR_GREEN" "${key:t}" "$SSH_COLOR_RESET"
+
+        printf '  %s\n' "$fingerprint"
 
         if ((key_locked)); then
             _ssh_info "Ключ захищений парольною фразою: перевірку вмісту пропущено."
@@ -353,7 +378,7 @@ ssh-info() {
         fi
 
         ((key_count++))
-        print
+        printf '\n'
     done
 
     if ((key_count == 0)); then
@@ -367,30 +392,30 @@ ssh-info() {
 # 4. SSH-COPY-KEY
 # Копіювання публічного ключа на сервер
 # ============================================================
-
 ssh-copy-key() {
     _ssh_require_client || return 1
 
     if (($# < 1 || $# > 2)); then
-        print "Використання:"
-        print "  ssh-copy-key <host> [public-key]"
-        print
-        print "Приклади:"
-        print "  ssh-copy-key linux-server"
-        print "  ssh-copy-key linux-server ~/.ssh/keys/servers.pub"
+        printf '%s\n' "Використання:"
+        printf '%s\n' "  ssh-copy-key <host> [public-key]"
+        printf '\n'
+        printf '%s\n' "Приклади:"
+        printf '%s\n' "  ssh-copy-key linux-server"
+        printf '%s\n' "  ssh-copy-key linux-server ~/.ssh/keys/servers.pub"
+
         return 1
     fi
 
     local host="$1"
     local public_key="${2:-$HOME/.ssh/id_ed25519.pub}"
 
-    # Перевірка наявності утиліти ssh-copy-id
+    # Перевірка наявності утиліти ssh-copy-id.
     if ! command -v ssh-copy-id >/dev/null 2>&1; then
         _ssh_error "ssh-copy-id не знайдений."
         return 1
     fi
 
-    # Перевірка публічного ключа
+    # Перевірка публічного ключа.
     if [[ ! -f "$public_key" ]]; then
         _ssh_error "Публічний ключ не знайдений: $public_key"
         return 1
@@ -401,10 +426,10 @@ ssh-copy-key() {
         return 1
     fi
 
-    print
+    printf '\n'
     _ssh_info "Сервер: $host"
     _ssh_info "Ключ: $public_key"
-    print
+    printf '\n'
 
     _ssh_warning "Переконайся, що це звичайний OpenSSH-сервер."
     _ssh_warning "Для MikroTik RouterOS використовуй окремий механізм імпорту ключів."
@@ -419,19 +444,18 @@ ssh-copy-key() {
 # 5. SSH-AGENT-STATUS
 # Стан SSH Agent
 # ============================================================
-
 ssh-agent-status() {
-    print
-    print -r -- "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH AGENT STATUS${SSH_COLOR_RESET}"
-    print
+    printf '\n'
+    printf '%s\n' "${SSH_COLOR_BOLD}${SSH_COLOR_CYAN}SSH AGENT STATUS${SSH_COLOR_RESET}"
+    printf '\n'
 
-    # Перевірка змінної SSH_AUTH_SOCK
+    # Перевірка змінної SSH_AUTH_SOCK.
     if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
         _ssh_error "SSH_AUTH_SOCK не встановлений."
         return 1
     fi
 
-    # Перевірка Unix Socket
+    # Перевірка Unix Socket.
     if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
         _ssh_error "SSH Agent Socket недоступний."
         return 1
@@ -439,36 +463,34 @@ ssh-agent-status() {
 
     _ssh_success "SSH Agent працює."
 
-    print "  Socket: $SSH_AUTH_SOCK"
+    printf '  Socket: %s\n' "$SSH_AUTH_SOCK"
 
-    # Перевірка Keychain
+    # Перевірка Keychain.
     if command -v keychain >/dev/null 2>&1; then
         _ssh_success "Keychain встановлений."
     else
         _ssh_warning "Keychain не встановлений."
     fi
 
-    print
+    printf '\n'
 
-    # Перевірка завантажених ключів
+    # Перевірка завантажених ключів.
     local agent_output
+    local exit_code
+
     agent_output="$(ssh-add -l 2>&1)"
-    local exit_code=$?
+    exit_code=$?
 
     if ((exit_code == 0)); then
         _ssh_success "Завантажені ключі:"
-        print -r -- "$agent_output"
+        printf '%s\n' "$agent_output"
         return 0
     elif ((exit_code == 1)); then
         _ssh_warning "SSH Agent працює, але ключів немає."
         return 1
     else
         _ssh_error "Не вдалося отримати стан SSH Agent."
-        print -r -- "$agent_output"
+        printf '%s\n' "$agent_output"
         return 1
     fi
 }
-
-# ============================================================
-# КІНЕЦЬ SSH UTILITIES v1.0
-# ============================================================
