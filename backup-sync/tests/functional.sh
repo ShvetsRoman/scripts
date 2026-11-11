@@ -41,6 +41,7 @@ while (($#)); do
 done
 shift                                   # host
 if [[ -n "${SSH_STUB_FAIL_DF:-}" && "$*" == *"df -"* ]]; then exit 255; fi
+if [[ -n "${SSH_STUB_FAIL_MKDIR:-}" && "$*" == *"mkdir -p"* && "$*" == *"$SSH_STUB_FAIL_MKDIR"* ]]; then exit 255; fi
 export RSYNC_STUB_CAPS="${RSYNC_STUB_REMOTE_CAPS:-${RSYNC_STUB_CAPS:-}}"
 if [[ "$*" == *"-mtime"* ]]; then
     [[ -n "${SSH_STUB_FAIL_MTIME:-}" ]] && exit 255
@@ -119,7 +120,7 @@ reset_env() {
     : > "$RSYNC_LOG"; : > "$RSYNC_SCAN_LOG"
     unset RSYNC_STUB_RC RSYNC_STUB_OUT RSYNC_STUB_TOUCH SSH_STUB_FAIL_DF \
           RSYNC_STUB_CHECK_LOCK RSYNC_STUB_STEAL_LOCK RSYNC_STUB_SLEEP EXPECT_ERR_TRAP \
-          SSH_STUB_FAIL_MTIME SSH_STUB_CHECK_LOCK_ON_CLEANUP \
+          SSH_STUB_FAIL_MTIME SSH_STUB_CHECK_LOCK_ON_CLEANUP SSH_STUB_FAIL_MKDIR \
           RSYNC_SCAN_OUT RSYNC_SCAN_RC RSYNC_STUB_CAPS RSYNC_STUB_REMOTE_CAPS
     : > "$SSH_ARGS_LOG"
     write_conf
@@ -863,5 +864,50 @@ check "cleanup не перевіряє можливості rsync" test "$rc" -e
 reset_env; write_conf 'RSYNC_PRESERVE_ACLS=maybe'
 run up -y --host h
 check "некоректний RSYNC_PRESERVE_ACLS відхилено" test "$rc" -eq 1
+
+printf '\n== 18. Колізія службового маркера __MISSING__ з іменем файлу на remote ==\n'
+# Файл, чиє ім'я містить маркер remote_dir_status, не повинен видавати
+# «каталог відсутній»: down — не пропускати синхронізацію, up — не змінювати dry-run-аналіз.
+reset_env; : > "$REMOTE/A/dir__MISSING__entry"
+run down -y --host h
+check "down: rc=0 (файл __MISSING__ в імені не ламає перевірку каталогу)" test "$rc" -eq 0
+check "down: A синхронізовано, а не пропущено" in_sync "h:$REMOTE/A/"
+reset_env; : > "$REMOTE/A/dir__MISSING__entry"
+run up -y --host h
+check "up: rc=0" test "$rc" -eq 0
+check "up: dry-run-аналіз порівнює з реальним remote A (не з порожнім)" in_scan "h:$REMOTE/A/"
+
+printf '\n== 19. Захист локального lock-файлу від symlink-атаки ==\n'
+VICTIM="$TMP/lock-victim.txt"
+LOCKPATH="/tmp/backup-sync-$(id -u).lock"
+printf 'важливі дані\n' > "$VICTIM"
+rm -f "$LOCKPATH"; ln -s "$VICTIM" "$LOCKPATH"
+rc=0
+out=$(env -u XDG_RUNTIME_DIR "$ROOT_DIR/backup-sync.sh" up -y --host h 2>&1 </dev/null) || rc=$?
+check "симлінк на місці lock → відмова (код 1)" test "$rc" -eq 1
+check "повідомлення про підозрілий lock-файл" in_out 'Підозрілий lock-файл'
+check "файл-жертву не обрізано" test -s "$VICTIM"
+check "симлінк не замінено звичайним файлом" test -L "$LOCKPATH"
+rm -f "$LOCKPATH" "$VICTIM"
+
+printf '\n== 20. Захисні шляхи: збій recovery-каталогу, --allow-empty, локальний df ==\n'
+reset_env; SSH_STUB_FAIL_MKDIR='.backup-sync-recovery' run up -y --host h
+check "збій створення recovery-каталогу на remote: каталог пропущено (код 1)" test "$rc" -eq 1
+check "...із попередженням про безпечний пропуск" in_out 'Не вдалося підготувати recovery-каталог'
+check "...rsync для A не запускався" bash -c "! grep -q '$HOME/A/' '$RSYNC_LOG'"
+
+reset_env; rm -f "$REMOTE/A/f.txt"; write_conf 'DELETE_ON_DOWN=true'
+run down -y --allow-empty --host h
+check "down --allow-empty: порожнє remote-джерело дозволено (rc=0)" test "$rc" -eq 0
+check "...rsync для A виконано" in_sync "h:$REMOTE/A/"
+
+DFSTUB="$TMP/nodf"; mkdir -p "$DFSTUB"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$DFSTUB/df"; chmod +x "$DFSTUB/df"
+reset_env
+rc=0
+out=$(PATH="$DFSTUB:$PATH" "$ROOT_DIR/backup-sync.sh" down -y --host h 2>&1 </dev/null) || rc=$?
+check "збій локального df (down): код 1, а не мовчазний запуск" test "$rc" -eq 1
+check "...із поясненням і підказкою --no-space-check" in_out 'вільне місце локально'
+check "...rsync не запускався" bash -c "[[ ! -s '$RSYNC_LOG' ]]"
 
 exit "$fail"

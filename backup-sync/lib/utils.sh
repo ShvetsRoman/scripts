@@ -143,6 +143,12 @@ init_runtime() {
 }
 
 acquire_lock() {
+    # Захист від symlink-атаки: коли XDG_RUNTIME_DIR не задано, lock лежить у
+    # world-writable /tmp, і `exec 9>` простежував би симлінк, обрізаючи довільний
+    # файл, доступний жертві на запис. Дозволено лише відсутній або звичайний файл.
+    if [[ -L "$LOCK_FILE" || ( -e "$LOCK_FILE" && ! -f "$LOCK_FILE" ) ]]; then
+        die "Підозрілий lock-файл (симлінк або не файл): $LOCK_FILE"
+    fi
     exec 9>"$LOCK_FILE"
     if ! flock -n 9; then
         die "Інший процес backup-sync уже запущений."

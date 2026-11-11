@@ -82,7 +82,7 @@ parse_args() {
                 shift
                 ;;
             --host)
-                [[ $# -ge 2 ]] || {
+                [[ $# -ge 2 && -n "$2" ]] || {
                     printf '[ERROR] --host потребує значення\n' >&2
                     exit "$EX_USAGE"
                 }

@@ -14,10 +14,16 @@ done
 rmdir "$base" 2>/dev/null
 true'
 
+# true, якщо вказаний напрямок може ВИДАЛЯТИ файли на приймачі.
+# Єдине місце семантики: verify використовує ту саму функцію, щоб показувати те саме, що робить sync.
+delete_active_for() {
+    [[ "$1" == up ]] && return 0
+    [[ "$1" == down && "$DELETE_ON_DOWN" == true ]]
+}
+
 # true, якщо поточний режим може ВИДАЛЯТИ файли на приймачі.
 delete_active() {
-    [[ "$DIRECTION" == up ]] && return 0
-    [[ "$DIRECTION" == down && "$DELETE_ON_DOWN" == true ]]
+    delete_active_for "$DIRECTION"
 }
 
 # Чи ввімкнено recovery для поточного напрямку (з урахуванням конфігу і --recovery/--no-recovery).
@@ -174,7 +180,10 @@ remote_dir_status() {
         "if [ -d $q ]; then find $q -mindepth 1 -maxdepth 1 2>/dev/null | head -n 1; echo __OK__; else echo __MISSING__; fi") || rc=$?
 
     ((rc == 0)) || return 12
-    if [[ "$out" == *__MISSING__* ]]; then
+    # Точне порівняння: рядок шляху з "__MISSING__" в імені файлу не повинен
+    # збігатися із службовим маркером (при відсутності каталогу вивід — рівно
+    # один рядок "__MISSING__", при наявності — завжди "__OK__" або шлях + "__OK__").
+    if [[ "$out" == "__MISSING__" ]]; then
         return 11
     fi
     if [[ "$out" == "__OK__" ]]; then

@@ -30,12 +30,6 @@ verify_direction() {
     done
 }
 
-# Чи видаляє реальна синхронізація у цьому напрямку (verify має показувати те саме).
-verify_delete_active() {
-    [[ "$1" == up ]] && return 0
-    [[ "$1" == down && "$DELETE_ON_DOWN" == true ]]
-}
-
 verify_one_dir() {
     local direction="$1"
     local dir="$2"
@@ -48,7 +42,7 @@ verify_one_dir() {
         --rsh="$RSH_STRING"
     )
 
-    if verify_delete_active "$direction"; then
+    if delete_active_for "$direction"; then
         opts+=(--delete)
     fi
 
@@ -125,6 +119,7 @@ verify_one_dir() {
         log_warn "[VERIFY] $dir — знайдено відмінності"
         printf '%s\n' "$output"
         CHANGED=$((CHANGED + 1))
-        CHANGED_DIRS+=("$dir")
+        # Префікс напрямку: при verify both видно, up чи down розійшовся.
+        CHANGED_DIRS+=("verify-${direction}:$dir")
     fi
 }
