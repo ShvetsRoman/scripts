@@ -25,6 +25,8 @@ export BROWSER="google-chrome-stable"
 # Якщо колись знадобляться НЕСТАНДАРТНІ шляхи — експортувати їх тут
 # і синхронно оновити fallback у .zshrc (рядки з ZSH_CACHE_DIR/ZSH_STATE_DIR).
 
+export XDG_CONFIG_HOME="$HOME/.config"
+
 # PATH
 # Локальні користувацькі програми мають пріоритет над системними.
 if [[ -d "$HOME/.local/bin" ]]; then
