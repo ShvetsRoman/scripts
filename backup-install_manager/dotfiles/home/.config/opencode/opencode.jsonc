@@ -1,0 +1,137 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Основний агент для роботи з кодом.
+  "default_agent": "build",
+
+  // Глибина вкладених викликів субагентів (експериментальна опція).
+  "experimental": {
+    "subagent_depth": 1,
+  },
+
+  // Використовуємо Zsh як основну оболонку.
+  "shell": "/bin/zsh",
+
+  // Не встановлювати оновлення автоматично.
+  // Повідомляти про доступні оновлення.
+  "update": "notify",
+
+  // Зберігати знімки змін для можливості відкату.
+  "snapshots": true,
+
+  // Заборона поширення сесій на зовнішній сервіс.
+  "share": "disabled",
+
+  // Політики доступу (лише allow/deny).
+  // Пошук у вебі вимкнено: приватні дані не передаються
+  // зовнішнім сервісам.
+  "policies": [
+    {
+      "action": "websearch.use",
+      "resource": "*",
+      "effect": "deny",
+    },
+  ],
+
+  // Не відстежувати важкі каталоги.
+  "watcher": {
+    "ignore": [
+      "node_modules",
+      ".git",
+      "dist",
+      "build",
+    ],
+  },
+
+  // Обмеження виводу інструментів (захист контексту від переповнення).
+  "tool_output": {
+    "max_lines": 2000,
+    "max_bytes": 51200,
+  },
+
+  // Основний провайдер OpenAI.
+  // Конкретну модель виберемо після авторизації.
+  "providers": {
+    "openai": {},
+  },
+
+  // Глобальні правила доступу.
+  // Спочатку загальні правила, далі винятки.
+  "permissions": [
+    {
+      "action": "read",
+      "resource": "*",
+      "effect": "allow",
+    },
+    // Секретні файли читати лише з підтвердження
+    // (правила нижче перекривають широке read *).
+    {
+      "action": "read",
+      "resource": "*.env",
+      "effect": "ask",
+    },
+    {
+      "action": "read",
+      "resource": "*.env.*",
+      "effect": "ask",
+    },
+    // Шаблони змінних оточення без секретів — дозволені.
+    {
+      "action": "read",
+      "resource": "*.env.example",
+      "effect": "allow",
+    },
+    // Доступ до файлів поза межами робочого каталогу — з запитом.
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "ask",
+    },
+    {
+      "action": "edit",
+      "resource": "*",
+      "effect": "ask",
+    },
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "ask",
+    },
+    {
+      "action": "shell",
+      "resource": "git status *",
+      "effect": "allow",
+    },
+    {
+      "action": "shell",
+      "resource": "git diff *",
+      "effect": "allow",
+    },
+    {
+      "action": "shell",
+      "resource": "git log *",
+      "effect": "allow",
+    },
+    {
+      "action": "shell",
+      "resource": "git push *",
+      "effect": "deny",
+    },
+    {
+      "action": "shell",
+      "resource": "sudo *",
+      "effect": "ask",
+    },
+    // Службові каталоги не редагувати ніколи.
+    {
+      "action": "edit",
+      "resource": "**/.git/**",
+      "effect": "deny",
+    },
+    {
+      "action": "edit",
+      "resource": "**/node_modules/**",
+      "effect": "deny",
+    },
+  ],
+}

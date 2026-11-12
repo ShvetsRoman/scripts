@@ -267,9 +267,6 @@ packages_main() {
         esac
         shift
     done
-    if [[ "${SYNC_DELETE:-false}" == true && "${SETUP_BACKUP_ENABLED:-true}" != true ]]; then
-        log error '--sync-delete потребує backup'; return 2
-    fi
     ((${#ids[@]})) || { packages_help; return 2; }
     local id
     for id in "${ids[@]}"; do registry_valid "$id" || { log error "Немає: $id"; return 2; }; done

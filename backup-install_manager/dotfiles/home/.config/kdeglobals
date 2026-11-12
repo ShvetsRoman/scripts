@@ -124,7 +124,7 @@ smallestReadableFont=SF Pro,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 toolBarFont=SF Pro,14,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 
 [Icons]
-Theme=Slot-Symbolic-Dark-Icons
+Theme=YAMIS
 
 [KDE]
 AnimationDurationFactor=1.414213562373095

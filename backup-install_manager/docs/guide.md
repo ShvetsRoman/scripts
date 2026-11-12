@@ -3,10 +3,10 @@
 ## Запуск
 
 ```bash
-cd ~/Documents/backup-install_manager
-./backup-install_manager.sh --version
-./backup-install_manager.sh --help
-./backup-install_manager.sh
+cd /шлях/до/backup-install_manager    # корінь проєкту, напр. ~/00_setup/scripts_bash/backup-install_manager
+./backup-install_manager.sh --version    # перевірити версію
+./backup-install_manager.sh --help       # переглянути довідку
+./backup-install_manager.sh              # відкрити інтерактивне меню
 ```
 
 Запуск без аргументів відкриває інтерактивне меню. У меню `0` повертає назад, `00` завершує роботу. Для операцій зворотного копіювання/видалення уважно читайте підтвердження.

@@ -33,14 +33,16 @@ if fs_copy "$tmp/src/new" "$tmp/escape/valuable"; then
     exit 1
 fi
 [[ "$(cat "$tmp/external/valuable")" == original ]]
-# No backup plus --sync-delete must be rejected without modification.
+# No backup plus --sync-delete is allowed: extras are removed, no snapshot.
 SETUP_BACKUP_ENABLED=false
 printf 'keep\n' > "$tmp/dst/keep"
-if fs_copy "$tmp/src" "$tmp/dst"; then
-    echo '[FAIL] deletion without backup accepted' >&2
+fs_copy "$tmp/src" "$tmp/dst" || {
+    echo '[FAIL] deletion without backup failed' >&2
     exit 1
-fi
-[[ -f "$tmp/dst/keep" ]]
+}
+[[ ! -e "$tmp/dst/keep" ]]
+[[ ! -e "$tmp/dst/old" ]]
+[[ -e "$tmp/dst/new" ]]
 SETUP_BACKUP_ENABLED=true
 SYNC_DELETE=false
 # Simulate failed copy AND failed rollback: failure must be logged.

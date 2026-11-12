@@ -29,37 +29,50 @@ cli_parse() {
 }
 
 # Єдина довідка для підкоманд dotfiles: використовується і в --help,
-# і для повідомлення про невідому команду, щоб перелік не застарівав.
+# і в `dotfiles --help`, і для повідомлення про невідому команду,
+# щоб перелік не застарівав. Змінюйте обережно: тести шукають
+# підрядки 'dotfiles backup changed' (tests/run-tests.sh, test-cli-contract-v1439.sh).
 cli_dotfiles_help() {
     cat <<'EOT'
-  ./backup-install_manager.sh dotfiles backup [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles backup changed [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles restore [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles status [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles verify [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles plan backup [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles plan restore [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles diff [ШЛЯХ...]
-  ./backup-install_manager.sh dotfiles groups
+  ./backup-install_manager.sh dotfiles backup [ШЛЯХ...]         Скопіювати HOME → dotfiles (Enter = усі)
+  ./backup-install_manager.sh dotfiles backup changed [ШЛЯХ...] Лише змінені файли
+  ./backup-install_manager.sh dotfiles restore [ШЛЯХ...]        Відновити dotfiles → HOME
+  ./backup-install_manager.sh dotfiles status [ШЛЯХ...]         Порівняти HOME ↔ dotfiles (читання)
+  ./backup-install_manager.sh dotfiles verify [ШЛЯХ...]         Перевірка розбіжностей
+  ./backup-install_manager.sh dotfiles plan backup [ШЛЯХ...]    План backup без дій
+  ./backup-install_manager.sh dotfiles plan restore [ШЛЯХ...]   План restore без дій
+  ./backup-install_manager.sh dotfiles diff [ШЛЯХ...]           Пофайлові відмінності
+  ./backup-install_manager.sh dotfiles groups                   Перелік груп реєстру
   Додайте --group НАЗВА до будь-якого режиму Dotfiles.
 EOT
 }
 
 # cli_help — довідка.
+# Структура: Загальне → Швидкі команди → Пакети → Dotfiles → Джерела → Архіви → Інше.
+# Швидкі команди — top-level псевдоніми без префікса `dotfiles`, які приймає
+# диспетчер (cli_execute). Тести шукають у тексті підрядки 'sources add',
+# 'recovery list|verify', 'dotfiles plan' — не видаляйте ці фрагменти.
 cli_help() {
     header "Setup Manager $SETUP_VERSION"
     cat <<'EOT'
 Загальне:
-  ./backup-install_manager.sh                      Інтерактивне меню
-  ./backup-install_manager.sh --version
-  ./backup-install_manager.sh --help
+  ./backup-install_manager.sh                       Інтерактивне меню
+  ./backup-install_manager.sh --version             Версія (src/core/version.sh)
+  ./backup-install_manager.sh --help                Ця довідка
+
+Швидкі команди (без префікса `dotfiles`):
+  ./backup-install_manager.sh status [ШЛЯХ...]      Порівняти HOME ↔ dotfiles (читання)
+  ./backup-install_manager.sh verify [ШЛЯХ...]      Перевірка розбіжностей
+  ./backup-install_manager.sh diff [ШЛЯХ...]        Пофайлові відмінності
+  ./backup-install_manager.sh plan backup|restore [ШЛЯХ...]   План дій без виконання
 
 Пакети (config/packages.conf: INI, порядок секцій; hooks = локальні Bash-скрипти):
-  ./backup-install_manager.sh packages --list
-  ./backup-install_manager.sh packages cli shell
-  ./backup-install_manager.sh packages --all
-  ./backup-install_manager.sh packages --dry-run all
+  ./backup-install_manager.sh packages --list                   Перелік пакетів без встановлення
+  ./backup-install_manager.sh packages cli shell                Встановити пакети модулів
+  ./backup-install_manager.sh packages --all                    Усі модулі реєстру
+  ./backup-install_manager.sh packages --dry-run all            Сухий прогін без дій
   ./backup-install_manager.sh packages --configs-only --sync-delete --yes cli
+  ./backup-install_manager.sh packages --help                   Довідка Packages (поля реєстру, порядок етапів)
 
 Dotfiles:
 EOT
@@ -67,33 +80,33 @@ EOT
     cat <<'EOT'
 
 Backup з довільного місця:
-  ./backup-install_manager.sh backup-src SRC REPO_SUB
-  ./backup-install_manager.sh restore-src REPO_SUB [TARGET]
+  ./backup-install_manager.sh backup-src SRC REPO_SUB           Разовий бекап шляху у сховище
+  ./backup-install_manager.sh restore-src REPO_SUB [TARGET]     Повернути його назад
 
 Реєстр джерел:
-  ./backup-install_manager.sh sources list
-  ./backup-install_manager.sh sources doctor
-  ./backup-install_manager.sh sources validate
-  ./backup-install_manager.sh sources scan
-  ./backup-install_manager.sh sources add NAME TYPE PATH GROUP
+  ./backup-install_manager.sh sources list                      Поточний реєстр джерел
+  ./backup-install_manager.sh sources doctor                    Чи існують шляхи на диску
+  ./backup-install_manager.sh sources validate                  Перевірка схеми реєстру
+  ./backup-install_manager.sh sources scan                      Що є у $HOME поза реєстром
+  ./backup-install_manager.sh sources add NAME TYPE PATH GROUP  Додати запис
   TYPE: home (~/ або ${HOME}/), system (/etc/...), порожній (абсолютний PATH)
-  ./backup-install_manager.sh sources remove NAME
+  ./backup-install_manager.sh sources remove NAME               Видалити запис
 
 Архіви / Recovery:
-  ./backup-install_manager.sh archive list|create|restore NAME
+  ./backup-install_manager.sh archive list|create|restore NAME  Архіви каталогу dotfiles/
   ./backup-install_manager.sh recovery list|verify ID|plan ID|restore ID [ШЛЯХ...]|delete ID
-  ./backup-install_manager.sh backups list GROUP
-  ./backup-install_manager.sh backups verify GROUP ID
+  ./backup-install_manager.sh backups list GROUP                Резервні копії групи
+  ./backup-install_manager.sh backups verify GROUP ID           Перевірка цілісності резервної копії
 
 Інше:
-  ./backup-install_manager.sh smart [--dry-run] [модулі...]
-  ./backup-install_manager.sh doctor
-  ./backup-install_manager.sh report summary|modules
-  ./backup-install_manager.sh modules list|info ID|deps ID|reverse ID|stats|plan
-  ./backup-install_manager.sh maintenance [--dry-run] menu|disk|cleanup TYPE|rotate TYPE KEEP
-  ./backup-install_manager.sh logs path|tail [N]
-  ./backup-install_manager.sh update RELEASE.tar.gz [--sha256 HASH] [--dry-run]
-  ./backup-install_manager.sh test
+  ./backup-install_manager.sh smart [--dry-run] [модулі...]     «Розумний» прогін модулів
+  ./backup-install_manager.sh doctor                            Діагностика середовища
+  ./backup-install_manager.sh report summary|modules            Звіти
+  ./backup-install_manager.sh modules list|info ID|deps ID|reverse ID|stats|plan   Граф модулів (не встановлює)
+  ./backup-install_manager.sh maintenance [--dry-run] menu|disk|cleanup TYPE|rotate TYPE KEEP   Обслуговування
+  ./backup-install_manager.sh logs path|tail [N]                Журнал виконання
+  ./backup-install_manager.sh update RELEASE.tar.gz [--sha256 HASH] [--dry-run]  Оновлення з релізного архіву
+  ./backup-install_manager.sh test                              Регресійні тести
 EOT
 }
 

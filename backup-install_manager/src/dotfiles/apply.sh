@@ -47,8 +47,11 @@ apply() {
     if [[ "$group" == recovery && "${SETUP_RECOVERY_ENABLED:-true}" != true ]]; then
         backup_allowed=false
     fi
-    if [[ "${SYNC_DELETE:-false}" == true && "$backup_allowed" != true ]]; then
-        log error '--sync-delete потребує recovery/backup'
+    # --sync-delete дозволений і без захисних копій (fs_guard_delete попередить).
+    # Окреме правило: відновлення знімків recovery не має працювати, коли
+    # recovery вимкнено — у такому разі немає звідки брати дані та відкат.
+    if [[ "${SYNC_DELETE:-false}" == true && "$group" == recovery && "${SETUP_RECOVERY_ENABLED:-true}" != true ]]; then
+        log error '--sync-delete для recovery потребує SETUP_RECOVERY_ENABLED=true'
         return 2
     fi
     if [[ -e "$dst" ]]; then

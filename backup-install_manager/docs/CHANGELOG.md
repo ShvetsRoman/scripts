@@ -1,5 +1,13 @@
-# Backup Install Manager 2.0.2
-# Історія документації
+# Історія документації Backup Install Manager
+
+Актуальна версія коду: **2.0.2** (джерело — `src/core/version.sh`). Цей журнал описує лише зміни документації та аудитів; зміни коду фіксуються окремо.
+
+## 2026-11-12 — --sync-delete без захисних копій
+
+- `--sync-delete` більше не відхиляється при вимкнених захисних копіях (`SETUP_BACKUP_ENABLED=false` або `--no-backup`): замість помилки — одне попередження «автоматичний відкат недоступний».
+- Запобіжник залишено лише для recovery-restore (`SETUP_RECOVERY_ENABLED=true` обов'язкове) та system restore (завжди зі власною копією).
+- Оновлено тести `test-safety`, `test-transaction-safety-v4`; `test-backups-v3` тепер фіксує `SETUP_BACKUP_ENABLED=true` у собі й не залежить від локального `config/setup.conf`.
+- Документацію (security.md, commands.md, configuration.md) узгоджено з новою поведінкою.
 
 ## 2026-10-22 — аудит перейменування
 

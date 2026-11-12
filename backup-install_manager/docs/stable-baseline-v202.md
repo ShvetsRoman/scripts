@@ -16,9 +16,9 @@
 ## Перевірка після застосування
 
 ```bash
-cd ~/Documents/backup-install_manager
-./backup-install_manager.sh --version
-./tests/run-tests.sh
+cd /шлях/до/backup-install_manager    # корінь проєкту, напр. ~/00_setup/scripts_bash/backup-install_manager
+./backup-install_manager.sh --version    # звірка версії
+./tests/run-tests.sh                     # повний регресійний набір
 ```
 
 Позитивний прогін v2.0.1 є базою для порівняння; v2.0.2 потрібно перевірити окремо на Arch Linux, включно з ShellCheck.

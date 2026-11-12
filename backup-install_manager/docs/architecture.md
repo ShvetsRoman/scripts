@@ -2,23 +2,25 @@
 
 Версія коду — `2.0.2` (читається з `src/core/version.sh`; звіряйте `./backup-install_manager.sh --version`). Remote Sync поки не інтегровано.
 
+Структура каталогів проєкту (runtime-каталоги не входять до релізного архіву):
+
 ```text
 backup-install_manager/
-├── backup-install_manager.sh         # точка входу
-├── config/                  # конфігурації
+├── backup-install_manager.sh       # точка входу CLI (єдина)
+├── config/                         # користувацькі конфігурації
 ├── src/
-│   ├── core/                # bootstrap, версія, шляхи, UI, блокування
-│   ├── cli/                 # CLI та інтерактивні меню
-│   ├── packages/            # пакети, конфігурації, реєстр/граф
-│   ├── dotfiles/            # джерела, план, порівняння, копіювання
-│   ├── recovery/            # backup, recovery, archives
-│   ├── hooks/               # запуск hooks у дочірніх процесах
-│   └── diagnostics/         # doctor та report
-├── hooks/                   # hook_main() для модулів
-├── tools/                   # archive_safe.py, recovery_safe.py, update_safe.py
-├── tests/                   # регресійні тести
-├── docs/                    # документація
-├── logs/                    # журнали виконання
+│   ├── core/                       # bootstrap, версія, шляхи, UI, блокування
+│   ├── cli/                        # CLI та інтерактивні меню
+│   ├── packages/                   # пакети, конфігурації, реєстр/граф
+│   ├── dotfiles/                   # джерела, план, порівняння, копіювання
+│   ├── recovery/                   # backup, recovery, archives
+│   ├── hooks/                      # запуск hooks у дочірніх процесах
+│   └── diagnostics/                # doctor та report
+├── hooks/                          # hook_main() для модулів
+├── tools/                          # archive_safe.py, recovery_safe.py, update_safe.py
+├── tests/                          # регресійні тести
+├── docs/                           # документація
+├── logs/                           # журнали виконання (runtime)
 └── backups/, archives/, dotfiles/  # користувацькі/runtime-дані
 ```
 

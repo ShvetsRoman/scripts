@@ -86,6 +86,8 @@ Doctor і команди Dotfiles перечитують конфігураці�
 
 ## Документація
 
+Повний індекс — у [docs/index.md](docs/index.md).
+
   docs/commands.md — усі команди
   docs/sources.md  — формат реєстру
   docs/security.md — запобіжники

@@ -3,12 +3,12 @@
 ## Основні перевірки
 
 ```bash
-cd ~/Documents/backup-install_manager
-bash -n backup-install_manager.sh
-./backup-install_manager.sh --version
-./backup-install_manager.sh doctor
-./backup-install_manager.sh sources validate
-./tests/run-tests.sh
+cd /шлях/до/backup-install_manager                 # корінь проєкту, напр. ~/00_setup/scripts_bash/backup-install_manager
+bash -n backup-install_manager.sh                  # перевірка синтаксису без виконання
+./backup-install_manager.sh --version              # звірка версії з src/core/version.sh
+./backup-install_manager.sh doctor                 # діагностика середовища
+./backup-install_manager.sh sources validate       # перевірка схеми реєстру джерел
+./tests/run-tests.sh                               # повний регресійний набір
 ```
 
 Відомий повний успішний прогін поточної гілки на Arch Linux: 95 PASS, 0 FAIL, 0 SKIP; це історичний результат, не гарантія майбутніх запусків. Прямий запуск нового тесту потребує виконуваного біта; без нього застосовуйте `bash tests/ІМʼЯ.sh` або `chmod +x tests/ІМʼЯ.sh`.

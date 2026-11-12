@@ -31,13 +31,16 @@ for x in '/tmp/..' '/tmp/.' "$tmp/link/file"; do
     if path_ok_abs "$x"; then fail "unsafe abs accepted: $x"; fi
 done
 
-# --sync-delete без backup не змінює target.
+# --sync-delete без backup дозволений: файли оновлюються, зайве видаляється,
+# але захисна копія не створюється і автоматичний відкат недоступний.
 mkdir -p "$tmp/target"
 printf 'original\n' > "$tmp/target/file"
 printf 'keep\n' > "$tmp/target/extra"
 SYNC_DELETE=true; SETUP_BACKUP_ENABLED=false
-if apply "$tmp/src" "$tmp/target" recovery target >/dev/null 2>&1; then fail 'delete without backup accepted'; fi
-[[ -f "$tmp/target/extra" ]] || fail 'delete without backup deleted extras'
+apply "$tmp/src" "$tmp/target" recovery target >/dev/null 2>&1 \
+    || fail 'delete without backup rejected'
+[[ "$(cat "$tmp/target/file")" == injected ]] || fail 'delete without backup did not sync'
+[[ ! -e "$tmp/target/extra" ]] || fail 'delete without backup kept extras'
 SYNC_DELETE=false; SETUP_BACKUP_ENABLED=true
 
 # Ad-hoc backup-src / restore-src не повинні створювати каталоги у dry-run.
