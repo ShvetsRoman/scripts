@@ -28,3 +28,11 @@ __pycache__/
 .env.*
 !.env.example
 *.local.conf
+
+# MikroTik: конфіги з паролями та бекапи не комітяться.
+# config.rsc після заповнення містить adminPassword / wifiPassword /
+# wgPeerKey у відкритому вигляді — зберігати лише локально.
+mikrotik-manager/routers/*/config.rsc
+mikrotik-manager-bash/profiles/*/.secrets
+mikrotik-manager-bash/profiles/*/backups/
+mikrotik/*.rsc

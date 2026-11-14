@@ -19,8 +19,6 @@ from typing import Any
 SCHEMA_FILE = Path(__file__).resolve().parent / "schema.json"
 if not SCHEMA_FILE.is_file():
     raise SystemExit(f"ERROR: TOML schema not found: {SCHEMA_FILE}")
-# Стандартний набір IP-служб RouterOS; тільки ці імена дозволені у [services.*].
-SERVICE_ALLOWLIST = frozenset({"api", "api-ssl", "api-rest", "ftp", "ssh", "telnet", "winbox", "www", "www-ssl", "grpc", "grpc-ssl"})
 try:
     _schema = json.loads(SCHEMA_FILE.read_text(encoding="utf-8"))
     ROOT_KEYS: dict[str, str] = _schema["root_keys"]
@@ -31,6 +29,13 @@ try:
     SCHEMA_CONSTRAINTS: dict[str, Any] = _schema.get("constraints", {})
 except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
     raise SystemExit(f"ERROR: invalid TOML schema {SCHEMA_FILE}: {exc}")
+# Єдине джерело allowlist служб — schema.json; без нього перевірка заборонена.
+try:
+    SERVICE_ALLOWLIST: frozenset[str] = frozenset(_schema["service_allowlist"])
+except (KeyError, TypeError) as exc:
+    raise SystemExit(f"ERROR: invalid TOML schema {SCHEMA_FILE}: {exc}")
+if not SERVICE_ALLOWLIST:
+    raise SystemExit(f"ERROR: invalid TOML schema {SCHEMA_FILE}: service_allowlist порожній")
 
 class ValidationError(Exception):
     pass
@@ -157,7 +162,8 @@ def validate(data: dict[str, Any], source: str) -> tuple[dict[str, Any], list[st
     # Типові каталоги профілю не потребують окремого TOML-блоку.
     for key, default in (("output_dir", "output"), ("backup_dir", "backups")):
         value = paths_cfg.get(key, default)
-        if not value or value == "." or Path(value).is_absolute() or ".." in Path(value).parts:
+        # "~"-префікс не розгортається: інакше створився б літеральний каталог "~".
+        if not value or value == "." or value.startswith("~") or Path(value).is_absolute() or ".." in Path(value).parts:
             fail(f"{source}: paths.{key} має бути непорожнім відносним каталогом усередині профілю")
     remote_dir = paths_cfg.get("remote_dir", "")
     if remote_dir and (remote_dir.startswith("/") or ".." in Path(remote_dir).parts or not re.fullmatch(r"[A-Za-z0-9_./-]+", remote_dir)):
@@ -258,6 +264,9 @@ def validate(data: dict[str, Any], source: str) -> tuple[dict[str, Any], list[st
         if mac in lease_macs: fail(f"{source}: дубль DHCP MAC {mac}")
         lease_ips.add(item["address"]); lease_macs.add(mac)
     # Перевірка сумісності ключових залежностей.
+    # [forward.*] генерує dstnat-правила: без nat.enabled вони мовчки втрачаються.
+    if not data.get("nat", {}).get("enabled", False) and data.get("forward"):
+        fail(f"{source}: секції [forward.*] потребують nat.enabled=true: без NAT правила dstnat не генеруються")
     if data.get("nat", {}).get("enabled") and data.get("nat", {}).get("masquerade") and not data.get("lists", {}).get("wan", {}).get("name"):
         fail(f"{source}: NAT masquerade потребує [lists.wan]")
     if data.get("wan", {}).get("enabled") and not data.get("wan", {}).get("interface"):
@@ -421,6 +430,11 @@ def validate(data: dict[str, Any], source: str) -> tuple[dict[str, Any], list[st
     # [wireless.guest] — окрема гостьова мережа: VAP на вказаних радіо + bridge + DHCP.
     guest = data.get("wireless", {}).get("guest", {})
     if isinstance(guest, dict) and guest.get("enabled"):
+        # Ізоляція гостей (guest → LAN drop) генерується лише у firewall:
+        # без нього таблиця filter порожня (політика accept) і гості мають
+        # повний доступ до LAN — тому гостьова мережа вимагає firewall.
+        if not data.get("firewall", {}).get("enabled", False):
+            fail(f"{source}: wireless.guest.enabled=true потребує firewall.enabled=true: гостьова мережа без firewall не ізолюється від LAN")
         wire = data.get("wireless", {})
         guest_sec_ref = guest.get("security", "")
         guest_sec_path = guest_sec_ref[1:] if isinstance(guest_sec_ref, str) and guest_sec_ref.startswith("@") else ""
@@ -498,42 +512,36 @@ def validate(data: dict[str, Any], source: str) -> tuple[dict[str, Any], list[st
                 fail(f"{source}: upnp.enabled=true потребує upnp.{req}")
         if upnp.get("external") and upnp["external"] == upnp["internal"]:
             fail(f"{source}: upnp.external та upnp.internal мають бути різними інтерфейсами")
+    # LAN, DHCP pool та статичні leases: один прохід — pool не захоплює
+    # зарезервовані адреси, leases лежать у LAN та поза pool/gateway.
     lan_value = flat.get("network.lan.address")
     if isinstance(lan_value, str) and not lan_value.startswith("@"):
         lan_if = ipaddress.ip_interface(lan_value)
+        lan_net = lan_if.network
         for field in ("dhcp.network.lan.gateway", "pool.lan.start", "pool.lan.end"):
             candidate = flat.get(field)
             if candidate:
                 try: addr = ipaddress.ip_address(candidate)
                 except ValueError: fail(f"{source}: {field}: некоректна IP-адреса '{candidate}'")
-                if addr not in lan_if.network: fail(f"{source}: {field} ({candidate}) не належить {lan_if.network}")
+                if addr not in lan_net: fail(f"{source}: {field} ({candidate}) не належить {lan_net}")
+        reserved = {lan_if.ip, lan_net.network_address, lan_net.broadcast_address}
+        gateway_value = flat.get("dhcp.network.lan.gateway")
+        if gateway_value:
+            reserved.add(ipaddress.ip_address(gateway_value))
+        pool_start_ip = pool_end_ip = None
         if flat.get("pool.lan.start") and flat.get("pool.lan.end"):
             pool_start_ip = ipaddress.ip_address(flat["pool.lan.start"])
             pool_end_ip = ipaddress.ip_address(flat["pool.lan.end"])
             if pool_start_ip > pool_end_ip:
                 fail(f"{source}: pool.lan.start має бути не більшою за pool.lan.end")
-            reserved = {lan_if.ip, lan_if.network.network_address, lan_if.network.broadcast_address}
-            gateway_value = flat.get("dhcp.network.lan.gateway")
-            if gateway_value:
-                reserved.add(ipaddress.ip_address(gateway_value))
             if any(pool_start_ip <= address <= pool_end_ip for address in reserved):
                 fail(f"{source}: DHCP pool {pool_start_ip}-{pool_end_ip} містить зарезервовану адресу маршрутизатора, gateway, network або broadcast")
-    # DHCP leases повинні бути у LAN-підмережі та не дублювати gateway/pool.
-    if isinstance(lan_value, str) and not lan_value.startswith("@"):
-        lan_net = ipaddress.ip_interface(lan_value).network
-        pool_start = flat.get("pool.lan.start")
-        pool_end = flat.get("pool.lan.end")
-        lan_if = ipaddress.ip_interface(lan_value)
-        gateway_value = flat.get("dhcp.network.lan.gateway")
-        reserved = {lan_if.ip, lan_net.network_address, lan_net.broadcast_address}
-        if gateway_value:
-            reserved.add(ipaddress.ip_address(gateway_value))
         for item in data.get("leases", {}).get("devices", []):
             addr = ipaddress.ip_address(item["address"])
             if addr not in lan_net: fail(f"{source}: lease {addr} не належить LAN {lan_net}")
             if addr in reserved: fail(f"{source}: статична lease {addr} конфліктує з адресою маршрутизатора, gateway, network або broadcast")
-            if pool_start and pool_end and ipaddress.ip_address(pool_start) <= addr <= ipaddress.ip_address(pool_end):
-                fail(f"{source}: статична lease {addr} перетинається з DHCP pool {pool_start}-{pool_end}")
+            if pool_start_ip and pool_end_ip and pool_start_ip <= addr <= pool_end_ip:
+                fail(f"{source}: статична lease {addr} перетинається з DHCP pool {pool_start_ip}-{pool_end_ip}")
     return {"values": flat, "sections": sections}, []
 
 def load_files(paths: list[Path]) -> dict[str, Any]:

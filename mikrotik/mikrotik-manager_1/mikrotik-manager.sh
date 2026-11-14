@@ -124,6 +124,19 @@ profile_files() {
   (( ${#PFILES[@]} )) || die "Профіль '$1' не знайдено ($profile_path/*.toml або $profile_path.toml)"
 }
 
+# Allowlist стандартних IP-служб RouterOS — єдине джерело: lib/schema.json
+# (ключ service_allowlist). Читається ліниво, один раз на запуск.
+SERVICE_ALLOWLIST_STR=""
+service_allowed() {
+  local key=$1 s
+  if [[ -z $SERVICE_ALLOWLIST_STR ]]; then
+    SERVICE_ALLOWLIST_STR=$(python3 -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1], encoding="utf-8"))["service_allowlist"]))' "$SCRIPT_DIR/lib/schema.json") \
+      || die "Не вдалося прочитати service_allowlist із lib/schema.json"
+  fi
+  for s in $SERVICE_ALLOWLIST_STR; do [[ $s == "$key" ]] && return 0; done
+  return 1
+}
+
 load_profile() {
   local f parsed
   PROFILE=$1; PROFILE_DIR="$PROFILES_DIR/$1"
@@ -670,7 +683,14 @@ gen_firewall() {
   local W L key p lim ports burst blacklist_timeout stage_timeout fasttrack_hw
   local -a SV
   sec "IPv4 firewall"
-  if ! is_true firewall.enabled true; then out "# firewall disabled in profile"; return 0; fi
+  if ! is_true firewall.enabled true; then
+    # Гостьова мережа без firewall не ізолюється: правила guest→LAN drop
+    # генеруються лише тут, а політика filter без firewall = accept.
+    if is_true wireless.guest.enabled; then
+      die "wireless.guest.enabled=true потребує firewall.enabled=true: гостьова мережа без firewall не ізолюється від LAN"
+    fi
+    out "# firewall disabled in profile"; return 0
+  fi
   W=$(q "$WAN_L"); L=$(q "$LAN_L")
   local MGMT_L="$LAN_L"
   if ! is_true management.on_lan true && has lists.management.name; then MGMT_L=$(cfg lists.management.name); fi
@@ -721,7 +741,7 @@ gen_firewall() {
   mapfile -t SV < <(children services)
   for key in "${SV[@]}"; do
     is_true "services.$key.enabled" || continue
-    [[ $key =~ ^(api|api-ssl|api-rest|ftp|ssh|telnet|winbox|www|www-ssl|grpc|grpc-ssl)$ ]] || die "services.$key не входить у стандартну IP-службу RouterOS"
+    service_allowed "$key" || die "services.$key не входить у стандартну IP-службу RouterOS"
     p=$(cfg "services.$key.port")
     is_port "$p" || die "services.$key.port: активна служба потребує порт 1..65535"
     if is_true "services.$key.limit_to_lan" true; then
@@ -780,7 +800,15 @@ gen_nat() {
   local key proto wp ta tp dst lim a sub br W
   local -a L
   sec "NAT"
-  if ! is_true nat.enabled; then out "# nat disabled"; return 0; fi
+  if ! is_true nat.enabled; then
+    # [forward.*] без NAT мовчки втратилися б: dstnat-правила не генеруються.
+    local -a ORPHAN_FWD
+    mapfile -t ORPHAN_FWD < <(children forward)
+    if (( ${#ORPHAN_FWD[@]} )); then
+      die "nat.enabled=false, але є секції [forward.*] (${ORPHAN_FWD[*]}): правила dstnat не генеруються — увімкніть nat.enabled або видаліть forward"
+    fi
+    out "# nat disabled"; return 0
+  fi
   W=$(q "$WAN_L")
   if is_true nat.masquerade; then
     rs "/ip firewall nat add chain=srcnat action=masquerade out-interface-list=$W comment=\"mgr: masquerade\""
@@ -848,11 +876,14 @@ gen_services() {
     en=$(cfg "services.$key.enabled" false)
     addr=""; p=""
     # Стандартний набір IP-служб RouterOS; ім'я йде у RSC без лапок.
-    [[ $key =~ ^(api|api-ssl|api-rest|ftp|ssh|telnet|winbox|www|www-ssl|grpc|grpc-ssl)$ ]] || die "services.$key не входить у стандартну IP-службу RouterOS"
+    # Список служб — service_allowlist у lib/schema.json (спільно з toml_engine).
+    service_allowed "$key" || die "services.$key не входить у стандартну IP-службу RouterOS"
     if [[ $en == true ]]; then
       need "services.$key.port" "services.$key.limit_to_lan"
       is_port "${CFG[services.$key.port]}" || die "services.$key.port некоректний"
       p=" port=${CFG[services.$key.port]}"
+      local addr_param="" addr_kw
+      addr_kw=$(service_addr_keyword)
       if is_true "services.$key.limit_to_lan" true; then
         if ! is_true management.on_lan true && has management.address; then
           ref_addr "${CFG[management.address]}"; addr="$(cidr_net "$REF")"
@@ -860,9 +891,11 @@ gen_services() {
           addr=$LAN_NET
         fi
         [[ -n $addr ]] || die "services.$key.limit_to_lan=true, але LAN-підмережу не обчислено: задайте [management].address або management.on_lan=true з [network.lan]"
+        addr_param=" $addr_kw=\"$addr\""
       fi
-      local addr_kw; addr_kw=$(service_addr_keyword)
-      rs "/ip service set [find where name=$key] disabled=no$p $addr_kw=\"$addr\""
+      # Без limit_to_lan параметр адреси не друкується взагалі: порожнє
+      # значення (address=""/available-from="") RouterOS може відхилити.
+      rs "/ip service set [find where name=$key] disabled=no$p$addr_param"
     else
       rs "/ip service set [find where name=$key] disabled=yes"
     fi
@@ -1080,10 +1113,11 @@ profile_secrets_sha256() {
 rel_dir_checked() {  # rel_dir_checked <значення> <local|remote> <назва поля> → значення або die
   local v=$1 field=$3
   local kind=$2
+  # "~" не розгортається тут: без перевірки створився б літеральний каталог "~".
   if [[ $kind == local ]]; then
-    [[ $v != /* && $v != .. && $v != ../* && $v != */../* && $v != */.. ]] || die "$field має бути відносним каталогом профілю"
+    [[ $v != "~"* && $v != /* && $v != .. && $v != ../* && $v != */../* && $v != */.. ]] || die "$field має бути відносним каталогом профілю"
   else
-    [[ $v != /* && $v != *".."* ]] || die "$field має бути відносним каталогом на роутері без '..'"
+    [[ $v != "~"* && $v != /* && $v != *".."* ]] || die "$field має бути відносним каталогом на роутері без '..'"
   fi
   printf '%s' "$v"
 }
@@ -1325,7 +1359,10 @@ cmd_list() {
     [[ -z ${seen[$n]+x} ]] || continue
     seen[$n]=1
     # list не запускає повну валідацію профілю — лише читає host із [connection].
+    # FNR==1 скидає стан на межі файлів: без цього in_connection "[connection]"
+    # з першого файла помилково захоплював top-level host з наступного файла.
     h=$(awk '
+      FNR == 1 { in_connection=0 }
       /^\[connection\][[:space:]]*$/ { in_connection=1; next }
       /^\[/ { in_connection=0 }
       in_connection && /^[[:space:]]*host[[:space:]]*=/ {

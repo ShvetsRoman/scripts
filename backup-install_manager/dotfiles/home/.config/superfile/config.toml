@@ -1,105 +1,257 @@
-# change your theme
-theme = 'nord_my'
+###############################################################################
+#                         SUPERFILE — CONFIGURATION                           #
+#                         Конфігурація файлового менеджера                    #
+###############################################################################
 
-# The editor files will be opened with. (Leave blank to use the EDITOR environment variable).
-editor = '$EDITOR'
+# Документація:
+# https://superfile.dev/configure/superfile-config/
 
-# The editor directories will be opened with. (Leave blank to use the default editors).
-dir_editor = '$EDITOR'
+# ============================================================
+# РЕДАКТОРИ
+# ============================================================
 
-# Auto check for update
-auto_check_update = true
+# Редактор файлів.
+# Порожнє значення використовує змінну середовища $EDITOR.
+# У твоєму випадку це Neovim.
+editor = ""
 
-# Cd on quit (For more details, please check out https://superfile.dev/configure/superfile-config/#cd_on_quit)
+# Редактор каталогів.
+# Явно вказуємо Neovim, оскільки порожнє значення
+# використовує системний редактор за замовчуванням (vi у Linux).
+dir_editor = "nvim"
+
+
+# ============================================================
+# ОСНОВНІ НАЛАШТУВАННЯ
+# ============================================================
+
+# Назва теми оформлення.
+theme = "nord_my"
+
+# Автоматично перевіряти наявність оновлень.
+# true  — перевіряти (не частіше одного разу на день).
+# false — вимкнути перевірку.
+auto_check_update = false
+
+# Перехід у останній відкритий каталог після виходу.
+# true  — змінити поточний каталог термінала.
+# false — залишити початковий каталог.
+# Потребує shell-функції spf у конфігурації Zsh.
 cd_on_quit = true
 
-# Whether to open file preview automatically every time superfile is opened.
+# ============================================================
+# ПОПЕРЕДНІЙ ПЕРЕГЛЯД ФАЙЛІВ
+# ============================================================
+
+# Автоматично відкривати панель попереднього перегляду.
 default_open_file_preview = true
 
-# Whether to show image preview.
+# Показувати попередній перегляд зображень.
 show_image_preview = true
 
-# Whether to show additional footer info for file panel.
-show_panel_footer_info = true
+# Показувати додаткову інформацію в нижній частині панелі.
+show_panel_footer_info = false
 
-# The path of the first file panel when superfile is opened.
-default_directory = '.'
+# ============================================================
+# ПОЧАТКОВИЙ КАТАЛОГ
+# ============================================================
 
-# Display file sizes using powers of 1000 (kB, MB, GB) instead of powers of 1024 (KiB, MiB, GiB).
+# Каталог, який відкривається під час запуску.
+# "."  — поточний каталог.
+# "~"  — домашній каталог.
+default_directory = "."
+
+# ============================================================
+# ВІДОБРАЖЕННЯ РОЗМІРІВ ФАЙЛІВ
+# ============================================================
+
+# Одиниці вимірювання розміру файлів.
+# true  — десяткові: kB, MB, GB (1000).
+# false — двійкові: KiB, MiB, GiB (1024).
 file_size_use_si = false
 
-# Default sort type (0: Name, 1: Size, 2: Date Modified, 3: Type, 4: Natural).
+# ============================================================
+# СОРТУВАННЯ ФАЙЛІВ
+# ============================================================
+
+# Тип сортування:
+# 0 — за назвою.
+# 1 — за розміром.
+# 2 — за датою зміни.
+# 3 — за типом.
+# 4 — природне сортування (file2 перед file10).
 default_sort_type = 0
 
-# Default sort order (false: Ascending, true: Descending).
+# Зворотний порядок сортування.
+# false — за зростанням.
+# true  — за спаданням.
 sort_order_reversed = false
 
-# Case sensitive sort by name (capital "B" comes before "a" if true).
+# Регістр символів під час сортування.
+# false — без урахування регістру.
+# true  — з урахуванням регістру.
 case_sensitive_sort = false
 
-# Whether to close the shell on successful command execution.
+# ============================================================
+# КОМАНДНИЙ РЯДОК
+# ============================================================
+
+# Закривати командний рядок після успішного виконання команди.
+# false — залишати відкритим.
+# true  — автоматично закривати.
 shell_close_on_success = false
 
-# Whether to enable debug mode.
+# ============================================================
+# ДІАГНОСТИКА
+# ============================================================
+
+# Режим налагодження.
+# true  — докладніші журнали.
+# false — звичайне журналювання.
 debug = false
 
-# Whether to ignore warnings about missing fields in the config file.
+# Ігнорувати попередження про відсутні поля конфігурації.
+# false — показувати попередження.
+# true  — приховувати попередження.
 ignore_missing_fields = false
 
-# Number of lines to scroll for PgUp/PgDown keys (0: full page, default behavior).
+# ============================================================
+# ПРОКРУЧУВАННЯ
+# ============================================================
+
+# Кількість рядків прокручування PgUp / PgDown.
+# 0 — прокручування на цілу сторінку.
+# Інше число — вказана кількість рядків.
 page_scroll_size = 0
 
-# Count of extra columns in file panel in addition to file name. When option equal 0 then feature is disabled.
+# ============================================================
+# КОЛОНКИ ФАЙЛОВОЇ ПАНЕЛІ
+# ============================================================
+
+# Кількість додаткових колонок:
+# 0 — вимкнено.
+# 1 — розмір файлу.
+# 2 — дата зміни.
+# 3 — права доступу.
 file_panel_extra_columns = 0
 
-# Percentage of file panel width allocated to file names (25-100). Higher values give more space to names, less to extra columns.
+# Відсоток ширини панелі для назв файлів.
+# Діапазон: 25–100.
+# Більше значення — більше місця для назв.
 file_panel_name_percent = 50
 
-# ================   Style =================
-#  If you don't have or don't want Nerdfont installed you can turn this off
+
+###############################################################################
+#                                ОФОРМЛЕННЯ                                   #
+###############################################################################
+
+# ============================================================
+# ІКОНКИ
+# ============================================================
+
+# Використовувати Nerd Fonts.
+# Потребує встановленого Nerd Font.
 nerdfont = true
 
-# Show checkbox icons in select mode (requires nerdfont)
+# Показувати іконки вибору файлів у режимі виділення.
+# Працює лише разом із nerdfont = true.
 show_select_icons = true
 
-# Set transparent background or not (this only work when your terminal background is transparent)
+# ============================================================
+# ПРОЗОРІСТЬ
+# ============================================================
+
+# Не малювати фон Superfile.
+# true  — використовувати прозорий фон термінала.
+# false — використовувати фон теми.
 transparent_background = true
 
-# File preview width allow '0' (this mean same as file panel),'x' x must be less than 10 and greater than 1 (This means that the width of the file preview will be one xth of the total width.)
+# ============================================================
+# ПАНЕЛЬ ПОПЕРЕДНЬОГО ПЕРЕГЛЯДУ
+# ============================================================
+
+# Ширина панелі Preview.
+# 0 — така сама ширина, як у файлової панелі.
+# 2–10 — ширина становить 1/X доступної ширини.
 file_preview_width = 0
 
-# Enable border around the file preview panel (default: false)
+# Показувати рамку навколо Preview.
 enable_file_preview_border = true
 
-# Whether to use the builtin syntax highlighting with chroma or use bat. Values: "" for builtin chroma, "bat" for bat
-code_previewer = ''
+# ============================================================
+# ПІДСВІЧУВАННЯ СИНТАКСИСУ
+# ============================================================
 
-# The length of the sidebar(excluding borders). If you don't find to display the sidebar, you can input 0 directly. If you want to display the value, please place it in the range of 5-20.
+# Механізм підсвічування тексту:
+# ""    — вбудований Chroma.
+# "bat" — зовнішній переглядач bat.
+code_previewer = "bat"
+
+# ============================================================
+# БОКОВА ПАНЕЛЬ
+# ============================================================
+
+# Ширина Sidebar без урахування рамок.
+# 0 — приховати панель.
+# Допустимий діапазон: 5–20.
 sidebar_width = 20
 
-# Order of sidebar sections (valid values: "home", "pinned", "disks").
-# Only sections included in this list will be displayed.
-sidebar_sections = ['home', 'pinned', 'disks']
+# Порядок секцій Sidebar.
+# Доступні секції:
+# "home"   — домашні каталоги.
+# "pinned" — закріплені каталоги.
+# "disks"  — диски та файлові системи.
+sidebar_sections = ["home", "pinned", "disks"]
 
-# Border style
-border_top = '─'
-border_bottom = '─'
-border_left = '│'
-border_right = '│'
-border_top_left = '╭'
-border_top_right = '╮'
-border_bottom_left = '╰'
-border_bottom_right = '╯'
-border_middle_left = '├'
-border_middle_right = '┤'
+# ============================================================
+# РАМКИ ПАНЕЛЕЙ
+# ============================================================
 
-# ==========PLUGINS========== #
-# Plugins means that you need to install some external dependencies to use them.
-# Show more detailed metadata, please install exiftool before enabling this plugin!
+# Символи верхньої та нижньої межі.
+border_top = "─"
+border_bottom = "─"
+
+# Символи лівої та правої межі.
+border_left = "│"
+border_right = "│"
+
+# Кути рамок.
+border_top_left = "╭"
+border_top_right = "╮"
+border_bottom_left = "╰"
+border_bottom_right = "╯"
+
+# З'єднання рамок між панелями.
+border_middle_left = "├"
+border_middle_right = "┤"
+
+
+###############################################################################
+#                                  ПЛАГІНИ                                    #
+###############################################################################
+
+# ============================================================
+# МЕТАДАНІ ФАЙЛІВ
+# ============================================================
+
+# Детальні метадані файлів.
+# Потребує встановленого exiftool.
 metadata = false
 
-# Enable MD5 checksum generation for files
+# ============================================================
+# КОНТРОЛЬНІ СУМИ
+# ============================================================
+
+# Генерувати MD5 для звичайних файлів.
+# Може сповільнювати роботу на великих файлах.
 enable_md5_checksum = false
 
-# Zoxide support for the fast navigation
+# ============================================================
+# ZOXIDE
+# ============================================================
+
+# Інтеграція з zoxide.
+# true  — увімкнути навігацію через zoxide (клавіша z).
+# false — вимкнути.
+# Потребує встановленого zoxide.
 zoxide_support = true

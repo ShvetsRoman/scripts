@@ -1,3 +1,20 @@
+# =============================================================================
+#  АРХІВ — НЕ ЗАСТОСОВУВАТИ! (легасі-конфіг, documentation-only)
+#
+#  Цей файл — історична «робоча» конфігурація, НЕ сумісна з поточним
+#  менеджером (інші імена інтерфейсів, інші address-list/сервіси).
+#  Відомі дефекти, через які він фактично непрацездатний:
+#    - рядок з 2.4 ГГц шукає інтерфейс LAN-wifi_2.4GHz, який був
+#      перейменований раніше у LAN-5-wifi_2.4GHz (no such item);
+#    - радіо 5 ГГц посилається на security-profile=HOME_test,
+#      якого ніде не створено;
+#    - DHCP-клієнт на WAN має add-default-route=no без ручного
+#      маршруту → вихід в інтернет мертвий.
+#  Секрети (WiFi PSK, MAC-адреси) замасковані — реальні значення
+#  відновлюйте з локального бекапа, а не з Git.
+#  Канонічний конфіг тепер: mikrotik-manager/routers/<ім'я>/config.rsc
+# =============================================================================
+
 # сброс к заводским настройкам
 # /system reset-configuration no-defaults=yes skip-backup=yes
 
@@ -76,7 +93,7 @@
 /ip dns set allow-remote-requests=yes servers=1.1.1.3,1.0.0.3
 
 ## Настройка пароля для WiFi в MikroTik
-/interface wireless security-profiles add name=HOME-security authentication-types=wpa2-psk eap-methods="" group-key-update=1h mode=dynamic-keys supplicant-identity=MikroTik wpa2-pre-shared-key=28052013Sasha
+/interface wireless security-profiles add name=HOME-security authentication-types=wpa2-psk eap-methods="" group-key-update=1h mode=dynamic-keys supplicant-identity=MikroTik wpa2-pre-shared-key=ЗАМІНІТЬ_ПАРОЛЬ_WIFI
 
 # Настройка WiFi на частоте 2,4ГГц
 /interface wireless set [ find name=LAN-wifi_2.4GHz ] antenna-gain=0 band=2ghz-b/g/n channel-width=20/40mhz-Ce country=no_country_set disabled=no frequency=auto frequency-mode=manual-txpower mode=ap-bridge security-profile=HOME-security ssid=HOME_test station-roaming=enabled wireless-protocol=802.11
@@ -85,22 +102,23 @@
 /interface wireless set [ find name=LAN-wifi_5GHz ] antenna-gain=0 band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country=no_country_set disabled=no frequency=auto frequency-mode=manual-txpower mode=ap-bridge security-profile=HOME_test ssid=HOME_test station-roaming=enabled wireless-protocol=802.11
 
 # Привязка клиентов по MAC адресу
-/ip dhcp-server lease add address=192.168.88.5 mac-address=44:DF:65:6C:14:07 server=DHCP-Server comment="mi_repiter"
-/ip dhcp-server lease add address=192.168.88.6 mac-address=20:10:7A:95:7D:48 server=DHCP-Server comment="printer"
-/ip dhcp-server lease add address=192.168.88.7 mac-address=14:DD:A9:12:69:0C server=DHCP-Server comment="server-pc"
-/ip dhcp-server lease add address=192.168.88.8 mac-address=5C:CF:7F:B8:C5:C2 server=DHCP-Server comment="Signal"
-/ip dhcp-server lease add address=192.168.88.9 mac-address=4C:3B:DF:49:2C:FD server=DHCP-Server comment="X-Box"
-/ip dhcp-server lease add address=192.168.88.10 mac-address=00:25:22:EA:7C:FA server=DHCP-Server comment="Vadim-pc"
-/ip dhcp-server lease add address=192.168.88.11 mac-address=70:77:81:79:F7:37 server=DHCP-Server comment="roman-pc"
-/ip dhcp-server lease add address=192.168.88.12 mac-address=88:46:04:6B:91:02 server=DHCP-Server comment="tel_roman"
-/ip dhcp-server lease add address=192.168.88.13 mac-address=4C:63:71:1C:B8:BC server=DHCP-Server comment="tel_oksana"
-/ip dhcp-server lease add address=192.168.88.14 mac-address=AA:97:75:5F:DD:47 server=DHCP-Server comment="tel_vadim"
-/ip dhcp-server lease add address=192.168.88.15 mac-address=32:30:42:8B:32:66 server=DHCP-Server comment="tel_sasha"
-/ip dhcp-server lease add address=192.168.88.16 mac-address=76:E2:52:AD:FA:F3 server=DHCP-Server comment="planshet_sasha"
-/ip dhcp-server lease add address=192.168.88.17 mac-address=FE:40:7E:77:A9:41 server=DHCP-Server comment="planshet_sasha"
-/ip dhcp-server lease add address=192.168.88.18 mac-address=74:4C:A1:55:85:0B server=DHCP-Server comment="notebook_sasha"
-/ip dhcp-server lease add address=192.168.88.19 mac-address=D0:78:01:06:66:3B server=DHCP-Server comment="tv_km3-spalnay"
-/ip dhcp-server lease add address=192.168.88.20 mac-address=A0:6F:AA:5E:47:DC server=DHCP-Server comment="tv_lg-32"
+# (MAC-адреси та імена членів сім'ї замасковані — див. шапку файлу)
+/ip dhcp-server lease add address=192.168.88.5 mac-address=XX:XX:XX:XX:XX:01 server=DHCP-Server comment="mi_repiter"
+/ip dhcp-server lease add address=192.168.88.6 mac-address=XX:XX:XX:XX:XX:02 server=DHCP-Server comment="printer"
+/ip dhcp-server lease add address=192.168.88.7 mac-address=XX:XX:XX:XX:XX:03 server=DHCP-Server comment="server-pc"
+/ip dhcp-server lease add address=192.168.88.8 mac-address=XX:XX:XX:XX:XX:04 server=DHCP-Server comment="Signal"
+/ip dhcp-server lease add address=192.168.88.9 mac-address=XX:XX:XX:XX:XX:05 server=DHCP-Server comment="X-Box"
+/ip dhcp-server lease add address=192.168.88.10 mac-address=XX:XX:XX:XX:XX:06 server=DHCP-Server comment="pc-1"
+/ip dhcp-server lease add address=192.168.88.11 mac-address=XX:XX:XX:XX:XX:07 server=DHCP-Server comment="pc-2"
+/ip dhcp-server lease add address=192.168.88.12 mac-address=XX:XX:XX:XX:XX:08 server=DHCP-Server comment="tel-1"
+/ip dhcp-server lease add address=192.168.88.13 mac-address=XX:XX:XX:XX:XX:09 server=DHCP-Server comment="tel-2"
+/ip dhcp-server lease add address=192.168.88.14 mac-address=XX:XX:XX:XX:XX:0A server=DHCP-Server comment="tel-3"
+/ip dhcp-server lease add address=192.168.88.15 mac-address=XX:XX:XX:XX:XX:0B server=DHCP-Server comment="tel-4"
+/ip dhcp-server lease add address=192.168.88.16 mac-address=XX:XX:XX:XX:XX:0C server=DHCP-Server comment="planshet-1"
+/ip dhcp-server lease add address=192.168.88.17 mac-address=XX:XX:XX:XX:XX:0D server=DHCP-Server comment="planshet-2"
+/ip dhcp-server lease add address=192.168.88.18 mac-address=XX:XX:XX:XX:XX:0E server=DHCP-Server comment="notebook-1"
+/ip dhcp-server lease add address=192.168.88.19 mac-address=XX:XX:XX:XX:XX:0F server=DHCP-Server comment="tv-1"
+/ip dhcp-server lease add address=192.168.88.20 mac-address=XX:XX:XX:XX:XX:10 server=DHCP-Server comment="tv-2"
 
 
 # Проброс портов !!!

@@ -20,16 +20,19 @@ ShowViewMode=false
 
 [General]
 BrowseThroughArchives=true
+CloseSplitViewChoice=InactiveView
 ConfirmClosingMultipleTabs=false
 DoubleClickViewAction=none
 RememberOpenedTabs=false
 ShowFullPath=true
-ShowSelectionToggle=false
 ShowStatusBar=FullWidth
 TabStyle=FixedSize
 UseTabForSwitchingSplitView=true
 Version=202
 ViewPropsTimestamp=2025,12,5,19,27,45.23
+
+[IconsMode]
+PreviewSize=80
 
 [InformationPanel]
 dateFormat=ShortFormat
@@ -44,6 +47,9 @@ MenuBar=Disabled
 [MainWindow][Toolbar mainToolBar]
 IconSize=16
 ToolButtonStyle=IconOnly
+
+[Notification Messages]
+warnAboutRisksBeforeActingAsAdmin=false
 
 [PreviewSettings]
 Plugins=glycin-image-rs,imagethumbnail,glycin-heif,exrthumbnail,jpegthumbnail,glycin-jxl,windowsimagethumbnail,glycin-svg,svgthumbnail,opendocumentthumbnail,djvuthumbnail,cursorthumbnail,fontthumbnail

@@ -466,6 +466,54 @@ mv "$TMP/project/profiles/$HOME_PROFILE/config.toml.new" "$TMP/project/profiles/
 check 'negative: guest network without pool_start rejected' run_fail "$M" --validate --profile "$HOME_PROFILE"
 mv "$TMP/home-config.base" "$TMP/project/profiles/$HOME_PROFILE/config.toml"
 
+# Гостьова мережа без firewall не ізолюється: правила guest→LAN drop генеруються
+# лише у firewall, а політика filter без firewall = accept. Комбінація
+# wireless.guest.enabled=true + firewall.enabled=false має відхилятися.
+# $TMP/home-config.base уже спожито попереднім guest-блоком (mv), тож
+# зберігаємо окрему копію поточного (базового без guest) конфігу.
+cp "$TMP/project/profiles/$HOME_PROFILE/config.toml" "$TMP/home-config.no-guest"
+cat > "$TMP/guest-no-firewall.toml" <<'EOF'
+
+[bridge.guest]
+name = "bridge-guest"
+
+[security.guest]
+name = "guest-wifi-security"
+authentication = "wpa2-psk"
+password_file = ".secrets"
+password_key = "GUEST_WIFI_PASSWORD"
+
+[wireless.guest]
+enabled = true
+masters = ["@interfaces.wlan1"]
+name_prefix = "guest"
+ssid = "HOME-Guest"
+security = "@security.guest"
+bridge = "@bridge.guest"
+address = "192.168.89.1/24"
+pool_start = "192.168.89.100"
+pool_end = "192.168.89.200"
+dns_servers = ["192.168.89.1"]
+EOF
+cat "$TMP/project/profiles/$HOME_PROFILE/config.toml" "$TMP/guest-no-firewall.toml" > "$TMP/guest-firewall-ok.toml"
+python3 - "$TMP/guest-firewall-ok.toml" "$TMP/guest-firewall-off.toml" <<'PYFWOFF'
+import pathlib, sys
+src = pathlib.Path(sys.argv[1]).read_text()
+start = src.index('[firewall]')
+end = src.find('\n[', start + 1)
+if end < 0: end = len(src)
+section = src[start:end].replace('enabled = true', 'enabled = false', 1)
+pathlib.Path(sys.argv[2]).write_text(src[:start] + section + src[end:])
+PYFWOFF
+# GUEST_WIFI_PASSWORD вже додано до .secrets у попередньому guest-блоці.
+cp "$TMP/guest-firewall-off.toml" "$TMP/project/profiles/$HOME_PROFILE/config.toml"
+check 'negative: guest Wi-Fi without firewall rejected by validator' run_fail "$M" --validate --profile "$HOME_PROFILE"
+check 'negative: guest Wi-Fi without firewall rejected by build' run_fail "$M" --build --profile "$HOME_PROFILE" --name guest-no-fw.rsc
+check 'guest Wi-Fi without firewall creates no RSC artifact' test ! -e "$TMP/project/profiles/$HOME_PROFILE/output/guest-no-fw.rsc"
+cp "$TMP/guest-firewall-ok.toml" "$TMP/project/profiles/$HOME_PROFILE/config.toml"
+check 'guest Wi-Fi with firewall enabled validates' run_ok "$M" --validate --profile "$HOME_PROFILE"
+mv "$TMP/home-config.no-guest" "$TMP/project/profiles/$HOME_PROFILE/config.toml"
+
 # Окремі контракти трьох Wi-Fi драйверів: генерація лише локальна, без RouterOS.
 WIFI_BASE="$TMP/project/profiles/$HOME_PROFILE/config.toml"
 cp "$WIFI_BASE" "$TMP/wifi-original.toml"
@@ -642,6 +690,56 @@ cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.services"
 printf '\n[services.reverse-proxy]\nenabled = true\nport = 8118\nlimit_to_lan = true\n' >> "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 check 'negative: non-standard service name rejected' run_fail "$M" --validate --profile "$CHR_PROFILE"
 mv "$TMP/chr-config.services" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+
+# limit_to_lan=false: параметр адреси не друкується взагалі. Порожнє
+# available-from="" (або address="") RouterOS може відхилити, тож
+# семантика «служба доступна звідусіль» досягається лише відсутністю параметра.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.services"
+python3 - "$TMP/project/profiles/$CHR_PROFILE/config.toml" <<'PYWWW'
+import pathlib, sys
+p = pathlib.Path(sys.argv[1])
+s = p.read_text()
+start = s.index('[services.www]')
+end = s.find('\n[', start + 1)
+if end < 0: end = len(s)
+p.write_text(s[:start] + '[services.www]\nenabled = true\nport = 8080\nlimit_to_lan = false\n' + s[end:])
+PYWWW
+check 'service with limit_to_lan=false validates' run_ok "$M" --validate --profile "$CHR_PROFILE"
+check 'service with limit_to_lan=false builds' run_ok "$M" --build --profile "$CHR_PROFILE" --name srv-any.rsc
+SRV_ANY_RSC="$TMP/project/profiles/$CHR_PROFILE/output/srv-any.rsc"
+check 'limit_to_lan=false emits no address parameter' grep -q 'name=www\] disabled=no port=8080' "$SRV_ANY_RSC"
+check 'limit_to_lan=false emits no empty available-from' bash -c '! grep -Eq "(available-from|address)=\"\"" "$1"' _ "$SRV_ANY_RSC"
+mv "$TMP/chr-config.services" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+
+# [forward.*] без nat.enabled мовчки втрачалися: dstnat-правила не генеруються.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.fwd"
+cat >> "$TMP/project/profiles/$CHR_PROFILE/config.toml" <<'EOF'
+
+[forward.http]
+protocol = "tcp"
+wan_port = 8080
+to_address = "192.168.88.10"
+to_port = 80
+EOF
+check 'port forward with NAT validates' run_ok "$M" --validate --profile "$CHR_PROFILE"
+check 'port forward with NAT builds' run_ok "$M" --build --profile "$CHR_PROFILE" --name fwd.rsc
+FWD_RSC="$TMP/project/profiles/$CHR_PROFILE/output/fwd.rsc"
+check 'port forward dstnat rule is generated' grep -q 'chain=dstnat action=dst-nat protocol=tcp dst-port=8080' "$FWD_RSC"
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.fwd-on"
+python3 - "$TMP/project/profiles/$CHR_PROFILE/config.toml" <<'PYFWDOFF'
+import pathlib, sys
+p = pathlib.Path(sys.argv[1])
+s = p.read_text()
+start = s.index('[nat]')
+end = s.find('\n[', start + 1)
+if end < 0: end = len(s)
+section = s[start:end].replace('enabled = true', 'enabled = false', 1)
+p.write_text(s[:start] + section + s[end:])
+PYFWDOFF
+check 'negative: port forward without NAT rejected by validator' run_fail "$M" --validate --profile "$CHR_PROFILE"
+check 'negative: port forward without NAT rejected by build' run_fail "$M" --build --profile "$CHR_PROFILE" --name fwd-nonat.rsc
+check 'port forward without NAT creates no RSC artifact' test ! -e "$TMP/project/profiles/$CHR_PROFILE/output/fwd-nonat.rsc"
+mv "$TMP/chr-config.fwd" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 USERS_RSC="$TMP/project/profiles/$CHR_PROFILE/output/users-test.rsc"
 check 'test user gets first configured SSH key' grep -q 'public-key-file=\"mgr-test-roman-1.pub\" user=\"test-roman\"' "$USERS_RSC"
 check 'test user gets second configured SSH key' grep -q 'public-key-file=\"mgr-test-roman-2.pub\" user=\"test-roman\"' "$USERS_RSC"
@@ -666,7 +764,30 @@ cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.good"
 printf '\n[paths]\noutput_dir = "../escape"\nbackup_dir = "backups"\n' >> "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 check 'negative: path traversal rejected' run_fail "$M" --build --profile "$CHR_PROFILE"
 mv "$TMP/chr-config.good" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+# "~"-префікс у paths.* не розгортається: без перевірки створився б
+# літеральний каталог "~" поруч із профілем.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.good"
+printf '\n[paths]\noutput_dir = "~/leak"\n' >> "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'negative: tilde prefix in paths.output_dir rejected by validator' run_fail "$M" --validate --profile "$CHR_PROFILE"
+check 'negative: tilde prefix in paths.output_dir rejected by build' run_fail "$M" --build --profile "$CHR_PROFILE"
+mv "$TMP/chr-config.good" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.good"
+printf '\n[paths]\nbackup_dir = "~"\n' >> "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'negative: tilde-only paths.backup_dir rejected' run_fail "$M" --validate --profile "$CHR_PROFILE"
+mv "$TMP/chr-config.good" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 check 'profile list' run_ok "$M" --list
+# --list: стан [connection] не повинен перетікати між TOML-файлами профілю;
+# інакше top-level host з наступного файла показувався б як адреса профілю.
+mkdir -p "$TMP/project/profiles/list-state"
+printf '[connection]\nuser = "roman"\n' > "$TMP/project/profiles/list-state/01-base.toml"
+printf 'host = "9.9.9.9"\n[identity]\nname = "leak-test"\n' > "$TMP/project/profiles/list-state/02-extra.toml"
+LIST_OUT=$("$M" --list 2>/dev/null)
+check 'negative: --list does not leak host across profile TOML files' bash -c '! grep -q "9.9.9.9" <<< "$1"' _ "$LIST_OUT"
+check '--list shows placeholder for profile without host' bash -c 'grep -Eq "list-state[[:space:]]+\?" <<< "$1"' _ "$LIST_OUT"
+printf '[connection]\nhost = "192.0.2.5"\n' > "$TMP/project/profiles/list-state/02-extra.toml"
+LIST_OUT=$("$M" --list 2>/dev/null)
+check '--list reads host from second profile TOML file' bash -c 'grep -q "192.0.2.5" <<< "$1"' _ "$LIST_OUT"
+rm -rf "$TMP/project/profiles/list-state"
 mkdir -p "$TMP/project/profiles/test.v1"
 cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/project/profiles/test.v1/config.toml"
 check '--profile accepts dot in profile name' run_ok "$M" --validate --profile test.v1
@@ -736,6 +857,15 @@ check '--upload uses pre-existing --name/--output file' run_ok "$M" --upload --p
 FIXTURE_HASH_AFTER=$(sha256sum "$TMP/mock-output/existing.rsc" | awk '{print $1}')
 check '--upload does not alter pre-existing RSC' bash -c '[[ $1 == "$2" ]]' _ "$FIXTURE_HASH_BEFORE" "$FIXTURE_HASH_AFTER"
 check '--upload transport references selected file' bash -c 'grep -Fq "$1" "$2"' _ "$TMP/mock-output/existing.rsc" "$MOCK_TRANSPORT_LOG"
+# Ненульовий paths.remote_dir: upload має адресувати файл у підкаталозі роутера.
+cp "$TMP/project/profiles/$CHR_PROFILE/config.toml" "$TMP/chr-config.remote"
+printf '\n[paths]\nremote_dir = "rsc"\n' >> "$TMP/project/profiles/$CHR_PROFILE/config.toml"
+check 'non-empty paths.remote_dir validates' run_ok "$M" --validate --profile "$CHR_PROFILE"
+check 'build with non-empty remote_dir' run_ok "$M" --build --profile "$CHR_PROFILE" --name remote-dir.rsc
+: > "$MOCK_TRANSPORT_LOG"
+check 'upload with non-empty remote_dir succeeds' run_ok "$M" --upload --profile "$CHR_PROFILE" --name remote-dir.rsc
+check 'upload targets remote_dir subdirectory' bash -c 'grep -Fq "rsc/remote-dir.rsc" "$1"' _ "$MOCK_TRANSPORT_LOG"
+mv "$TMP/chr-config.remote" "$TMP/project/profiles/$CHR_PROFILE/config.toml"
 # Зміни секретів/TOML після --build більше не блокують upload/reset —
 # заголовки config/secrets-sha256 суто інформаційні; для застосування
 # нових значень достатньо виконати новий --build.

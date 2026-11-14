@@ -1,5 +1,18 @@
 {
   "schema_version": "1.0",
+  "service_allowlist": [
+    "api",
+    "api-ssl",
+    "api-rest",
+    "ftp",
+    "ssh",
+    "telnet",
+    "winbox",
+    "www",
+    "www-ssl",
+    "grpc",
+    "grpc-ssl"
+  ],
   "root_keys": {
     "schema_version": "str",
     "generated_for": "str",
