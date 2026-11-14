@@ -208,7 +208,7 @@ format = "via [$symbol$version]($style) "
 [custom.container_status]
 disabled = false
 description = "Стан Compose-контейнерів"
-command = 'bash "$HOME/.config/starship/scripts/container-status.sh"'
+command = 'bash "${XDG_CONFIG_HOME:-$HOME/.config}/starship/scripts/container-status.sh"'
 when = true
 format = "[$output]($style) "
 style = "bold"

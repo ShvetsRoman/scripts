@@ -237,8 +237,8 @@ immutability=1
 plugin=org.kde.plasma.punchi-dock-remastered
 
 [Containments][291][Applets][292][Configuration]
-popupHeight=806
-popupWidth=1026
+popupHeight=830
+popupWidth=1050
 
 [Containments][291][Applets][292][Configuration][Appearance]
 contextMenuBackgroundBlurEnabled=true

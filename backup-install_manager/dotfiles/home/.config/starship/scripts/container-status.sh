@@ -5,7 +5,8 @@
 #
 # Пріоритет рушіїв:
 #   1. Podman
-#   2. Docker
+#   2. Docker (запасний варіант, якщо проєкт не знайдено
+#      серед контейнерів podman)
 # ============================================================
 
 set -uo pipefail
@@ -42,41 +43,52 @@ fi
 
 # Отримуємо список контейнерів.
 if [[ "$ENGINE" == "podman" ]]; then
-    containers=$(podman compose ps -q 2>/dev/null) || {
-        printf '%s project\n' "$SYMBOL"
-        exit 0
-    }
+    containers=$(podman compose ps -q 2>/dev/null)
 else
-    containers=$(docker compose ps --all --quiet 2>/dev/null) || {
-        printf '%s project\n' "$SYMBOL"
-        exit 0
-    }
+    containers=$(docker compose ps --all --quiet 2>/dev/null)
 fi
 
-total=0
-running=0
+# Запасний варіант: podman нічого не знайшов, але проєкт може
+# керуватися Docker (podman compose фільтрує лише власні
+# контейнери за лейблом com.docker.compose.project).
+if [[ -z "$containers" ]] \
+    && [[ "$ENGINE" == "podman" ]] \
+    && command -v docker >/dev/null 2>&1; then
+    ENGINE="docker"
+    SYMBOL="🐳"
+    containers=$(docker compose ps --all --quiet 2>/dev/null)
+fi
 
-# Перевіряємо стан контейнерів.
-while IFS= read -r container_id; do
-    [[ -z "$container_id" ]] && continue
-
-    ((total += 1))
-
-    if state=$("$ENGINE" inspect \
-        --format '{{.State.Running}}' \
-        "$container_id" 2>/dev/null); then
-
-        if [[ "$state" == "true" ]]; then
-            ((running += 1))
-        fi
-    fi
-done <<<"$containers"
-
-# Compose-проєкт існує, але контейнери ще не створені.
-if ((total == 0)); then
+# Рушій недоступний або контейнерів ще не створено.
+if [[ -z "$containers" ]]; then
     printf '%s project\n' "$SYMBOL"
     exit 0
 fi
+
+# Збираємо ID контейнерів у масив.
+ids=()
+while IFS= read -r container_id; do
+    [[ -z "$container_id" ]] && continue
+    ids+=("$container_id")
+done <<<"$containers"
+
+if ((${#ids[@]} == 0)); then
+    printf '%s project\n' "$SYMBOL"
+    exit 0
+fi
+
+# Один пакетний виклик inspect замість O(N) окремих викликів.
+# Помилка inspect (рушій тимчасово недоступний, контейнер зник)
+# не вважається станом «зупинено» — показуємо нейтральний проект.
+states=$("$ENGINE" inspect \
+    --format '{{.State.Running}}' \
+    "${ids[@]}" 2>/dev/null) || {
+    printf '%s project\n' "$SYMBOL"
+    exit 0
+}
+
+total=${#ids[@]}
+running=$(grep -c '^true$' <<<"$states") || running=0
 
 # Показуємо кількість запущених контейнерів.
 printf '%s %s/%s\n' "$SYMBOL" "$running" "$total"
