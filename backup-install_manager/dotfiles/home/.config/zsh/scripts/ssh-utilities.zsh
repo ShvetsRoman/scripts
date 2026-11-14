@@ -145,13 +145,18 @@ _ssh_config_hosts() {
 
 # Запускає окремий Agent для поточного інтерактивного Zsh-сеансу.
 # Сокет розміщується в XDG_RUNTIME_DIR і видаляється під час виходу
-# з оболонки. Agent не запускається під час завантаження конфігурації.
+# з оболонки. Перед запуском нового Agent прибираються залишки
+# некоректно завершених сеансів (сирітські Agent та сокети).
+# Agent не запускається під час завантаження конфігурації.
 _ssh_ensure_agent() {
     local runtime_dir
     local socket
     local agent_output
     local agent_pid
     local agent_status
+    local stale_socket
+    local stale_shell_pid
+    local -a orphan_pids
 
     # Якщо поточний Agent доступний, повторно його не запускаємо.
     if [[ -n "${SSH_AUTH_SOCK:-}" && -S "$SSH_AUTH_SOCK" ]]; then
@@ -169,6 +174,30 @@ _ssh_ensure_agent() {
         _ssh_error "XDG_RUNTIME_DIR відсутній або недоступний для запису."
         return 1
     fi
+
+    # Прибираємо ресурси сеансів, що завершилися некоректно (SIGHUP/SIGKILL):
+    # мертвий сеанс залишає сирітський Agent та сокет. Сокет іменований
+    # за PID оболонки, тому належність перевіряємо за життям цього PID.
+    # Зауваження: це best-effort прибирання — якщо система встигла
+    # перевикористати PID мертвого сеансу, сокет буде пропущено
+    # (він зникне під час перезавантаження разом із runtime-каталогом).
+    for stale_socket in "$runtime_dir"/ssh-agent-"$UID"-*.sock(N); do
+        stale_shell_pid="${${stale_socket:t:r}##*-}"
+
+        # Сокети живих сеансів, включно з поточним, не чіпаємо.
+        if [[ "$stale_shell_pid" == "$$" ]] || kill -0 "$stale_shell_pid" 2>/dev/null; then
+            continue
+        fi
+
+        # Сеанс мертвий: зупиняємо його Agent, якщо той ще працює.
+        orphan_pids=("${(@f)$(pgrep -u "$UID" -f "ssh-agent -a $stale_socket" 2>/dev/null)}")
+
+        if ((${#orphan_pids[@]})); then
+            kill -- "${orphan_pids[@]}" 2>/dev/null
+        fi
+
+        rm -f -- "$stale_socket"
+    done
 
     # Унікальний сокет для поточного Zsh-сеансу.
     socket="${runtime_dir}/ssh-agent-${UID}-$$.sock"
@@ -215,6 +244,13 @@ _ssh_ensure_agent() {
     typeset -ga zshexit_functions
     if ((${zshexit_functions[(Ie)_ssh_agent_cleanup]} == 0)); then
         zshexit_functions+=(_ssh_agent_cleanup)
+    fi
+
+    # zshexit_functions виконуються лише при штатному виході, тому
+    # додатково прибираємо Agent при обриві сесії (SIGHUP).
+    # Визначений користувачем TRAPHUP не перезаписуємо.
+    if (( ! $+functions[TRAPHUP] )); then
+        TRAPHUP() { _ssh_agent_cleanup }
     fi
 
     _ssh_info "SSH Agent запущений за першим запитом."

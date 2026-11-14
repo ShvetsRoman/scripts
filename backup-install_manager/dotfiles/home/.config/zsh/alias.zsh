@@ -103,9 +103,6 @@ alias genpass='bash "$HOME/00_setup/scripts_bash/gen_pass.sh"'
 # Setup Manager.
 alias backup-install='bash "$HOME/00_setup/scripts_bash/backup-install_manager/backup-install_manager.sh"'
 
-# Backup Sync.
-alias backup-sync='bash "$HOME/00_setup/scripts_bash/backup-sync/backup-sync.sh"'
-
 # EDITORS
 # Zed.
 alias zed='zeditor'
@@ -255,9 +252,20 @@ gc() {
 
 # PACMAN / ARCH LINUX
 # Reflector.
-alias mlu='sudo reflector --country Ukraine,Poland,Germany,Czechia,Netherlands --latest 15 --protocol https --sort rate --download-timeout 15 --save /etc/pacman.d/mirrorlist'
+# Спільні аргументи для mlu та mls: список країн та параметри задається
+# один раз, щоб аліаси не розсинхронізувалися.
+typeset -ga _REFLECTOR_ARGS
+_REFLECTOR_ARGS=(
+    --country Ukraine,Poland,Germany,Czechia,Netherlands
+    --latest 15
+    --protocol https
+    --sort rate
+    --download-timeout 15
+)
 
-alias mls='reflector --country Ukraine,Poland,Germany,Czechia,Netherlands --latest 15 --protocol https --sort rate --download-timeout 15'
+alias mlu="sudo reflector ${_REFLECTOR_ARGS[*]} --save /etc/pacman.d/mirrorlist"
+
+alias mls="reflector ${_REFLECTOR_ARGS[*]}"
 
 alias mln='sudoedit /etc/pacman.d/mirrorlist'
 

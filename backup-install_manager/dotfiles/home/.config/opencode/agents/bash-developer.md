@@ -48,6 +48,18 @@ permissions:
   - action: subagent
     resource: "*"
     effect: deny
+
+  # Остаточні заборони: не дозволяємо їх перекривати
+  # загальними правилами edit та shell вище.
+  - action: edit
+    resource: "**/.git/**"
+    effect: deny
+  - action: edit
+    resource: "**/node_modules/**"
+    effect: deny
+  - action: shell
+    resource: "git push *"
+    effect: deny
 ---
 
 # Bash Developer

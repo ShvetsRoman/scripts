@@ -87,51 +87,33 @@ ex() {
                 return 1
             fi
             ;;
-        # GZIP
+        # GZIP / BZIP2 / XZ
         # Наприклад:
-        #   database.sql.gz
+        #   database.sql.gz | database.sql.bz2 | database.sql.xz
         # Результат:
         #   target_dir/database.sql
-        *.gz)
-            if ! command -v gzip >/dev/null 2>&1; then
-                printf 'Помилка: команда gzip не знайдена\n'
+        *.gz | *.bz2 | *.xz)
+            local ext
+            local compressor
+            local output_name
+            # Мапа «розширення -> команда декомпресора».
+            local -A decompressors=(
+                gz  gzip
+                bz2 bzip2
+                xz  xz
+            )
+            ext="${${archive:l}:e}"
+            compressor="${decompressors[$ext]}"
+            if [[ -z "$compressor" ]] || ! command -v "$compressor" >/dev/null 2>&1; then
+                printf 'Помилка: команда %s не знайдена\n' "${compressor:-$ext}"
                 return 1
             fi
-            local output_name
             output_name="${archive:t:r}"
             if [[ -e "$target_dir/$output_name" ]]; then
                 printf 'Помилка: файл уже існує: %s\n' "$target_dir/$output_name"
                 return 1
             fi
-            gzip -dc -- "$archive" >"$target_dir/$output_name"
-            ;;
-        # BZIP2
-        *.bz2)
-            if ! command -v bzip2 >/dev/null 2>&1; then
-                printf 'Помилка: команда bzip2 не знайдена\n'
-                return 1
-            fi
-            local output_name
-            output_name="${archive:t:r}"
-            if [[ -e "$target_dir/$output_name" ]]; then
-                printf 'Помилка: файл уже існує: %s\n' "$target_dir/$output_name"
-                return 1
-            fi
-            bzip2 -dc -- "$archive" >"$target_dir/$output_name"
-            ;;
-        # XZ
-        *.xz)
-            if ! command -v xz >/dev/null 2>&1; then
-                printf 'Помилка: команда xz не знайдена\n'
-                return 1
-            fi
-            local output_name
-            output_name="${archive:t:r}"
-            if [[ -e "$target_dir/$output_name" ]]; then
-                printf 'Помилка: файл уже існує: %s\n' "$target_dir/$output_name"
-                return 1
-            fi
-            xz -dc -- "$archive" >"$target_dir/$output_name"
+            "$compressor" -dc -- "$archive" >"$target_dir/$output_name"
             ;;
         # Невідомий формат
         # Пробуємо універсальний bsdtar.
