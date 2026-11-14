@@ -24,10 +24,10 @@ if system_restore "$tmp/link" /etc/samba/smb.conf test > /dev/null 2>&1; then
     printf '[FAIL] system restore accepted source symlink\n' >&2
     exit 1
 fi
-# The shell must reject --sync-delete before any privileged operations.
+# The shell must reject --delete before any privileged operations.
 SYNC_DELETE=true
 if system_restore "$tmp/source" /etc/samba/smb.conf test > /dev/null 2>&1; then
-    printf '[FAIL] system restore accepted --sync-delete\n' >&2
+    printf '[FAIL] system restore accepted --delete\n' >&2
     exit 1
 fi
 printf '[PASS] test-system-restore-v4\n'

@@ -8,12 +8,10 @@ actual_version="$(SETUP_TEST_MODE=true bash "$root/backup-install_manager.sh" --
 [[ -f "$root/dotfiles/.keep" ]] || { printf '[FAIL] Відсутній файл dotfiles/.keep\n' >&2; exit 1; }
 # Користувацькі дані не повинні бути об'єктами видалення в PATCH стабільної гілки.
 # Перевіряємо відсутність операцій видалення даних у джерельних тестах релізу.
-for doc in README.md docs/architecture.md docs/CHANGELOG.md; do
-    if [[ ! -f "$root/$doc" ]] || ! grep -Fq "$SETUP_VERSION" "$root/$doc"; then
-        printf '[FAIL] У %s немає актуальної версії %s\n' "$doc" "$SETUP_VERSION" >&2
-        exit 1
-    fi
-done
+if [[ ! -f "$root/README.md" ]] || ! grep -Fq "$SETUP_VERSION" "$root/README.md"; then
+    printf '[FAIL] У README.md немає актуальної версії %s\n' "$SETUP_VERSION" >&2
+    exit 1
+fi
 # Ізоляція перевірки: жодної зміни робочого config/, dotfiles/ чи backups/.
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT

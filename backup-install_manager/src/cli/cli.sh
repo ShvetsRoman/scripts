@@ -14,8 +14,8 @@ cli_parse() {
             --yes|-y)          SETUP_ASSUME_YES=true; export SETUP_ASSUME_YES ;;
             --no-color)        export NO_COLOR=1 ;;
             --verbose|-v)      export SETUP_VERBOSE=true ;;
-            --sync-delete)     SYNC_DELETE=true ;;
-            --no-backup)       SETUP_BACKUP_ENABLED=false ;;
+            --delete)          SYNC_DELETE=true ;;
+            --backup)          SETUP_BACKUP_ENABLED=true ;;
             --configs-only)    CONFIGS_ONLY=true ;;
             --no-configs)      NO_CONFIGS=true ;;
             --strict-configs)  STRICT_CONFIGS=true ;;
@@ -71,7 +71,7 @@ cli_help() {
   ./backup-install_manager.sh packages cli shell                Встановити пакети модулів
   ./backup-install_manager.sh packages --all                    Усі модулі реєстру
   ./backup-install_manager.sh packages --dry-run all            Сухий прогін без дій
-  ./backup-install_manager.sh packages --configs-only --sync-delete --yes cli
+  ./backup-install_manager.sh packages --configs-only --delete --yes cli
   ./backup-install_manager.sh packages --help                   Довідка Packages (поля реєстру, порядок етапів)
 
 Dotfiles:

@@ -4,14 +4,14 @@ _FS_BASE=(rsync -a -c --no-times --no-perms --no-owner --no-group --links)
 _FS_DIFF=("${_FS_BASE[@]}" --dry-run --itemize-changes)
 _FS_DIFF_DEL=("${_FS_DIFF[@]}" --delete)
 
-# --sync-delete може видаляти файли і без захисних копій.
-# Команда більше не відхиляється; попередження показуємо один раз за процес,
+# --delete може видаляти файли і без захисних копій.
+# Команда не відхиляється; попередження показуємо один раз за процес,
 # бо fs_copy/apply викликають цю перевірку для кожного об'єкта окремо.
 _FS_DELETE_WARNED=''
 fs_guard_delete() {
     if [[ "${SYNC_DELETE:-false}" == true && "${SETUP_BACKUP_ENABLED:-true}" != true && -z "$_FS_DELETE_WARNED" ]]; then
         _FS_DELETE_WARNED=1
-        log warn '--sync-delete без захисних копій: автоматичний відкат недоступний'
+        log warn '--delete без захисних копій: автоматичний відкат недоступний'
     fi
     return 0
 }

@@ -293,7 +293,7 @@ packages_help() {
 ./backup-install_manager.sh packages --list
 ./backup-install_manager.sh packages cli shell
 ./backup-install_manager.sh packages --dry-run all
-./backup-install_manager.sh packages --configs-only --sync-delete --yes cli
+./backup-install_manager.sh packages --configs-only --delete --yes cli
 # packages.conf: configs_group = font; hooks = docker; hook.zsh = shell
 # Порядок: пакети → група → конфіги → загальні hooks → прив’язані hooks
 EOT

@@ -47,7 +47,7 @@ printf 'a' > "$HOME/.dir/file"
 printf 'a' > "$ROOT_DIR/dotfiles/home/.dir/file"
 printf 'extra' > "$ROOT_DIR/dotfiles/home/.dir/extra"
 SYNC_DELETE=true
-text="$(sync_plan backup)" || fail 'plan sync-delete'
+text="$(sync_plan backup)" || fail 'plan --delete'
 [[ "$text" == *'[DELETE]'* ]] || fail 'deletion not shown'
 [[ -f "$ROOT_DIR/dotfiles/home/.dir/extra" ]] || fail 'plan deleted file'
 printf '[PASS] test-plan\n'

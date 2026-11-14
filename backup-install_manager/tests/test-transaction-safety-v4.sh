@@ -19,7 +19,7 @@ printf 'outdated\n' > "$tmp/dst/old"
 DRY_RUN=false
 SETUP_BACKUP_ENABLED=true
 SYNC_DELETE=true
-# --sync-delete may remove extra entries but must never traverse links.
+# --delete may remove extra entries but must never traverse links.
 fs_copy "$tmp/src" "$tmp/dst"
 [[ ! -e "$tmp/dst/old" ]]
 [[ -L "$tmp/dst/linked" ]]
@@ -33,7 +33,7 @@ if fs_copy "$tmp/src/new" "$tmp/escape/valuable"; then
     exit 1
 fi
 [[ "$(cat "$tmp/external/valuable")" == original ]]
-# No backup plus --sync-delete is allowed: extras are removed, no snapshot.
+# No backup plus --delete is allowed: extras are removed, no snapshot.
 SETUP_BACKUP_ENABLED=false
 printf 'keep\n' > "$tmp/dst/keep"
 fs_copy "$tmp/src" "$tmp/dst" || {

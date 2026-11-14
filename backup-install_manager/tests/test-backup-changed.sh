@@ -27,7 +27,7 @@ before="$(find "$tmp/repo/backups/dotfiles" -mindepth 1 -maxdepth 1 -type d | wc
 output="$("$tmp/repo/backup-install_manager.sh" dotfiles backup changed)"
 after="$(find "$tmp/repo/backups/dotfiles" -mindepth 1 -maxdepth 1 -type d | wc -l)"
 [[ "$before" == "$after" && "$output" == *'оновлено 0, без змін 3'* ]] || exit 1
-# Коли нема --sync-delete, зайві файли не вважаються причиною копіювання.
+# Коли нема --delete, зайві файли не вважаються причиною копіювання.
 mkdir -p "$HOME/a-dir" "$tmp/repo/dotfiles/home/a-dir"
 printf 'same\n' > "$HOME/a-dir/file"
 cp "$HOME/a-dir/file" "$tmp/repo/dotfiles/home/a-dir/file"
@@ -35,7 +35,7 @@ printf 'extra\n' > "$tmp/repo/dotfiles/home/a-dir/extra"
 printf 'dir | home | ~/a-dir\n' >> "$tmp/repo/config/dotfiles.conf"
 output="$("$tmp/repo/backup-install_manager.sh" dotfiles backup changed)"
 [[ -f "$tmp/repo/dotfiles/home/a-dir/extra" && "$output" == *'оновлено 0'* ]] || exit 1
-output="$("$tmp/repo/backup-install_manager.sh" --sync-delete dotfiles backup changed)"
+output="$("$tmp/repo/backup-install_manager.sh" --delete dotfiles backup changed)"
 [[ ! -e "$tmp/repo/dotfiles/home/a-dir/extra" ]] || exit 1
 [[ "$output" == *'оновлено 1'* ]] || exit 1
 printf '[PASS] test-backup-changed\n'

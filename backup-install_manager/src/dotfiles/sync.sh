@@ -48,7 +48,7 @@ sync_run() {
 
         # Backup Changed не торкається записів без змін і не створює
         # для них захисних копій. Зміни визначаються за вмістом (rsync -c).
-        # Без --sync-delete зайві файли в dotfiles не є зміною.
+        # Без --delete зайві файли в dotfiles не є зміною.
         if [[ "$changed_only" == true ]]; then
             if [[ ! -e "$src" && ! -L "$src" ]]; then
                 log warn "[MISSING] $S_NAME: $src"
@@ -412,7 +412,7 @@ sync_verify() {
     return 0
 }
 
-# plan: без запису, перераховує заплановані операції з урахуванням sync-delete.
+# plan: без запису, перераховує заплановані операції з урахуванням --delete.
 sync_plan() {
     local mode="${1:-}"; (($#)) && shift
     [[ "$mode" == backup || "$mode" == restore ]] || {

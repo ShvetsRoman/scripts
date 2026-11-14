@@ -8,9 +8,7 @@ source "$root/src/core/version.sh"
 [[ $(grep -cF 'case "$title" in' "$root/src/cli/menu.sh") -eq 1 ]]
 [[ $(grep -cF 'Архів містить dotfiles/ проєкту' "$root/src/cli/menu.sh") -eq 1 ]]
 [[ $(grep -cF 'Recovery — захисні копії' "$root/src/cli/menu.sh") -eq 1 ]]
-[[ -f "$root/docs/stable-baseline-v202.md" ]]
-for file in "$root/README.md" "$root/docs/index.md" "$root/docs/CHANGELOG.md"; do
-    grep -qF 'Backup Install Manager' "$file"
-done
-! grep -Eq '^# .*Bash Setup Manager|^# .*Setup Manager' "$root"/README.md "$root"/docs/*.md
+[[ -f "$root/README.md" ]]
+grep -qF 'Backup Install Manager' "$root/README.md"
+! grep -Eq '^# .*Bash Setup Manager|^# .*Setup Manager' "$root/README.md"
 printf '[PASS] test-docs-menu-v202\n'

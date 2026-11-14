@@ -31,7 +31,7 @@ for x in '/tmp/..' '/tmp/.' "$tmp/link/file"; do
     if path_ok_abs "$x"; then fail "unsafe abs accepted: $x"; fi
 done
 
-# --sync-delete без backup дозволений: файли оновлюються, зайве видаляється,
+# --delete без backup дозволений: файли оновлюються, зайве видаляється,
 # але захисна копія не створюється і автоматичний відкат недоступний.
 mkdir -p "$tmp/target"
 printf 'original\n' > "$tmp/target/file"
@@ -77,7 +77,7 @@ apply "$tmp/tree" "$tmp/destination" recovery nested >/dev/null 2>&1 || fail 'ne
 [[ -L "$tmp/destination/external" ]] || fail 'nested symlink not preserved'
 [[ "$(cat "$tmp/external/file")" == protected ]] || fail 'external file modified via source symlink'
 
-# Відключений recovery не може бути використаний з --sync-delete.
+# Відключений recovery не може бути використаний з --delete.
 SYNC_DELETE=true; SETUP_RECOVERY_ENABLED=false
 if apply "$tmp/src" "$tmp/target" recovery target >/dev/null 2>&1; then
     fail 'delete without recovery accepted'

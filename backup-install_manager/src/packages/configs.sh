@@ -6,10 +6,6 @@ configs_apply() {
     local -a entries=("$@")
     ((${#entries[@]})) || { log info 'Конфігів немає.'; return 0; }
 
-    if [[ "${SYNC_DELETE:-false}" == true && "${SETUP_BACKUP_ENABLED:-true}" != true ]]; then
-        log error '--sync-delete несумісний з --no-backup'; return 2
-    fi
-
     # Реєстр уже перевірений викликачем Packages. Поза ним читаємо заново.
     if [[ "${PKG_DOTFILES_LOADED:-false}" != true ]]; then
         sources_load || return 2

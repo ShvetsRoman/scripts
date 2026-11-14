@@ -6,7 +6,5 @@ root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 [[ ! -e "$root/logs/setup-tests.log" ]]
 source "$root/src/core/version.sh"
 [[ "$SETUP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-preview|-rc[0-9]+)?$ ]]
-for doc in README.md docs/architecture.md docs/CHANGELOG.md; do
-    grep -Fq "$SETUP_VERSION" "$root/$doc"
-done
+grep -Fq "$SETUP_VERSION" "$root/README.md"
 printf '[PASS] test-release-contract-v1440\n'

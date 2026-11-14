@@ -18,14 +18,12 @@ for dir in lib app core packages recovery scripts; do
 done
 
 [[ -f "$root/src/hooks/hook_runtime.sh" ]] || fail 'Відсутній src/hooks/hook_runtime.sh'
-[[ -f "$root/docs/architecture.md" ]] || fail 'Відсутній docs/architecture.md'
-[[ -f "$root/docs/CHANGELOG.md" ]] || fail 'Відсутній docs/CHANGELOG.md'
+[[ -f "$root/README.md" ]] || fail 'Відсутній README.md'
 
 # Поточну версію беремо з одного джерела.
 # shellcheck source=../src/core/version.sh
 source "$root/src/core/version.sh"
-grep -Fq -- "$SETUP_VERSION" "$root/docs/architecture.md" || fail "docs/architecture.md не містить версію $SETUP_VERSION"
-grep -Fq -- "$SETUP_VERSION" "$root/docs/CHANGELOG.md" || fail "docs/CHANGELOG.md не містить версію $SETUP_VERSION"
+grep -Fq -- "$SETUP_VERSION" "$root/README.md" || fail "README.md не містить версію $SETUP_VERSION"
 
 if grep -Eq '^[[:space:]]+lib/|bash hooks/snapper.sh' "$root/README.md"; then
     fail 'README містить застарілу структуру або прямий запуск hook'

@@ -7,6 +7,10 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 ! grep -Eq -- '^[[:space:]]*--dry-run\)' "$ROOT_DIR/src/packages/packages.sh"
 ! grep -Eq -- '^[[:space:]]*\[\[.*--dry-run.*DRY_RUN=true' "$ROOT_DIR/src/core/maintenance.sh"
 [[ $(grep -c 'cli_parse "\$@"' "$ROOT_DIR/src/core/bootstrap.sh") -eq 1 ]]
+# Нові прапорці --delete та --backup парсяться в cli_parse; старих --sync-delete/--no-backup немає.
+grep -Eq '^[[:space:]]*--delete\)' "$ROOT_DIR/src/cli/cli.sh"
+grep -Eq '^[[:space:]]*--backup\)' "$ROOT_DIR/src/cli/cli.sh"
+! grep -Eq -- '--sync-delete|--no-backup' "$ROOT_DIR/src/cli/cli.sh"
 
 # Нешкідливі команди та прапорці до/після імені команди.
 out1="$(bash "$ROOT_DIR/backup-install_manager.sh" --dry-run --no-color --version)"

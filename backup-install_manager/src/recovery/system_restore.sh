@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Привілейоване відновлення лише зареєстрованих звичайних файлів /etc.
-# Не підтримує каталоги, symlink або --sync-delete.
+# Не підтримує каталоги, symlink або --delete.
 # Копіювання системного файлу; тести використовують лише тимчасові шляхи.
 _system_restore_copy() {
     local src="$1" dst="$2" backup_dir="$3" tmp='' mode owner group rc=0
@@ -42,7 +42,7 @@ system_restore() {
         return 2
     fi
     if [[ "${SYNC_DELETE:-false}" == true ]]; then
-        log error "$label — --sync-delete заборонено для system restore"
+        log error "$label — --delete заборонено для system restore"
         return 2
     fi
     if ! path_ok_abs "$src"; then

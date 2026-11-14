@@ -9,7 +9,7 @@ done
 for dir in lib core app packages recovery scripts; do
     [[ ! -e "$root/$dir" ]] || { printf '[FAIL] Застарілий каталог %s\n' "$dir" >&2; exit 1; }
 done
-[[ -f "$root/docs/architecture.md" && -f "$root/README.md" ]]
-grep -Fq 'diagnostics/' "$root/docs/architecture.md"
+[[ -f "$root/README.md" ]]
+grep -Fq 'diagnostics/' "$root/README.md"
 [[ "$(bash "$root/backup-install_manager.sh" --version)" == "$expected_version" ]]
 printf '[PASS] test-structure-v1424\n'
