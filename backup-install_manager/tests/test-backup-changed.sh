@@ -2,7 +2,10 @@
 set -Eeuo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"; trap 'rm -rf -- "$tmp"' EXIT
-cp -a -- "$PROJECT_DIR" "$tmp/repo"
+# Копіюємо лише рантайм CLI: повне копіювання проєкту (dotfiles/ та артефакти)
+# уповільнює тест і створює залежність від брудного робочого дерева.
+mkdir -p -- "$tmp/repo"
+cp -a -- "$PROJECT_DIR/src" "$PROJECT_DIR/config" "$PROJECT_DIR/hooks" "$PROJECT_DIR/tools" "$PROJECT_DIR/backup-install_manager.sh" "$tmp/repo/"
 export HOME="$tmp/home" SETUP_NO_CLEAR=true
 mkdir -p "$HOME" "$tmp/repo/dotfiles/home"
 cat > "$tmp/repo/config/dotfiles.conf" <<'CONF'
@@ -23,6 +26,8 @@ output="$("$tmp/repo/backup-install_manager.sh" dotfiles backup changed)"
 [[ "$(cat "$tmp/repo/dotfiles/home/a")" == same ]] || exit 1
 [[ "$output" == *'оновлено 2, без змін 1, відсутніх 1, помилок 0'* ]] || { printf '%s\n' "$output" >&2; exit 1; }
 # Ідемпотентність: вдруге не повинні з'явитися нові snapshots.
+# Каталог може бути відсутнім у копії проєкту — find мусить його мати.
+mkdir -p -- "$tmp/repo/backups/dotfiles"
 before="$(find "$tmp/repo/backups/dotfiles" -mindepth 1 -maxdepth 1 -type d | wc -l)"
 output="$("$tmp/repo/backup-install_manager.sh" dotfiles backup changed)"
 after="$(find "$tmp/repo/backups/dotfiles" -mindepth 1 -maxdepth 1 -type d | wc -l)"

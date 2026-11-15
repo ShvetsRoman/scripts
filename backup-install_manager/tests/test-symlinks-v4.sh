@@ -38,6 +38,11 @@ fs_copy "$tmp/src" "$tmp/dst/cfg"
 fs_compare "$tmp/src" "$tmp/dst/cfg"
 # Snapshot integrity must record symlinks without following their targets.
 log() { printf '[%s] %s\n' "$1" "${*:2}" > /dev/null; }
+# fs_protect пише snapshot у "$ROOT_DIR/backups": скеровуємо ROOT_DIR
+# у пісочницю, щоб тест не мутував реальний проєкт.
+ROOT_DIR="$tmp/repo"
+mkdir -p "$ROOT_DIR/tools"
+cp -a -- "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/tools/recovery_safe.py" "$ROOT_DIR/tools/recovery_safe.py"
 mkdir -p "$ROOT_DIR/backups"
 fs_protect "$tmp/src" dotfiles symlink-test
 [[ -n "${FS_PROTECT_SNAPSHOT:-}" ]]

@@ -137,19 +137,36 @@ alias py='python'
 alias pip_up='python -m pip install --upgrade pip'
 
 # FILE UTILITIES
-# Rsync copy.
+# RSYNC — КОПІЮВАННЯ ФАЙЛІВ
+# -a  — архівний режим: зберігає права, власників, часові мітки тощо.
+# -v  — докладний вивід операцій.
+# -P  — показує прогрес і зберігає частково передані файли.
+# -h  — зручний для читання формат розмірів.
 alias rcp='rsync -avPh'
 
-# Безпечні додаткові варіанти cp/mv.
+# -i — інтерактивне підтвердження перезапису.
 alias cpi='cp -iv'
+
+# -u — пропускати новіші файли в місці призначення.
 alias cpu='cp -uv'
+
+# -i — інтерактивне підтвердження перезапису.
 alias mvi='mv -iv'
 
-# rm.
+# RM — БЕЗПЕЧНЕ ВИДАЛЕННЯ
+# -I — одне загальне підтвердження перед потенційно небезпечною операцією.
+# -v — показувати видалені файли.
 alias rmi='rm -Iv'
+
+# -I — запит підтвердження перед масовим видаленням.
+# -v — показувати видалені файли.
+# -r — рекурсивно видаляти каталоги та їхній вміст.
 alias rmr='rm -Ivr'
 
-# mkdir.
+# MKDIR — СТВОРЕННЯ КАТАЛОГІВ
+# -p — створювати відсутні батьківські каталоги без помилки,
+#      якщо каталог уже існує.
+# -v — показувати створені каталоги.
 alias md='mkdir -pv'
 
 # ln.
@@ -160,7 +177,7 @@ alias c='clear'
 alias x='exit'
 
 # CONTAINER ENGINE: PODMAN / DOCKER
-if (($+commands[podman])); then
+if command -v podman >/dev/null 2>&1; then
     # PODMAN COMPOSE
     alias pcu='podman compose up'
     alias pcud='podman compose up -d'
@@ -182,7 +199,7 @@ if (($+commands[podman])); then
 fi
 
 # DOCKER
-if (($+commands[docker])); then
+if command -v docker >/dev/null 2>&1; then
     # DOCKER COMPOSE
     alias dcu='docker compose up'
     alias dcud='docker compose up -d'
@@ -263,11 +280,11 @@ _REFLECTOR_ARGS=(
     --download-timeout 15
 )
 
-alias mlu="sudo reflector ${_REFLECTOR_ARGS[*]} --save /etc/pacman.d/mirrorlist"
+alias mlru="sudo reflector ${_REFLECTOR_ARGS[*]} --save /etc/pacman.d/mirrorlist"
 
-alias mls="reflector ${_REFLECTOR_ARGS[*]}"
+alias mlr="reflector ${_REFLECTOR_ARGS[*]}"
 
-alias mln='sudoedit /etc/pacman.d/mirrorlist'
+alias mlnvim='sudoedit /etc/pacman.d/mirrorlist'
 
 # Pacman.
 # Встановити пакет.

@@ -7,7 +7,8 @@ source "$repo/src/core/path.sh"
 source "$repo/src/hooks/hooks.sh"
 log() { printf '[%s] %s\n' "$1" "$2" >&2; }
 packages_load "$repo/config/packages.conf"
-[[ "${#PACKAGE_IDS[@]}" == 13 ]]
+# Точна кількість секцій у config/packages.conf; оновлюйте разом із конфігом.
+[[ "${#PACKAGE_IDS[@]}" == 14 ]]
 for id in "${PACKAGE_IDS[@]}"; do
     registry_valid "$id"
     packages_select "$id"

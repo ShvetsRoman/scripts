@@ -6,7 +6,9 @@ fail() { printf '[FAIL] test-status-color: %s\n' "$1" >&2; exit 1; }
 tmp="$(mktemp -d)"; trap 'rm -rf -- "$tmp"' EXIT
 export HOME="$tmp/home" SETUP_NO_CLEAR=true
 mkdir -p "$HOME/.config/nvim" "$tmp/repo/config" "$tmp/repo/dotfiles/home/.config/nvim" "$tmp/repo/dotfiles/home/.config/orphan"
-cp -a "$PROJECT_DIR"/. "$tmp/repo/"
+# Копіюємо лише рантайм CLI (без dotfiles/, logs/, артефактів).
+mkdir -p -- "$tmp/repo"
+cp -a -- "$PROJECT_DIR/src" "$PROJECT_DIR/config" "$PROJECT_DIR/hooks" "$PROJECT_DIR/tools" "$PROJECT_DIR/backup-install_manager.sh" "$tmp/repo/"
 # Ізоляція: робочі dotfiles можуть вже містити .zshrc та інші реальні файли.
 # Створюємо чистий набір лише у тимчасовій копії репозиторію.
 rm -rf -- "$tmp/repo/dotfiles"

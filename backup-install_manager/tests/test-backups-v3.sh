@@ -2,7 +2,9 @@
 set -Eeuo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"; trap 'rm -rf -- "$tmp"' EXIT
-cp -a "$PROJECT_DIR" "$tmp/repo"
+# Копіюємо лише рантайм CLI (без dotfiles/, logs/, артефактів).
+mkdir -p -- "$tmp/repo"
+cp -a -- "$PROJECT_DIR/src" "$PROJECT_DIR/config" "$PROJECT_DIR/hooks" "$PROJECT_DIR/tools" "$PROJECT_DIR/backup-install_manager.sh" "$tmp/repo/"
 # Тест перевіряє створення захисних знімків, тому значення фіксується явно:
 # локальний config/setup.conf (напр. SETUP_BACKUP_ENABLED=false) не має впливу.
 printf 'SETUP_BACKUP_ENABLED=true\n' > "$tmp/repo/config/setup.conf"

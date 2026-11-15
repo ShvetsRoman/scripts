@@ -10,7 +10,7 @@ for cmd in pacman paru; do
     chmod +x "$tmp/bin/$cmd"
 done
 export PATH="$tmp/bin:$PATH"
-cp -a -- "$ROOT_DIR/backup-install_manager.sh" "$ROOT_DIR/src" "$ROOT_DIR/dotfiles" "$ROOT_DIR/config" "$ROOT_DIR/hooks" "$ROOT_DIR/tools" "$ROOT_DIR/tests" "$tmp/project/"
+cp -a -- "$ROOT_DIR/backup-install_manager.sh" "$ROOT_DIR/src" "$ROOT_DIR/config" "$ROOT_DIR/hooks" "$ROOT_DIR/tools" "$ROOT_DIR/tests" "$tmp/project/"
 cat > "$tmp/project/config/packages.conf" <<'INI'
 [base]
 title = Base

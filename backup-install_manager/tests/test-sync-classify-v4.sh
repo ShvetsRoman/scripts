@@ -6,7 +6,9 @@ tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 export HOME="$tmp/home" SETUP_NO_CLEAR=true
 mkdir -p "$HOME" "$tmp/repo/dotfiles/home" "$tmp/repo/config"
-cp -a -- "$PROJECT_DIR"/. "$tmp/repo/"
+# Копіюємо лише рантайм CLI (без dotfiles/, logs/, артефактів).
+mkdir -p -- "$tmp/repo"
+cp -a -- "$PROJECT_DIR/src" "$PROJECT_DIR/config" "$PROJECT_DIR/hooks" "$PROJECT_DIR/tools" "$PROJECT_DIR/backup-install_manager.sh" "$tmp/repo/"
 rm -rf -- "$tmp/repo/dotfiles"
 mkdir -p "$tmp/repo/dotfiles/home"
 printf '[test]\n' > "$tmp/repo/config/dotfiles.conf"

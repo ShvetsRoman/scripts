@@ -1,3 +1,4 @@
+graphify-out/
 backups/
 archives/
 logs/*.log
@@ -10,6 +11,8 @@ logs/*.gz
 Thumbs.db
 *~
 *.uuid
+AUDIT*
+.graphifyignore
 
 .setup-manager.lock
 

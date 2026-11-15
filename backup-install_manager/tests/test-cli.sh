@@ -3,7 +3,9 @@ literal_tilde="$(printf '%s/' '~')"
 set -Eeuo pipefail
 repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-cp -a -- "$repo" "$tmp/setup-manager"
+# Копіюємо лише рантайм CLI (без dotfiles/, logs/, артефактів).
+mkdir -p -- "$tmp/setup-manager"
+cp -a -- "$repo/src" "$repo/config" "$repo/hooks" "$repo/tools" "$repo/backup-install_manager.sh" "$tmp/setup-manager/"
 repo="$tmp/setup-manager"
 mkdir -p "$tmp/home"
 export HOME="$tmp/home"

@@ -2,7 +2,9 @@
 set -Eeuo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"; trap 'rm -rf -- "$tmp"' EXIT
-cp -a -- "$PROJECT_DIR" "$tmp/repo"
+# Копіюємо лише рантайм CLI (без dotfiles/, logs/, артефактів).
+mkdir -p -- "$tmp/repo"
+cp -a -- "$PROJECT_DIR/src" "$PROJECT_DIR/config" "$PROJECT_DIR/hooks" "$PROJECT_DIR/tools" "$PROJECT_DIR/backup-install_manager.sh" "$tmp/repo/"
 export SETUP_LOG_FILE="$tmp/session.log" SETUP_NO_CLEAR=true
 "$tmp/repo/backup-install_manager.sh" sources validate >/dev/null
 [[ -f "$SETUP_LOG_FILE" ]] || exit 1

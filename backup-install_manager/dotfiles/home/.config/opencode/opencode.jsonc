@@ -134,4 +134,17 @@
       "effect": "deny",
     },
   ],
+  "plugins": [
+    {
+      // Token Slim: скорочення payload запитів. Резерви повного виводу на диск.
+      // snip вимкнено (не встановлено); системний промпт ~48 КБ не обрізати.
+      "package": "opencode-token-slim@1.6.0",
+      "options": {
+        "enabled": true,
+        "keepFullOutput": true,
+        "snip": false,
+        "systemBytes": 65536
+      }
+    }
+  ],
 }

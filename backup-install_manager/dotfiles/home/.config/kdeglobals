@@ -116,7 +116,6 @@ Theme=YAMIS
 AnimationDurationFactor=1.414213562373095
 LookAndFeelPackage=Nordic
 ShowDeleteCommand=true
-SingleClick=true
 contrast=4
 frameContrast=0.2
 widgetStyle=kvantum-dark

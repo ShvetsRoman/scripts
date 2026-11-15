@@ -5,7 +5,9 @@ set -Eeuo pipefail
 BASE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
-cp -a -- "$BASE" "$tmp/project"
+# Копіюємо лише рантайм CLI (без dotfiles/, logs/, артефактів).
+mkdir -p -- "$tmp/project"
+cp -a -- "$BASE/src" "$BASE/config" "$BASE/hooks" "$BASE/tools" "$BASE/backup-install_manager.sh" "$tmp/project/"
 repo="$tmp/project"
 mkdir -p "$tmp/home"
 export HOME="$tmp/home"

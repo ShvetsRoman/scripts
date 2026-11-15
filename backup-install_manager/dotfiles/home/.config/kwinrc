@@ -12,10 +12,8 @@ Rows=1
 BlurStength=50
 
 [Effect-better-blur-dx]
-BlurDecorations=true
-BlurMenus=true
-NoiseStrength=30
-WindowClasses=systemsettings
+BlurStrength=12
+NoiseStrength=15
 
 [Effect-blur]
 BlurStrength=8
@@ -49,7 +47,7 @@ WobblynessLevel=2
 
 [Plugins]
 better_blur_dxEnabled=true
-blurEnabled=true
+blurEnabled=false
 krohnkiteEnabled=false
 kwin4_effect_geometry_changeEnabled=true
 magiclampEnabled=true

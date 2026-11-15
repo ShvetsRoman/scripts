@@ -6,7 +6,9 @@ fail() { printf '[FAIL] test-status-counts: %s\n' "$1" >&2; exit 1; }
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 export HOME="$tmp/home" SETUP_NO_CLEAR=true
-cp -a -- "$PROJECT_DIR" "$tmp/setup-manager"
+# Копіюємо лише рантайм CLI (без dotfiles/, logs/, артефактів).
+mkdir -p -- "$tmp/setup-manager"
+cp -a -- "$PROJECT_DIR/src" "$PROJECT_DIR/config" "$PROJECT_DIR/hooks" "$PROJECT_DIR/tools" "$PROJECT_DIR/backup-install_manager.sh" "$tmp/setup-manager/"
 repo="$tmp/setup-manager"
 # Не допускаємо впливу користувацьких dotfiles на тестові лічильники.
 rm -rf -- "$repo/dotfiles"
