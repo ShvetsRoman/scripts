@@ -76,7 +76,8 @@
 | `--yes`, `-y` | пропуск підтверджень |
 | `--no-color` | без ANSI-кольорів |
 | `--verbose`, `-v` | додаткова діагностика |
-| `--delete` | видаляти зайве на цільовій стороні синхронізації |
+| `--delete [true\|false]` | видаляти зайве на цільовій стороні синхронізації; голий `--delete` = `true` |
+| `--no-delete` | не видаляти зайве (перекриває `SETUP_DELETE_ENABLED`) |
 | `--backup` | форсовано увімкнути захисні копії на цей запуск |
 | `--configs-only` | тільки конфігурації у Packages |
 | `--no-configs` | не застосовувати конфігурації у Packages |
@@ -125,6 +126,7 @@ SETUP_KEEP_DAYS=30                      # скільки днів зберіга
 SETUP_ARCHIVE_PREFIX="dotfiles-backup"  # префікс імен архівних файлів
 SETUP_BACKUP_ENABLED=true               # захисні копії перед змінами (за замовчуванням true)
 SETUP_RECOVERY_ENABLED=true             # recovery-знімки файлових операцій
+SETUP_DELETE_ENABLED=false              # --delete за замовчуванням (прапорці перекривають)
 SETUP_LOCK_TIMEOUT=0                    # очікування блокування, с (0–300; 0 — не чекати)
 ```
 
@@ -174,6 +176,13 @@ SETUP_LOCK_TIMEOUT=0                    # очікування блокуван�
 ## Останні зміни
 
 Актуальна версія коду: **2.0.2** (джерело — `src/core/version.sh`).
+
+### 2026-11-16 — --delete зі значенням та SETUP_DELETE_ENABLED
+
+- `--delete` приймає явне значення `true|false`; голий `--delete` дорівнює `true`.
+- Додано `--no-delete` для вимкнення на один запуск.
+- `config/setup.conf`: `SETUP_DELETE_ENABLED=false` — базове значення delete;
+  прапорці `--delete`/`--no-delete` перекривають його на один запуск.
 
 ### 2026-11-14 — прапорці --delete та --backup
 

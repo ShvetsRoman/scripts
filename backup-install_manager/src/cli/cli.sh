@@ -8,13 +8,22 @@
 # shellcheck disable=SC2034
 cli_parse() {
     CLI_ARGS=()
+    # Базове значення delete беремо з config/setup.conf; прапорці нижче перекривають.
+    SYNC_DELETE="${SETUP_DELETE_ENABLED:-false}"
     while (($#)); do
         case "$1" in
             --dry-run)         DRY_RUN=true; export DRY_RUN ;;
             --yes|-y)          SETUP_ASSUME_YES=true; export SETUP_ASSUME_YES ;;
             --no-color)        export NO_COLOR=1 ;;
             --verbose|-v)      export SETUP_VERBOSE=true ;;
-            --delete)          SYNC_DELETE=true ;;
+            --delete)
+                # Голий --delete = true; явне значення приймається як --delete true|false.
+                case "${2:-}" in
+                    true)  SYNC_DELETE=true;  shift ;;
+                    false) SYNC_DELETE=false; shift ;;
+                    *)     SYNC_DELETE=true ;;
+                esac ;;
+            --no-delete)       SYNC_DELETE=false ;;
             --backup)          SETUP_BACKUP_ENABLED=true ;;
             --configs-only)    CONFIGS_ONLY=true ;;
             --no-configs)      NO_CONFIGS=true ;;
@@ -43,7 +52,7 @@ cli_dotfiles_help() {
   ./backup-install_manager.sh dotfiles plan restore [ШЛЯХ...]   План restore без дій
   ./backup-install_manager.sh dotfiles diff [ШЛЯХ...]           Пофайлові відмінності
   ./backup-install_manager.sh dotfiles groups                   Перелік груп реєстру
-  Додайте --group НАЗВА до будь-якого режиму Dotfiles.
+  Додайте --delete true|false або --no-delete та --group НАЗВА до будь-якого режиму Dotfiles.
 EOT
 }
 

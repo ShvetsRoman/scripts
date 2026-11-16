@@ -161,7 +161,14 @@ done
 pass 'Підтести'
 
 # 6. ShellCheck.
-if command -v shellcheck >/dev/null 2>&1; then
+# У вибіркових прогонах (SETUP_TEST_ONLY) ShellCheck пропускається:
+# runner-тести перезапускають цей скрипт багато разів, а повний ShellCheck
+# триває ~40 с і через ліміт 60 с на підтест дає хибні тайм-аути.
+# У повному наборі ShellCheck виконується тут як і раніше.
+if [[ -n "${SETUP_TEST_ONLY:-}" ]]; then
+    runner_skip=$((runner_skip + 1))
+    printf '[SKIP] ShellCheck (SETUP_TEST_ONLY)\n'
+elif command -v shellcheck >/dev/null 2>&1; then
     mapfile -d '' -t files < <(find "$ROOT_DIR" -name '*.sh' -type f -print0)
     shellcheck -x --source-path=SCRIPTDIR -S warning "${files[@]}" || fail 'ShellCheck'
     pass 'ShellCheck'
