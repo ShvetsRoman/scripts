@@ -1,4 +1,9 @@
-# ZSH ENVIRONMENT / PATH
+# ============================================================
+# ZSHENV — ЄДИНИЙ ФАЙЛ ЗМІННИХ СЕРЕДОВИЩА ДЛЯ ВСІХ СЕСІЙ ZSH
+# ============================================================
+# ZDOTDIR: звідси zsh згодом прочитає .zshrc/.zprofile/.zlogin.
+# Експортуємо і тут (ідемпотентно з ~/.zshenv)
+export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
 # Основна локаль системи для поточної shell-сесії.
 export LANG="uk_UA.UTF-8"
@@ -28,14 +33,3 @@ export BROWSER="google-chrome-stable"
 
 : "${XDG_CONFIG_HOME:="$HOME/.config"}"
 export XDG_CONFIG_HOME
-
-# PATH
-# Локальні користувацькі програми мають пріоритет над системними.
-if [[ -d "$HOME/.local/bin" ]]; then
-    path=(
-        "$HOME/.local/bin"
-        $path
-    )
-fi
-# Видалити дублікати з PATH.
-typeset -U path PATH

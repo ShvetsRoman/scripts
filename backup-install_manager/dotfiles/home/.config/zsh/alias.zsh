@@ -184,7 +184,6 @@ if command -v podman >/dev/null 2>&1; then
     alias pcd='podman compose down'
     alias pcdv='podman compose down --volumes'
     alias pcps='podman compose ps'
-    alias pcpsa='podman compose ps'
     alias pci='podman compose images'
     alias pcst='podman compose start'
     alias pcsp='podman compose stop'
@@ -382,12 +381,3 @@ alias pss='paru -Ss'
 
 # Видалення.
 alias pr='paru -R'
-
-# APT / UBUNTU
-# alias sau='sudo apt update && sudo apt upgrade'
-# alias sai='sudo apt -y install'
-# alias sar='sudo apt -y remove'
-# alias sap='sudo apt -y purge'
-# alias saa='sudo apt autoremove'
-# alias sas='sudo apt search'
-# alias sal='sudo apt list --installed'
