@@ -1,0 +1,50 @@
+services:
+  traefik:
+    image: "traefik:${TRAEFIK_VERSION}"
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    mem_limit: "${TRAEFIK_MEM_LIMIT}"
+    pids_limit: "${PIDS_LIMIT}"
+
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./letsencrypt:/letsencrypt
+
+    networks:
+      - wp_proxy
+
+    healthcheck:
+      test:
+        - CMD
+        - traefik
+        - healthcheck
+        - --ping
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+networks:
+  wp_proxy:
+    name: "${PROXY_NETWORK}"
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "${PROXY_SUBNET}"

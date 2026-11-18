@@ -1,63 +1,91 @@
 # =============================================================================
-#  ТЕСТОВИЙ ПРОФІЛЬ: MikroTik CHR у VirtualBox (на базі конфіга hAP ac²)
-#  RouterOS:  7.16+   |   Файл читається скриптом setup.sh
-# =============================================================================
+# ТЕСТОВИЙ ПРОФІЛЬ: MikroTik CHR у VirtualBox (на базі hAP ac²)
+# RouterOS: 7.20+ | Файл читається setup.sh
 #
-#  ОСОБЛИВОСТІ ТЕСТОВОГО СЕРЕДОВИЩА:
-#   - Працює на RouterOS CHR у VirtualBox (образ .vdi під'єднується до VM вручну).
-#   - Топологія як на реальному роутері: ether1 = NAT (WAN),
-#     ether2 = host-only vboxnet0 (LAN/керування з хоста), ether3-5 = internal.
-#   - У CHR 8 портів: ether6-8 залишаються вільними.
-#   - WiFi-розділ у профілі ПОВНІСТЮ ВИДАЛЕНИЙ (не охоронений!):
-#     RouterOS валідує імена інтерфейсів при парсингу, тому згадки
-#     wifi1/wifi2 ламали б імпорт на CHR навіть у невиконуваних гілках.
-#   - Bridge/VLAN/DHCP/firewall/WireGuard/бекап тестуються повністю.
+# НОВА СХЕМА:
+# - WiFi вимкнений: CHR не має радіомодулів; WiFi-команди відсутні повністю.
+# - WireGuard керується wgEndpointMode: ip | mikrotik-ddns | disabled.
+# - WAN SSH/Winbox керуються enableWanSsh / enableWanWinbox.
+# - Доступ через тунель — enableWgSsh / enableWgWinbox; порти служб —
+#   routerSshPort та routerWinboxPort.
+# - wanAdminAddresses — список довірених зовнішніх IP у форматі
+#   "198.51.100.10/32,203.0.113.20/32". Використовуйте власні реальні адреси.
+# - Автоматичні бекапи та нічний LED у цьому профілі відсутні.
 #
-#  ЗАСТОСУВАННЯ:
-#    ./setup.sh --name vbox-test           # завантажити файл (без застосування)
-#    ./setup.sh --name vbox-test --reset   # завантажити + reset + автозастосування
-#  ВРУЧНУ (після завантаження):
-#    /import file-name=config.rsc
+# ПЕРШЕ ПІДКЛЮЧЕННЯ:
+# Якщо CHR ще має заводську адресу, тимчасово встановіть routerHost=192.168.88.1.
+# Після застосування конфігурації адреса керування стане 192.168.10.1;
+# тоді змініть routerHost на 192.168.10.1 для наступних запусків setup.sh.
+# На хості для першого підключення: ip addr add 192.168.88.2/24 dev vboxnet0
+# Після переходу на нову адресу: ip addr replace 192.168.10.2/24 dev vboxnet0
 #
-#  УВАГА: рядки :global НЕ мають коментарів у кінці — їх парсить setup.sh.
+# ЗАСТОСУВАННЯ:
+# ./setup.sh --name vbox-test
+# ./setup.sh --name vbox-test --reset
+# ВРУЧНУ: /import file-name=config.rsc
 #
+# ВАЖЛИВО: setup.sh читає початкові :global. Не додавайте коментарі в кінець
+# рядків :global, які він має розібрати.
 # =============================================================================
 
-
 # =============================================================================
-# 0. ЗМІННІ — ВСІ НАЛАШТУВАННЯ В ОДНОМУ МІСЦІ
+# 0. ЗМІННІ — НАЛАШТУВАННЯ В ОДНОМУ МІСЦІ
 # =============================================================================
 
-# --- Підключення (використовує setup.sh для SSH/SFTP) ---
-# ЕТАП 1 (перший деплой на свіжий CHR): дефолтна адреса 192.168.88.1;
-#   на хості:  ip addr add 192.168.88.2/24 dev vboxnet0
-# ЕТАП 2 (після --reset): керування через ether2 (vboxnet0),
-#   роутер стає 192.168.10.1 — змініть значення нижче та на хості:
-#   ip addr del 192.168.88.2/24 dev vboxnet0; ip addr add 192.168.10.2/24 dev vboxnet0
-:global routerHost "192.168.10.1"
-:global routerUser "roman"
-:global routerPassword "ЗАМІНІТЬ_НА_ПАРОЛЬ_SSH"
+# --- Підключення setup.sh ---
+:global routerHost "192.168.88.1"
+:global routerUser "admin"
+:global routerPassword "11111111"
+# Порти SSH та Winbox, які слухає роутер; SSH-порт також використовує setup.sh.
+# Якщо змінюєте порт — додайте його до bfPorts.
 :global routerSshPort 22
+:global routerWinboxPort 8291
 :global configFile "config.rsc"
 
 # --- Система ---
-:global routerIdentity "vbox-test"
+:global routerIdentity "vbox-test1"
 :global TIMEZONE "Europe/Kyiv"
 :global ntpServer1 "ua.pool.ntp.org"
 :global ntpServer2 "time.cloudflare.com"
 :global adminUser "roman"
-:global adminPassword "ЗАМІНІТЬ_НА_ПАРОЛЬ_ADMIN"
+:global adminPassword "11111111"
 
-# --- Тумблери (true/false) ---
-:global enableWireguard false
-:global enableGuest false 
+# --- Мережеві перемикачі ---
+:global enableGuest false
 :global enableIot false 
-:global enableWifi2Ghz false 
-:global enableWifi5Ghz false 
+# IPv6: вимкнений за замовчуванням (протокол відключається на рівні стеку).
+:global enableIPv6 false
+
+# --- WiFi: вимкнений для CHR ---
+:global enableWifi2Ghz false
+:global enableWifi5Ghz false
+
+# --- WireGuard --- Допустимі значення: ip | mikrotik-ddns | disabled.
+:global wgEndpointMode "disabled"
+:global wgEndpointIp ""
+:global wgPort 13231
+:global wgAddr "10.10.100.1/24"
+:global wgNet "10.10.100.0/24"
+:global wgPeerAddr "10.10.100.2/32"
+:global wgPeerKey "ЗАМІНІТЬ_КЛЮЧ_WG"
+# Доступ SSH/Winbox через WireGuard-тунель (джерела з wgNet).
+:global enableWgSsh true
+:global enableWgWinbox true
+
+# --- WAN-адміністрування ---
+:global enableWanSsh false
+:global enableWanWinbox false
+:global wanAdminAddresses ""
+
+# --- Захист від брутфорсу ---
+:global enableBruteforce true
+:global bfPorts "22,8291"
+:global bfStageTimeout "1m"
+:global bfBlacklistTime "10d"
 
 # --- Мережа ---
 :global wanInterface "ether1"
-:global bridgeName "br-lan"
+:global bridgeName "bridge-lan"
 :global lanPorts {"ether2";"ether3";"ether4";"ether5"}
 
 :global vlanLan 10
@@ -82,560 +110,392 @@
 :global leaseLan "8h"
 :global leaseGuest "2h"
 :global leaseIot "8h"
-
 :global dnsUpstream "1.1.1.1,9.9.9.9"
 
-# --- WiFi (на CHR радіо відсутнє — змінні не використовуються) ---
-:global wifiSsid "Home-WiFi"
-:global wifiPassword "ЗАМІНІТЬ_ПАРОЛЬ_WIFI"
-:global guestSsid "Home-Guest"
-:global guestPassword "ЗАМІНІТЬ_ПАРОЛЬ_ГОСТЯ"
-:global iotSsid "Home-IoT"
-:global iotPassword "ЗАМІНІТЬ_ПАРОЛЬ_IOT"
+# =============================================================================
+# 0а. ПЕРЕВІРКА ПАРАМЕТРІВ
+# =============================================================================
 
-# --- WireGuard ---
-:global wgPort 13231
-:global wgAddr "10.10.100.1/24"
-:global wgNet "10.10.100.0/24"
-:global wgPeerAddr "10.10.100.2/32"
-:global wgPeerKey "ЗАМІНІТЬ_КЛЮЧ_WG"
-
-# --- Захист від брутфорсу ---
-# bfPorts — порти для захисту (мують відповідати /ip service:
-# тут ssh=22 та winbox=8291). Захист діє ТІЛЬКИ на трафік з WAN —
-# клієнти LAN (в т.ч. WiFi wlan) ніколи не потрапляють у списки.
-:global enableBruteforce true
-:global bfPorts "22,8291"
-:global bfStageTimeout "1m"
-:global bfBlacklistTime "10d"
-
-# --- Бекап та нічний LED ---
-:global enableBackup true
-:global backupStartTime "03:00:00"
-:global enableNightLed false
-:global nightLedInterval "23:00-07:00"
-
+:if (($enableGuest != true) and ($enableGuest != false)) do={:error "enableGuest має бути true або false"}
+:if (($enableIot != true) and ($enableIot != false)) do={:error "enableIot має бути true або false"}
+:if (($enableIPv6 != true) and ($enableIPv6 != false)) do={:error "enableIPv6 має бути true або false"}
+:if (($enableWifi2Ghz != true) and ($enableWifi2Ghz != false)) do={:error "enableWifi2Ghz має бути true або false"}
+:if (($enableWifi5Ghz != true) and ($enableWifi5Ghz != false)) do={:error "enableWifi5Ghz має бути true або false"}
+:if (($enableBruteforce != true) and ($enableBruteforce != false)) do={:error "enableBruteforce має бути true або false"}
+:if (($enableWanSsh != true) and ($enableWanSsh != false)) do={:error "enableWanSsh має бути true або false"}
+:if (($enableWanWinbox != true) and ($enableWanWinbox != false)) do={:error "enableWanWinbox має бути true або false"}
+:if ($adminPassword = "ЗАМІНІТЬ_НА_ПАРОЛЬ_ADMIN") do={:error "Замініть adminPassword перед імпортом"}
+:if (([:typeof $wgPort] != "num") or ($wgPort < 1) or ($wgPort > 65535)) do={:error "wgPort має бути числом 1..65535"}
+:if (([:typeof $routerWinboxPort] != "num") or ($routerWinboxPort < 1) or ($routerWinboxPort > 65535)) do={:error "routerWinboxPort має бути числом 1..65535"}
+:if ($routerWinboxPort = $routerSshPort) do={:error "routerWinboxPort не може збігатися з routerSshPort"}
+:if (($enableWgSsh != true) and ($enableWgSsh != false)) do={:error "enableWgSsh має бути true або false"}
+:if (($enableWgWinbox != true) and ($enableWgWinbox != false)) do={:error "enableWgWinbox має бути true або false"}
+:if (($enableWanSsh = true) or ($enableWanWinbox = true)) do={
+    :if ([:len $wanAdminAddresses] = 0) do={:error "Для WAN-адміністрування задайте wanAdminAddresses із довіреними IP/CIDR"}
+}
 
 # =============================================================================
 # 1. БАЗОВІ СИСТЕМНІ НАЛАШТУВАННЯ
 # =============================================================================
 
 /system identity set name=$routerIdentity
-
-# Часовий пояс і час (потрібні для логів і планувальника)
 /system clock set time-zone-name=$TIMEZONE
 
-# Синхронізація часу через NTP
 /system ntp client set enabled=yes
+/system ntp client servers remove [find]
 /system ntp client servers add address=$ntpServer1
 /system ntp client servers add address=$ntpServer2
 
-# Логування помилок на диск (зберігається між перезавантаженнями)
-# Ідемпотентно: спочатку прибрати наші дію/правило, якщо вони вже є
-# (важливо при повторному імпорті поверх наявного конфігу)
-/system logging action remove [find where name="diskLog"]
-/system logging remove [find where action="diskLog"]
-/system logging action add name=diskLog target=disk disk-file-name=routerlog disk-lines-per-file=1000
-/system logging add topics=error,warning,critical action=diskLog
-
 /system note set show-at-login=yes note="Authorization required. Unauthorized access is prohibited."
 
+# IPv6: enableIPv6=false вимикає стек протоколу (адреси очищаються; повна
+# дія застосовується після перезавантаження). enableIPv6=true лишає стек
+# увімкненим — окремий IPv6 firewall цей профіль не налаштовує.
+:if ($enableIPv6 = true) do={
+    /ipv6 settings set disable-ipv6=no
+} else={
+    /ipv6 settings set disable-ipv6=yes
+}
 
 # =============================================================================
 # 2. КОРИСТУВАЧІ ТА БЕЗПЕКА АДМІНІСТРУВАННЯ
 # =============================================================================
 
-/user add name=$adminUser group=full password=$adminPassword comment="Основний адміністратор"
+# routerUser (SSH-доступ setup.sh) і adminUser (створюється конфігурацією)
+# можуть відрізнятися. Повторний імпорт не повинен створювати дубль користувача.
+:if ([:len [/user find where name=$adminUser]] = 0) do={
+    /user add name=$adminUser group=full password=$adminPassword comment="Основний адміністратор"
+} else={
+    /user set [find where name=$adminUser] group=full password=$adminPassword comment="Основний адміністратор"
+}
 
-# Вимикаємо дефолтного "admin" (тільки якщо основний не називається "admin")
-:if ($adminUser != "admin") do={ /user disable admin }
-
+:if ($adminUser != "admin") do={
+    :if ([:len [/user find where name="admin"]] > 0) do={ /user disable [find where name="admin"] }
+}
 
 # =============================================================================
 # 3. ІНТЕРФЕЙСИ, BRIDGE ТА VLAN
 # =============================================================================
 
-# Міст з фільтрацією VLAN — "хребет" локальної мережі
-/interface bridge add name=$bridgeName vlan-filtering=yes protocol-mode=rstp comment="Основний міст LAN"
+/interface bridge
+:if ([:len [find where name=$bridgeName]] = 0) do={
+    add name=$bridgeName vlan-filtering=no protocol-mode=rstp comment="Основний міст LAN"
+} else={
+    set [find where name=$bridgeName] protocol-mode=rstp
+}
 
-# LAN-порти; pvid = VLAN для нетегованого трафіку порту
+/interface bridge port
 :foreach p in=$lanPorts do={
-    /interface bridge port add bridge=$bridgeName interface=$p pvid=$vlanLan comment="LAN-порт"
+    :if ([:len [find where interface=$p]] = 0) do={
+        add bridge=$bridgeName interface=$p pvid=$vlanLan comment="LAN-порт"
+    } else={
+        set [find where interface=$p] bridge=$bridgeName pvid=$vlanLan
+    }
 }
 
-# VLAN-інтерфейси на мосту — "віртуальні роутери" кожної мережі
-/interface vlan add name=$vifLan vlan-id=$vlanLan interface=$bridgeName comment="Основна мережа"
-
-# Гостьова/IoT — лише за тумблерами
+/interface vlan
+:if ([:len [find where name=$vifLan]] = 0) do={
+    add name=$vifLan vlan-id=$vlanLan interface=$bridgeName comment="Основна мережа"
+}
 :if ($enableGuest = true) do={
-    /interface vlan add name=$vifGuest vlan-id=$vlanGuest interface=$bridgeName comment="Гостьова мережа"
+    :if ([:len [find where name=$vifGuest]] = 0) do={
+        add name=$vifGuest vlan-id=$vlanGuest interface=$bridgeName comment="Гостьова мережа"
+    }
 }
 :if ($enableIot = true) do={
-    /interface vlan add name=$vifIot vlan-id=$vlanIot interface=$bridgeName comment="Мережа IoT"
+    :if ([:len [find where name=$vifIot]] = 0) do={
+        add name=$vifIot vlan-id=$vlanIot interface=$bridgeName comment="Мережа IoT"
+    }
 }
 
-# Теговані VLAN на самому мосту.
-# Для пакету "wifi" гостьовий/IoT SSID тегує трафік САМ (datapath.vlan-id),
-# на реальному пристрої wifi1/wifi2 є тегованими членами VLAN 20/30
-# (у цьому профілі радіо-членів немає).
-# Радіо може бути вимкнене тумблером — інтерфейс все одно існує, членство не шкодить.
-# У профілі vbox-test WiFi-радіо відсутні — тегованих радіо-членів немає.
-/interface bridge vlan add bridge=$bridgeName tagged=$bridgeName vlan-ids=$vlanLan
+/interface bridge vlan
+:if ([:len [find where bridge=$bridgeName and vlan-ids=$vlanLan]] = 0) do={
+    add bridge=$bridgeName tagged=$bridgeName untagged=$lanPorts vlan-ids=$vlanLan
+}
 :if ($enableGuest = true) do={
-    /interface bridge vlan add bridge=$bridgeName tagged=$bridgeName vlan-ids=$vlanGuest
+    :if ([:len [find where bridge=$bridgeName and vlan-ids=$vlanGuest]] = 0) do={
+        add bridge=$bridgeName tagged=$bridgeName vlan-ids=$vlanGuest
+    }
 }
 :if ($enableIot = true) do={
-    /interface bridge vlan add bridge=$bridgeName tagged=$bridgeName vlan-ids=$vlanIot
+    :if ([:len [find where bridge=$bridgeName and vlan-ids=$vlanIot]] = 0) do={
+        add bridge=$bridgeName tagged=$bridgeName vlan-ids=$vlanIot
+    }
 }
 
+# Увімкнути VLAN filtering після налаштування bridge VLAN table.
+/interface bridge set [find where name=$bridgeName] vlan-filtering=yes
 
 # =============================================================================
-# 3а. СПИСКИ ІНТЕРФЕЙСІВ (створюються ДО firewall)
+# 3а. СПИСКИ ІНТЕРФЕЙСІВ
 # =============================================================================
 
-# WAN та LAN існують завжди
-/interface list add name=WAN
-/interface list add name=LAN
+/interface list
+:if ([:len [find where name="WAN"]] = 0) do={ add name=WAN }
+:if ([:len [find where name="LAN"]] = 0) do={ add name=LAN }
 
-/interface list member add interface=$wanInterface list=WAN
-/interface list member add interface=$vifLan list=LAN
+/interface list member
+:if ([:len [find where list="WAN" and interface=$wanInterface]] = 0) do={ add interface=$wanInterface list=WAN }
+:if ([:len [find where list="LAN" and interface=$vifLan]] = 0) do={ add interface=$vifLan list=LAN }
 
-# Гостьова/IoT — лише за тумблерами
 :if ($enableGuest = true) do={
-    /interface list add name=GUEST
-    /interface list member add interface=$vifGuest list=GUEST
+    /interface list
+    :if ([:len [find where name="GUEST"]] = 0) do={ add name=GUEST }
+    /interface list member
+    :if ([:len [find where list="GUEST" and interface=$vifGuest]] = 0) do={ add interface=$vifGuest list=GUEST }
 }
 :if ($enableIot = true) do={
-    /interface list add name=IOT
-    /interface list member add interface=$vifIot list=IOT
+    /interface list
+    :if ([:len [find where name="IOT"]] = 0) do={ add name=IOT }
+    /interface list member
+    :if ([:len [find where list="IOT" and interface=$vifIot]] = 0) do={ add interface=$vifIot list=IOT }
 }
 
-# WireGuard додається до LAN у розділі 9 (після створення wg-vpn)
-
-
 # =============================================================================
-# 4. WiFi — ВІДСУТНІЙ У ЦЬОМУ ПРОФІЛІ
-# =============================================================================
-# CHR не має бездротових модулів, а RouterOS валідує імена інтерфейсів
-# при ПАРСИНГУ (навіть у гілках :if, що не виконуються) — тому будь-яка
-# згадка wifi1/wifi2 ламала б імпорт. Розділ тут не просто охоронений,
-# а повністю вилучений. WiFi-змінні (wifiSsid тощо) залишені у розділі 0
-# для узгодженості setup.sh — на CHR вони не використовуються.
+# 4. WiFi — ПОВНІСТЮ ВІДСУТНІЙ У ПРОФІЛІ CHR
 # =============================================================================
 
-
-
 # =============================================================================
-# 5. WAN (ІНТЕРНЕТ ВІД ПРОВАЙДЕРА, DHCP)
+# 5. WAN — DHCP ВІД ВІРТУАЛЬНОГО NAT
 # =============================================================================
 
-# use-peer-dns=no — DNS беремо самі (розділ 7), не від провайдера
-# Ідемпотентно: прибрати наявний dhcp-client на WAN (дефолтний або наш з
-# попереднього імпорту), інакше "dhcp-client on that interface already exists"
-/ip dhcp-client remove [find where interface=$wanInterface]
-/ip dhcp-client add \
-    interface=$wanInterface \
-    add-default-route=yes \
-    use-peer-dns=no \
-    dhcp-options=hostname,clientid \
-    disabled=no \
-    comment="DHCP-клієнт від провайдера"
-
+/ip dhcp-client
+remove [find where interface=$wanInterface]
+add interface=$wanInterface add-default-route=yes use-peer-dns=no \
+    dhcp-options=hostname,clientid disabled=no comment="DHCP-клієнт від провайдера"
 
 # =============================================================================
 # 6. IP-АДРЕСИ ТА DHCP-СЕРВЕРИ
 # =============================================================================
 
-/ip address add address=$ipLan interface=$vifLan comment="Шлюз LAN"
+/ip address
+:if ([:len [find where interface=$vifLan and address=$ipLan]] = 0) do={
+    add address=$ipLan interface=$vifLan comment="Шлюз LAN"
+}
+
+/ip pool
+:if ([:len [find where name="pool-lan"]] = 0) do={ add name=pool-lan ranges=$poolLan comment="Пул LAN" } else={ set [find where name="pool-lan"] ranges=$poolLan }
+
+/ip dhcp-server
+:if ([:len [find where name="dhcp-lan"]] = 0) do={
+    add name=dhcp-lan interface=$vifLan address-pool=pool-lan lease-time=$leaseLan disabled=no comment="DHCP LAN"
+} else={
+    set [find where name="dhcp-lan"] interface=$vifLan address-pool=pool-lan lease-time=$leaseLan disabled=no
+}
+
+/ip dhcp-server network
+:if ([:len [find where address=$netLan]] = 0) do={
+    add address=$netLan gateway=$gwLan dns-server=$gwLan comment="Мережа LAN"
+} else={
+    set [find where address=$netLan] gateway=$gwLan dns-server=$gwLan
+}
 
 :if ($enableGuest = true) do={
-    /ip address add address=$ipGuest interface=$vifGuest comment="Шлюз GUEST"
-    /ip pool add name=pool-guest ranges=$poolGuest comment="Пул GUEST"
-    /ip dhcp-server add name=dhcp-guest interface=$vifGuest address-pool=pool-guest lease-time=$leaseGuest disabled=no comment="DHCP GUEST"
-    /ip dhcp-server network add address=$netGuest gateway=$gwGuest dns-server=$gwGuest comment="Мережа GUEST"
+    /ip address
+    :if ([:len [find where interface=$vifGuest and address=$ipGuest]] = 0) do={ add address=$ipGuest interface=$vifGuest comment="Шлюз GUEST" }
+    /ip pool
+    :if ([:len [find where name="pool-guest"]] = 0) do={ add name=pool-guest ranges=$poolGuest comment="Пул GUEST" } else={ set [find where name="pool-guest"] ranges=$poolGuest }
+    /ip dhcp-server
+    :if ([:len [find where name="dhcp-guest"]] = 0) do={ add name=dhcp-guest interface=$vifGuest address-pool=pool-guest lease-time=$leaseGuest disabled=no comment="DHCP GUEST" } else={ set [find where name="dhcp-guest"] interface=$vifGuest address-pool=pool-guest lease-time=$leaseGuest disabled=no }
+    /ip dhcp-server network
+    :if ([:len [find where address=$netGuest]] = 0) do={ add address=$netGuest gateway=$gwGuest dns-server=$gwGuest comment="Мережа GUEST" } else={ set [find where address=$netGuest] gateway=$gwGuest dns-server=$gwGuest }
 }
 
 :if ($enableIot = true) do={
-    /ip address add address=$ipIot interface=$vifIot comment="Шлюз IOT"
-    /ip pool add name=pool-iot ranges=$poolIot comment="Пул IOT"
-    /ip dhcp-server add name=dhcp-iot interface=$vifIot address-pool=pool-iot lease-time=$leaseIot disabled=no comment="DHCP IOT"
-    /ip dhcp-server network add address=$netIot gateway=$gwIot dns-server=$gwIot comment="Мережа IOT"
+    /ip address
+    :if ([:len [find where interface=$vifIot and address=$ipIot]] = 0) do={ add address=$ipIot interface=$vifIot comment="Шлюз IOT" }
+    /ip pool
+    :if ([:len [find where name="pool-iot"]] = 0) do={ add name=pool-iot ranges=$poolIot comment="Пул IOT" } else={ set [find where name="pool-iot"] ranges=$poolIot }
+    /ip dhcp-server
+    :if ([:len [find where name="dhcp-iot"]] = 0) do={ add name=dhcp-iot interface=$vifIot address-pool=pool-iot lease-time=$leaseIot disabled=no comment="DHCP IOT" } else={ set [find where name="dhcp-iot"] interface=$vifIot address-pool=pool-iot lease-time=$leaseIot disabled=no }
+    /ip dhcp-server network
+    :if ([:len [find where address=$netIot]] = 0) do={ add address=$netIot gateway=$gwIot dns-server=$gwIot comment="Мережа IOT" } else={ set [find where address=$netIot] gateway=$gwIot dns-server=$gwIot }
 }
-
-# Основна мережа
-/ip pool add name=pool-lan ranges=$poolLan comment="Пул LAN"
-/ip dhcp-server add name=dhcp-lan interface=$vifLan address-pool=pool-lan lease-time=$leaseLan disabled=no comment="DHCP LAN"
-/ip dhcp-server network add address=$netLan gateway=$gwLan dns-server=$gwLan comment="Мережа LAN"
-
-# --- Статичні резервування (приклади — підставте свої MAC) ---
-# /ip dhcp-server lease add address=192.168.10.50 mac-address=AA:BB:CC:DD:EE:01 server=dhcp-lan comment="NAS"
-# /ip dhcp-server lease add address=192.168.10.51 mac-address=AA:BB:CC:DD:EE:02 server=dhcp-lan comment="Принтер"
-
 
 # =============================================================================
 # 7. DNS
 # =============================================================================
 
-# Роутер — кешуючий DNS для локальних мереж.
-# Захист від зовнішніх запитів робиться у firewall (розділ 8).
-/ip dns set \
-    servers=$dnsUpstream \
-    allow-remote-requests=yes \
-    max-udp-packet-size=512 \
-    cache-size=2048KiB
-
-# Локальні імена (приклади)
-# /ip dns static add name=nas.home address=192.168.10.50
-# /ip dns static add name=router.home address=192.168.10.1
-
+/ip dns set servers=$dnsUpstream allow-remote-requests=yes max-udp-packet-size=512 cache-size=2048KiB
 
 # =============================================================================
-# 8. FIREWALL (списки інтерфейсів створені у розділі 3а)
+# 8. FIREWALL
 # =============================================================================
 
-# --- INPUT (трафік на сам роутер) ---
+# Для WAN-адміністрування довірені адреси пропускаються ДО bruteforce.
+# Це не дає власним IP потрапити до динамічного blacklist.
+# src-address у firewall приймає лише одне значення — список довірених
+# адрес розгортається в окреме правило на кожен IP/CIDR.
+:local wanAdminAddr ""
+:if ($enableWanSsh = true) do={
+    :foreach wanAdminAddr in=[:toarray $wanAdminAddresses] do={
+        /ip firewall filter add chain=input action=accept protocol=tcp dst-port=22 \
+            src-address=$wanAdminAddr in-interface-list=WAN comment="WAN admin: SSH з довірених IP"
+    }
+}
+:if ($enableWanWinbox = true) do={
+    :foreach wanAdminAddr in=[:toarray $wanAdminAddresses] do={
+        /ip firewall filter add chain=input action=accept protocol=tcp dst-port=$routerWinboxPort \
+            src-address=$wanAdminAddr in-interface-list=WAN comment="WAN admin: Winbox з довірених IP"
+    }
+}
+
 /ip firewall filter
-
-# --- Захист від брутфорсу (SSH/Winbox) — за тумблером ---
-# Розташовано ПЕРЕД accept established: чорний список має діяти
-# негайно, навіть поки живі старі з'єднання джерела (тому БЕЗ
-# connection-state=new — drop матчить і established-пакети).
-# Схема MikroTik "Bruteforce prevention": кожен TCP-пакет з WAN на
-# захищені порти ($bfPorts) крок за кроком підвищує "стадію" джерела:
-#   пакет 1 → bf_stage1, пакет 2 → bf_stage2, пакет 3 → bf_blacklist,
-#   далі — drop на час $bfBlacklistTime.
-# Адміністрування напряму з WAN не передбачене (лише LAN або WireGuard),
-# тому швидкий каскад для WAN-джерел безпечний.
-# Списки динамічні і самоочищаються за таймаутами ($bfStageTimeout).
-# Усі правила мають in-interface-list=WAN — трафік LAN/wlan не обробляється
-# і не може потрапити у чорний список.
+# Bruteforce: правила застосовуються лише до WAN і розміщені перед established.
 :if ($enableBruteforce = true) do={
-    /ip firewall filter
-    add chain=input action=drop protocol=tcp dst-port=$bfPorts \
-        src-address-list=bf_blacklist in-interface-list=WAN \
-        comment="BF: drop з чорного списку"
+    add chain=input action=drop protocol=tcp dst-port=$bfPorts src-address-list=bf_blacklist \
+        in-interface-list=WAN comment="BF: drop з чорного списку"
     add chain=input action=add-src-to-address-list protocol=tcp dst-port=$bfPorts \
-        src-address-list=bf_stage2 in-interface-list=WAN \
-        address-list=bf_blacklist address-list-timeout=$bfBlacklistTime \
-        comment="BF: stage2 → чорний список"
+        src-address-list=bf_stage2 in-interface-list=WAN address-list=bf_blacklist \
+        address-list-timeout=$bfBlacklistTime comment="BF: stage2 -> blacklist"
     add chain=input action=add-src-to-address-list protocol=tcp dst-port=$bfPorts \
-        src-address-list=bf_stage1 in-interface-list=WAN \
-        address-list=bf_stage2 address-list-timeout=$bfStageTimeout \
-        comment="BF: stage1 → stage2"
+        src-address-list=bf_stage1 in-interface-list=WAN address-list=bf_stage2 \
+        address-list-timeout=$bfStageTimeout comment="BF: stage1 -> stage2"
     add chain=input action=add-src-to-address-list protocol=tcp dst-port=$bfPorts \
-        in-interface-list=WAN \
-        address-list=bf_stage1 address-list-timeout=$bfStageTimeout \
-        comment="BF: перший пакет → stage1"
-}
-add chain=input action=accept connection-state=established,related \
-    comment="Input: встановлені та пов'язані з'єднання"
-add chain=input action=drop connection-state=invalid \
-    comment="Input: невалідні пакети"
-
-# SYN-flood-ліміт вилучено: правило з action=drop та limit= матчало
-# перші 50 SYN/s (інвертована логіка), а надлишок і так ловив фінальний
-# drop з WAN — тож ефективна поведінка (новий TCP з WAN заборонено)
-# не змінилася. Захист від SYN-шторму забезпечує tcp-syn-cookie (нижче).
-
-add chain=input action=accept protocol=icmp icmp-options=3:0-255 \
-    comment="Input: PMTU fragmentation-needed (без ліміту — важливо для маскараду)"
-add chain=input action=accept protocol=icmp icmp-options=0:0-255 limit=10,5:packet \
-    comment="Input: echo-reply з обмеженням (вхідні ping з WAN відкидає фінальний drop)"
-
-# WireGuard — за тумблером
-:if ($enableWireguard = true) do={
-    /ip firewall filter add chain=input action=accept protocol=udp dst-port=$wgPort in-interface-list=WAN \
-        comment="Input: WireGuard з WAN"
+        in-interface-list=WAN address-list=bf_stage1 address-list-timeout=$bfStageTimeout \
+        comment="BF: перший пакет -> stage1"
 }
 
-add chain=input action=accept in-interface-list=LAN \
-    comment="Input: повний доступ з LAN (Winbox/SSH/DNS)"
+add chain=input action=accept connection-state=established,related comment="Input: established,related"
+add chain=input action=drop connection-state=invalid comment="Input: invalid"
+add chain=input action=accept protocol=icmp icmp-options=3:0-255 comment="Input: PMTU"
+add chain=input action=accept protocol=icmp icmp-options=0:0-255 limit=10,5:packet comment="Input: echo-reply"
 
-# DNS для гостьової/IoT — за тумблерами
-:if ($enableGuest = true) do={
-    /ip firewall filter add chain=input action=accept protocol=udp dst-port=53 in-interface-list=GUEST \
-        comment="Input: DNS для гостьової мережі"
-    /ip firewall filter add chain=input action=accept protocol=udp dst-port=67-68 in-interface-list=GUEST \
-        comment="Input: DHCP для гостьової мережі"
-}
-:if ($enableIot = true) do={
-    /ip firewall filter add chain=input action=accept protocol=udp dst-port=53 in-interface-list=IOT \
-        comment="Input: DNS для IoT-мережі"
-    /ip firewall filter add chain=input action=accept protocol=udp dst-port=67-68 in-interface-list=IOT \
-        comment="Input: DHCP для IoT-мережі"
+:if ($wgEndpointMode != "disabled") do={
+    add chain=input action=accept protocol=udp dst-port=$wgPort in-interface-list=WAN comment="Input: WireGuard з WAN"
 }
 
-add chain=input action=drop in-interface-list=WAN log=yes log-prefix="fw-in-drop" \
-    comment="Input: ВСЕ решту з WAN відкинути"
+add chain=input action=accept in-interface-list=LAN comment="Input: повний доступ з LAN"
 
 :if ($enableGuest = true) do={
-    /ip firewall filter add chain=input action=drop in-interface-list=GUEST \
-        comment="Input: гостьова не має доступу до роутера (крім DNS)"
+    add chain=input action=accept protocol=udp dst-port=53 in-interface-list=GUEST comment="Input: DNS GUEST"
+    add chain=input action=accept protocol=udp dst-port=67-68 in-interface-list=GUEST comment="Input: DHCP GUEST"
+    add chain=input action=drop in-interface-list=GUEST comment="Input: GUEST не має доступу до роутера"
 }
 :if ($enableIot = true) do={
-    /ip firewall filter add chain=input action=drop in-interface-list=IOT \
-        comment="Input: IoT не має доступу до роутера (крім DNS)"
+    add chain=input action=accept protocol=udp dst-port=53 in-interface-list=IOT comment="Input: DNS IOT"
+    add chain=input action=accept protocol=udp dst-port=67-68 in-interface-list=IOT comment="Input: DHCP IOT"
+    add chain=input action=drop in-interface-list=IOT comment="Input: IOT не має доступу до роутера"
 }
 
-add chain=input action=drop log=yes log-prefix="fw-in-drop" \
-    comment="Input: типове відкидання (страховка)"
+add chain=input action=drop in-interface-list=WAN log=yes log-prefix="fw-in-drop" comment="Input: решту з WAN відкинути"
+add chain=input action=drop log=yes log-prefix="fw-in-drop" comment="Input: типове відкидання"
 
-# --- FORWARD (трафік між мережами) ---
-/ip firewall filter
-add chain=forward action=accept connection-state=established,related \
-    comment="Forward: встановлені та пов'язані з'єднання"
-add chain=forward action=drop connection-state=invalid \
-    comment="Forward: невалідні пакети"
-
-# Ізоляція: GUEST та IOT не ходять у LAN, але мають інтернет через NAT
-:if (($enableGuest = true) and ($enableIot = true)) do={
-    /ip firewall filter add chain=forward action=drop src-address=$netGuest dst-address=$netLan \
-        comment="Forward: GUEST → LAN заблоковано"
-    /ip firewall filter add chain=forward action=drop src-address=$netGuest dst-address=$netIot \
-        comment="Forward: GUEST → IOT заблоковано"
-    /ip firewall filter add chain=forward action=drop src-address=$netIot dst-address=$netLan \
-        comment="Forward: IOT → LAN заблоковано"
-    /ip firewall filter add chain=forward action=drop src-address=$netIot dst-address=$netGuest \
-        comment="Forward: IOT → GUEST заблоковано"
-}
-:if (($enableGuest = true) and ($enableIot = false)) do={
-    /ip firewall filter add chain=forward action=drop src-address=$netGuest dst-address=$netLan \
-        comment="Forward: GUEST → LAN заблоковано"
-}
-:if (($enableIot = true) and ($enableGuest = false)) do={
-    /ip firewall filter add chain=forward action=drop src-address=$netIot dst-address=$netLan \
-        comment="Forward: IOT → LAN заблоковано"
-}
-
-# Ізоляція GUEST/IOT від VPN-підмережі: без цього accept-правила
-# "все з GUEST/IOT назовні" пропускало б трафік у 10.10.100.0/24
-# (підключені WireGuard-піри) повз ізоляцію LAN.
-:if ($enableWireguard = true) do={
-    :if ($enableGuest = true) do={
-        /ip firewall filter add chain=forward action=drop src-address=$netGuest dst-address=$wgNet \
-            comment="Forward: GUEST → VPN-підмережу заблоковано"
-    }
-    :if ($enableIot = true) do={
-        /ip firewall filter add chain=forward action=drop src-address=$netIot dst-address=$wgNet \
-            comment="Forward: IOT → VPN-підмережу заблоковано"
-    }
-}
+# FORWARD
+add chain=forward action=accept connection-state=established,related comment="Forward: established,related"
+add chain=forward action=drop connection-state=invalid comment="Forward: invalid"
 
 :if ($enableGuest = true) do={
-    /ip firewall filter add chain=forward action=drop in-interface-list=GUEST dst-address=$gwGuest \
-        comment="Forward: GUEST не трогає сам роутер"
+    add chain=forward action=drop src-address=$netGuest dst-address=$netLan comment="Forward: GUEST -> LAN заблоковано"
+    :if ($enableIot = true) do={ add chain=forward action=drop src-address=$netGuest dst-address=$netIot comment="Forward: GUEST -> IOT заблоковано" }
+    :if ($wgEndpointMode != "disabled") do={ add chain=forward action=drop src-address=$netGuest dst-address=$wgNet comment="Forward: GUEST -> VPN заблоковано" }
 }
 :if ($enableIot = true) do={
-    /ip firewall filter add chain=forward action=drop in-interface-list=IOT dst-address=$gwIot \
-        comment="Forward: IOT не трогає сам роутер"
+    add chain=forward action=drop src-address=$netIot dst-address=$netLan comment="Forward: IOT -> LAN заблоковано"
+    :if ($enableGuest = true) do={ add chain=forward action=drop src-address=$netIot dst-address=$netGuest comment="Forward: IOT -> GUEST заблоковано" }
+    :if ($wgEndpointMode != "disabled") do={ add chain=forward action=drop src-address=$netIot dst-address=$wgNet comment="Forward: IOT -> VPN заблоковано" }
+    add chain=forward action=accept src-address=$netLan dst-address=$netIot comment="Forward: LAN -> IOT дозволено"
 }
 
-# Керування розумними пристроями з основної мережі — дозволено
-:if ($enableIot = true) do={
-    /ip firewall filter add chain=forward action=accept src-address=$netLan dst-address=$netIot \
-        comment="Forward: LAN → IOT дозволено"
-}
+add chain=forward action=accept in-interface-list=LAN comment="Forward: LAN назовні"
+:if ($enableGuest = true) do={ add chain=forward action=accept in-interface-list=GUEST comment="Forward: GUEST назовні" }
+:if ($enableIot = true) do={ add chain=forward action=accept in-interface-list=IOT comment="Forward: IOT назовні" }
+add chain=forward action=drop in-interface-list=WAN log=yes log-prefix="fw-fwd-drop" comment="Forward: не dstnat-трафік з WAN"
+add chain=forward action=drop log=yes log-prefix="fw-fwd-drop" comment="Forward: типове відкидання"
 
-add chain=forward action=accept in-interface-list=LAN \
-    comment="Forward: все з LAN назовні"
+# NAT і захист від SYN flood — шлях RouterOS /ip settings (connection tracking
+# tcp-syn-cookie вважається застарілим, як і в основному профілі).
+/ip settings set tcp-syncookies=yes
+/ip firewall nat add chain=srcnat action=masquerade out-interface-list=WAN comment="NAT: локальні мережі в інтернет"
 
-:if ($enableGuest = true) do={
-    /ip firewall filter add chain=forward action=accept in-interface-list=GUEST \
-        comment="Forward: все з GUEST назовні (через NAT)"
-}
-:if ($enableIot = true) do={
-    /ip firewall filter add chain=forward action=accept in-interface-list=IOT \
-        comment="Forward: все з IOT назовні (через NAT)"
-}
-
-add chain=forward action=drop in-interface-list=WAN log=yes log-prefix="fw-fwd-drop" \
-    comment="Forward: не dstnat'нутий трафік з WAN — відкинути"
-add chain=forward action=drop log=yes log-prefix="fw-fwd-drop" \
-    comment="Forward: типове відкидання (страховка)"
-
-# --- NAT (маскарад — вихід в інтернет) ---
-# SYN-cookie: захист від заповнення conntrack-таблиці під час SYN-шторму
-/ip firewall connection tracking set tcp-syn-cookie=yes
-
-/ip firewall nat
-add chain=srcnat action=masquerade out-interface-list=WAN \
-    comment="NAT: маскарад всіх локальних мереж в інтернет"
-
-# --- RAW: не відкривати DNS-router назовні (захист від amplification) ---
 /ip firewall raw
-add chain=prerouting action=drop protocol=udp dst-port=53 in-interface-list=WAN \
-    comment="RAW: DNS-router не назовні"
+add chain=prerouting action=drop protocol=udp dst-port=53 in-interface-list=WAN comment="RAW: DNS-router не назовні"
+# src-address у firewall приймає лише одне значення — список через кому
+# не підтримується, тому кожен приватний префікс додається окремим правилом.
+:local spoofNet ""
+:foreach spoofNet in={"10.0.0.0/8";"172.16.0.0/12";"192.168.0.0/16";"100.64.0.0/10";"127.0.0.0/8"} do={
+    /ip firewall raw add chain=prerouting action=drop src-address=$spoofNet in-interface-list=WAN comment="RAW: анти-спуфінг приватних джерел"
+}
 
-# Анти-спуфінг: приватні джерела (RFC1918/loopback/CGNAT) не приходять з WAN
-add chain=prerouting action=drop \
-    src-address=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,127.0.0.0/8 \
-    in-interface-list=WAN \
-    comment="RAW: спуфінг приватних джерел з WAN"
+# =============================================================================
+# 8а. СЛУЖБИ АДМІНІСТРУВАННЯ
+# =============================================================================
 
-# --- Служби адміністрування ---
 /ip service
-# УВАГА: у /ip service немає властивості comment — пояснення тут
-# (Telnet/FTP/www/api вимкнено як небезпечні; ssh/winbox — лише для LAN)
 set telnet disabled=yes
-set ftp    disabled=yes
-set www    disabled=yes
-set api    disabled=yes
-# Явно вимкнено (secure-by-default): :do on-error — на випадок, якщо
-# елемент відсутній у /ip service цієї версії RouterOS
+set ftp disabled=yes
+set www disabled=yes
+set api disabled=yes
 :do { set www-ssl disabled=yes } on-error={}
 :do { set api-ssl disabled=yes } on-error={}
 :do { set btest-server disabled=yes } on-error={}
-/ip snmp set enabled=no
-# Дубльний захист: служби обмежені самим RouterOS, а не тільки firewall.
-# $wgNet дозволяє адміністрування через WireGuard-підмережу.
-set ssh    port=22 address=$netLan,$wgNet
-set winbox port=8291 address=$netLan,$wgNet
+
+# Цільова версія RouterOS >= 7.20, тому available-from застосовується напряму.
+# Списки джерел: LAN завжди; wgNet — лише коли WireGuard створюється та
+# відповідний тумблер дозволяє доступ через тунель. Довірені WAN-адреси
+# додаються для відповідної служби; firewall також має окремі allow-правила.
+:local sshNets $netLan
+:local winboxNets $netLan
+:if ($wgEndpointMode != "disabled") do={
+    :if ($enableWgSsh = true) do={:set sshNets ($sshNets . "," . $wgNet)}
+    :if ($enableWgWinbox = true) do={:set winboxNets ($winboxNets . "," . $wgNet)}
+}
+:if ($enableWanSsh = true) do={
+    set ssh port=$routerSshPort available-from=($sshNets . "," . $wanAdminAddresses)
+} else={
+    set ssh port=$routerSshPort available-from=$sshNets
+}
+:if ($enableWanWinbox = true) do={
+    set winbox port=$routerWinboxPort available-from=($winboxNets . "," . $wanAdminAddresses)
+} else={
+    set winbox port=$routerWinboxPort available-from=$winboxNets
+}
 
 /ip ssh set strong-crypto=yes
+# З RouterOS 7.13 SNMP перенесено з /ip snmp на верхній рівень /snmp.
+/snmp set enabled=no
 
-# MAC-сервер: лише Winbox по MAC з LAN (порятунок при втраті IP)
 /tool mac-server set allowed-interface-list=none
 /tool mac-server mac-winbox set allowed-interface-list=LAN
 /tool mac-server ping set enabled=no
-
-# Neighbor discovery: лише з LAN
 /ip neighbor discovery-settings set discover-interface-list=LAN
-
-# UPnP вимкнено (пристрої не відкривають порти самовільно)
 /ip upnp set enabled=no
 
-
 # =============================================================================
-# 9. WIREGUARD VPN (ВІДДАЛЕНИЙ ДОСТУП) — за тумблером
-# =============================================================================
-
-:if ($enableWireguard = true) do={
-
-    # Секретний ключ генерується роутером автоматично при створенні інтерфейсу
-    /interface wireguard add name=wg-vpn listen-port=$wgPort mtu=1420 \
-        comment="WireGuard VPN для віддаленого доступу"
-
-    /ip address add address=$wgAddr interface=wg-vpn comment="Шлюз WireGuard"
-
-    # Пір (клієнт). wgPeerKey = PUBLIC-ключ клієнта WireGuard.
-    /interface wireguard peers add \
-        interface=wg-vpn \
-        public-key=$wgPeerKey \
-        allowed-address=$wgPeerAddr \
-        comment="Клієнт №1 (телефон/ноутбук)"
-
-    # Віддалений адмін має права локального
-    /interface list member add interface=wg-vpn list=LAN
-}
-
-# PUBLIC-ключ роутера (нужен клієнту): /interface wireguard peers print
-#
-# Приклад конфігу клієнта (tunnel.conf у додатку WireGuard):
-#   [Interface]
-#   PrivateKey = <приватний ключ клієнта>
-#   Address    = 10.10.100.2/32
-#   DNS        = 192.168.10.1
-#
-#   [Peer]
-#   PublicKey  = <PUBLIC-ключ роутера>
-#   AllowedIPs = 0.0.0.0/0, ::/0
-#   Endpoint   = <зовнішня IP або DDNS>:13231
-#   PersistentKeepalive = 25
-
-# NAT для VPN-клієнтів в інтернет (опціонально):
-# /ip firewall nat add chain=srcnat action=masquerade src-address=10.10.100.0/24 \
-#     out-interface-list=WAN comment="NAT для VPN-клієнтів"
-
-# DDNS MikroTik — якщо провайдер не дає статичну IP:
-# /ip cloud set ddns-enabled=yes ddns-update-interval=1h
-
-
-# =============================================================================
-# 10. QoS / ОБМЕЖЕННЯ ГЮСТОВОЇ МЕРЕЖІ (ОПЦІОНАЛЬНО)
+# 9. WIREGUARD VPN — КЕРУЄТЬСЯ wgEndpointMode
 # =============================================================================
 
-# /queue simple add name=limit-guest target=$netGuest \
-#     max-limit=10M/10M comment="Обмеження швидкості гостьової мережі"
-
-
-# =============================================================================
-# 11. СЛУЖБОВІ СКРИПТИ ТА ПЛАНУВАЛЬНИК
-# =============================================================================
-
-# Щоденний бекап: .backup (бінарний) та .rsc (текстовий export) — за тумблером
-:if ($enableBackup = true) do={
-    /system script add name=backup-daily source={
-        :local dateStr [/system clock get date]
-        :local fname ("backup-" . [/system identity get name] . "-" . $dateStr)
-        /system backup save name=$fname
-        /export file=$fname show-sensitive
-        :log info "Бекап виконано: $fname"
-        # Ротація: лишаємо останні 14 файлів (7 пар backup + rsc).
-        # УВАГА: порядок /file find залежить від версії RouterOS —
-        # звірити на живому роутері перед покладанням на ротацію.
-        :local files [/file find where name~"^backup-"]
-        :if ([:len $files] > 14) do={
-            :for i from=0 to=([:len $files] - 15) do={
-                /file remove [:pick $files $i ($i + 1)]
-            }
-        }
+:if ($wgEndpointMode != "disabled") do={
+    :if ([:len [/interface wireguard find where name="wg-vpn"]] = 0) do={
+        /interface wireguard add name=wg-vpn listen-port=$wgPort mtu=1420 comment="WireGuard VPN"
     }
-
-    /system scheduler add name=backup-daily on-event="/system script run backup-daily" \
-        start-time=$backupStartTime interval=1d \
-        comment="Щоденний бекап"
+    :if ([:len [/ip address find where interface="wg-vpn" and address=$wgAddr]] = 0) do={
+        /ip address add address=$wgAddr interface=wg-vpn comment="Шлюз WireGuard"
+    }
+    :if ([:len [/interface wireguard peers find where interface="wg-vpn" and allowed-address=$wgPeerAddr]] = 0) do={
+        /interface wireguard peers add interface=wg-vpn public-key=$wgPeerKey allowed-address=$wgPeerAddr comment="Клієнт №1"
+    }
+    :if ([:len [/interface list member find where interface="wg-vpn" and list="LAN"]] = 0) do={
+        /interface list member add interface=wg-vpn list=LAN
+    }
+    :if ($wgEndpointMode = "mikrotik-ddns") do={
+        /ip cloud set ddns-enabled=yes update-time=yes
+    }
 }
 
-# Watchdog WAN: 3 невдалі пінги поспіль → перезапуск DHCP-клієнта
-# /system script add name=wan-watchdog source={
-#     :local count 0
-#     :for i from=1 to=3 do={
-#         :if ([/ping 8.8.8.8 count=1 interface=ether1 as-value] = false) do={
-#             :set count ($count + 1)
-#         }
-#     }
-#     :if ($count >= 3) do={
-#         :log warning "WAN пропав — перезапускаю DHCP-клієнт"
-#         /ip dhcp-client disable [find]
-#         :delay 5s
-#         /ip dhcp-client enable [find]
-#     }
-# }
-# /system scheduler add name=wan-watchdog on-event="/system script run wan-watchdog" \
-#     interval=5m comment="Перевірка WAN кожні 5 хв"
-
+# Для wgEndpointMode=ip клієнтський Endpoint: wgEndpointIp:wgPort.
+# Для wgEndpointMode=mikrotik-ddns використовуйте dns-name з /ip cloud print.
+# Публічний ключ роутера: /interface wireguard print detail
+# Приватний ключ клієнта зберігається лише на клієнтському пристрої.
 
 # =============================================================================
-# 12. ОПЦІОНАЛЬНЕ
+# 10. QoS — ОПЦІЙНО
 # =============================================================================
 
-# Нічний режим LED — за тумблером (гасить user-led у заданий інтервал).
-# Ім'я діоду звірте на своєму пристрої: /system led print
-:if ($enableNightLed = true) do={
-    /system led add all=yes leds=user-led type=off interval=$nightLedInterval \
-        comment="Нічний режим"
-}
-
+# /queue simple add name=limit-guest target=$netGuest max-limit=10M/10M comment="Обмеження швидкості GUEST"
 
 # =============================================================================
-# КІНЕЦЬ КОНФІГУРАЦІЇ
-# =============================================================================
-#  ПІСЛЯ ЗАСТОСУВАННЯ ПЕРЕВІРТЕ:
-#  1. /ip dhcp-client print          — WAN отримав IP від провайдера
-#  2. /ip firewall filter print      — правила активні (не disabled)
-#  3. (WiFi-перевірка — лише на реальних роутерах, не на CHR)
-#  4. /ip dhcp-server lease print    — клієнти отримують адреси
-#  5. /ping 8.8.8.8                  — інтернет працює
-#  6. Клієнт з ether2 → адреса 192.168.10.x
-#  7. /system reboot                 — перевірити, що все піднімається з нуля
-#  8. Тумблери ENABLE_* у розділі 0 — вимкнене має бути відсутнім:
-#     /interface wireguard print; /interface vlan print; /interface list print
-#  9. При логіні видно "CONFIG OK — import finished" — конфіг застосувався
-#     ПОВНІСТЮ. Якщо банера немає — імпорт обірвався на одному з розділів.
+# 11. ЗАВЕРШЕННЯ ТА МАРКЕР УСПІШНОГО ІМПОРТУ
 # =============================================================================
 
-# Маркер успішного завершення імпорту (поєднаний з банером входу).
-# Тримати ОСТАННІМ рядком конфігу: якщо імпорт обірветься раніше,
-# банер з "CONFIG OK" не з'явиться при логіні.
-/system note set show-at-login=yes \
-    note="CONFIG OK — import finished. Authorization required. Unauthorized access is prohibited."
+/system note set show-at-login=yes note="CONFIG OK — import finished. Authorization required. Unauthorized access is prohibited."
