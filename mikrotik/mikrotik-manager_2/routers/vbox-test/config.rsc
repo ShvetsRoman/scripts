@@ -33,8 +33,8 @@
 # =============================================================================
 
 # --- Підключення setup.sh ---
-:global routerHost "192.168.88.1"
-:global routerUser "admin"
+:global routerHost "192.168.10.1"
+:global routerUser "roman"
 :global routerPassword "11111111"
 # Порти SSH та Winbox, які слухає роутер; SSH-порт також використовує setup.sh.
 # Якщо змінюєте порт — додайте його до bfPorts.
