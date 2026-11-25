@@ -14,7 +14,10 @@
 typeset -g ZSH_CONFIG_DIR="${ZDOTDIR:-$HOME/.config/zsh}"
 typeset -g ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 typeset -g ZSH_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/zsh"
-mkdir -p -- "$ZSH_CACHE_DIR" "$ZSH_STATE_DIR" || return 1
+if ! mkdir -p -- "$ZSH_CACHE_DIR" "$ZSH_STATE_DIR"; then
+    print -u2 "zsh: не вдалося створити $ZSH_CACHE_DIR або $ZSH_STATE_DIR"
+    return 1
+fi
 
 # ============================================================
 # 1. PATH
@@ -58,13 +61,13 @@ unsetopt SHARE_HISTORY
 # Системні функції доповнення Arch Linux (zsh-completions).
 fpath=(/usr/share/zsh/site-functions ${fpath:#/usr/share/zsh/site-functions})
 
-# -C: без compaudit (перевірка прав каталогів) — швидкий старт.
-# Дамп кешується у $ZSH_CACHE_DIR: для повної перевірки прав
-# видаліть ~/.cache/zsh/zcompdump* і перезапустіть shell.
+# compinit перевіряє права каталогів і сам оновлює дамп, коли
+# змінюється набір доповнень: нові команди після pacman -S
+# підхоплюються автоматично. Дамп у $ZSH_CACHE_DIR прискорює старт.
 autoload -Uz compinit
-compinit -C -d "$ZSH_CACHE_DIR/zcompdump"
+compinit -d "$ZSH_CACHE_DIR/zcompdump"
 
-# Tab відкриває меню вибору варіанта.
+# Меню вибору варіанта (діє, коли Tab не перехоплено fzf — секція 7).
 zstyle ':completion:*' menu select
 
 # Групи, підписи та повідомлення.
@@ -79,16 +82,16 @@ zstyle ':completion:*' matcher-list \
     'm:{a-zA-Z}={A-Za-z}' \
     'r:|[._-]=** r:|=**'
 
-# Кольори ls/eza, якщо визначені.
-if [[ -n ${LS_COLORS-} ]]; then
-    zstyle ':completion:*' list-colors "${(@s.:.)LS_COLORS}"
-fi
 
 # ============================================================
 # 5. АЛІАСИ
 # ============================================================
 
-source "$ZSH_CONFIG_DIR/alias.zsh"
+if [[ -r "$ZSH_CONFIG_DIR/alias.zsh" ]]; then
+    source "$ZSH_CONFIG_DIR/alias.zsh"
+else
+    print -u2 "zsh: не знайдено $ZSH_CONFIG_DIR/alias.zsh"
+fi
 
 # ============================================================
 # 6. КЛАВІАТУРА (EMACS-РЕЖИМ)
@@ -146,7 +149,11 @@ fi
 # Обов'язково останніми серед ZLE — вимога zsh-syntax-highlighting.
 # ============================================================
 
-source "$ZSH_CONFIG_DIR/plugins.zsh"
+if [[ -r "$ZSH_CONFIG_DIR/plugins.zsh" ]]; then
+    source "$ZSH_CONFIG_DIR/plugins.zsh"
+else
+    print -u2 "zsh: не знайдено $ZSH_CONFIG_DIR/plugins.zsh"
+fi
 
 # ============================================================
 # 9. ВЛАСНІ КОМАНДИ

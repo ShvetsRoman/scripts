@@ -259,3 +259,62 @@ pk() {
     printf '\nГотово.\n'
     printf 'Створено: %s\n' "$archive"
 }
+
+# ============================================================
+# ORPHAN PACKAGES
+# ============================================================
+# Допоміжна функція: список orphan-пакетів, які:
+#   - були встановлені як залежності;
+#   - більше не потрібні жодному встановленому пакету.
+_orphan_packages() {
+    pacman -Qtdq 2>/dev/null
+}
+
+sprs() {
+    local -a packages
+    local answer
+    local package
+
+    packages=("${(@f)$(_orphan_packages)}")
+
+    if ((${#packages[@]} == 0)); then
+        printf 'Orphan-пакети не знайдено.\n'
+        return 0
+    fi
+
+    printf 'Знайдено orphan-пакетів: %d\n\n' "${#packages[@]}"
+    printf 'Буде запропоновано видалити:\n'
+
+    for package in "${packages[@]}"; do
+        printf '  %s\n' "$package"
+    done
+
+    printf '\n'
+    printf 'Видалити ці пакети? [y/N]: '
+    read -r answer
+
+    case "${answer:l}" in
+        y | yes | так)
+            ;;
+        *)
+            printf 'Скасовано.\n'
+            return 0
+            ;;
+    esac
+
+    sudo pacman -Rns -- "${packages[@]}"
+}
+
+sprsl() {
+    local -a packages
+
+    packages=("${(@f)$(_orphan_packages)}")
+
+    if ((${#packages[@]} == 0)); then
+        printf 'Orphan-пакети не знайдено.\n'
+        return 0
+    fi
+
+    printf 'Orphan-пакети: %d\n\n' "${#packages[@]}"
+    printf '  %s\n' "${packages[@]}"
+}

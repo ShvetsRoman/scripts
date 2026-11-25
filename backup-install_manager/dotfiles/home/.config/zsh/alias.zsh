@@ -121,7 +121,7 @@ alias nza='nvim "$HOME/.config/zsh/alias.zsh"'
 # PATH / environment (усе в .zshenv: PATH — у .zshrc, секція 1).
 alias nzp='nvim "$HOME/.config/zsh/.zshenv"'
 
-# Клавіатура та інтеграції (секції 6-7 у .zshrc).
+# ZLE-плагіни та кольори підсвічування (секція 8 у .zshrc).
 alias nzk='nvim "$HOME/.config/zsh/plugins.zsh"'
 
 # Каталог додаткових Zsh-скриптів.
@@ -309,69 +309,6 @@ alias spss='sudo pacman -Ss'
 # Видалення.
 alias spr='sudo pacman -R'
 alias sprns='sudo pacman -Rns'
-
-# ORPHAN PACKAGES
-# Допоміжна функція: список orphan-пакетів, які:
-#   - були встановлені як залежності;
-#   - більше не потрібні жодному встановленому пакету.
-_orphan_packages() {
-    pacman -Qtdq 2>/dev/null
-}
-
-sprs() {
-    local -a packages
-    local answer
-    local package
-
-    # Отримати список orphan-пакетів.
-    packages=("${(@f)$(_orphan_packages)}")
-
-    # Якщо orphan-пакетів немає.
-    if ((${#packages[@]} == 0)); then
-        printf 'Orphan-пакети не знайдено.\n'
-        return 0
-    fi
-
-    # Показати список.
-    printf 'Знайдено orphan-пакетів: %d\n\n' "${#packages[@]}"
-    printf 'Буде запропоновано видалити:\n'
-
-    for package in "${packages[@]}"; do
-        printf '  %s\n' "$package"
-    done
-
-    printf '\n'
-
-    # Підтвердження.
-    printf 'Видалити ці пакети? [y/N]: '
-    read -r answer
-
-    case "${answer:l}" in
-        y | yes | так)
-            ;;
-        *)
-            printf 'Скасовано.\n'
-            return 0
-            ;;
-    esac
-
-    # Видалення.
-    sudo pacman -Rns -- "${packages[@]}"
-}
-
-sprsl() {
-    local -a packages
-
-    packages=("${(@f)$(_orphan_packages)}")
-
-    if ((${#packages[@]} == 0)); then
-        printf 'Orphan-пакети не знайдено.\n'
-        return 0
-    fi
-
-    printf 'Orphan-пакети: %d\n\n' "${#packages[@]}"
-    printf '  %s\n' "${packages[@]}"
-}
 
 # PARU
 # Встановлення пакетів без повторного встановлення
