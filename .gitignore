@@ -36,3 +36,8 @@ mikrotik-manager/routers/*/config.rsc
 mikrotik-manager-bash/profiles/*/.secrets
 mikrotik-manager-bash/profiles/*/backups/
 mikrotik/*.rsc
+
+# WordPress-стек: профілі розгортання можуть містити паролі.
+# Комітимо лише типовий профіль і приклади.
+wp_docker/install-wordpress/configs/*/defaults.conf
+!wp_docker/install-wordpress/configs/defaults/defaults.conf
