@@ -147,4 +147,14 @@
       }
     }
   ],
+  "mcp": {
+    "solidcraft": {
+      "command": [
+        "/usr/bin/solidcraft-cli",
+        "mcp"
+      ],
+      "enabled": true,
+      "type": "local"
+    }
+  },
 }

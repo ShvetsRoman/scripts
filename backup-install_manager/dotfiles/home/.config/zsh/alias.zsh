@@ -118,8 +118,11 @@ alias nzc='nvim "$HOME/.config/zsh/.zshrc"'
 # Alias.
 alias nza='nvim "$HOME/.config/zsh/alias.zsh"'
 
-# PATH / environment.
-alias nzp='nvim "$HOME/.config/zsh/path.zsh"'
+# PATH / environment (усе в .zshenv: PATH — у .zshrc, секція 1).
+alias nzp='nvim "$HOME/.config/zsh/.zshenv"'
+
+# Клавіатура та інтеграції (секції 6-7 у .zshrc).
+alias nzk='nvim "$HOME/.config/zsh/plugins.zsh"'
 
 # Каталог додаткових Zsh-скриптів.
 alias nzs='nvim "$HOME/.config/zsh/scripts"'
@@ -275,6 +278,7 @@ _REFLECTOR_ARGS=(
     --country Ukraine,Poland,Germany,Czechia,Netherlands
     --latest 15
     --protocol https
+    --age 12
     --sort rate
     --download-timeout 15
 )
@@ -282,6 +286,10 @@ _REFLECTOR_ARGS=(
 alias mlru="sudo reflector ${_REFLECTOR_ARGS[*]} --save /etc/pacman.d/mirrorlist"
 
 alias mlr="reflector ${_REFLECTOR_ARGS[*]}"
+
+# Аліаси вже містять готові аргументи — прибираємо змінну з оточення,
+# щоб вона не висіла глобально в кожній сесії.
+unset _REFLECTOR_ARGS
 
 alias mlnvim='sudoedit /etc/pacman.d/mirrorlist'
 
