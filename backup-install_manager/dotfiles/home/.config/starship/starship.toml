@@ -40,7 +40,8 @@ $character"""
 # Модулі праворуч від основного запрошення.
 right_format = """
 $cmd_duration\
-$jobs$time"""
+$jobs\
+$time"""
 
 
 # ============================================================
@@ -283,7 +284,6 @@ vimcmd_replace_symbol = "[❮](bold peach)"
 
 # Vi visual mode.
 vimcmd_visual_symbol = "[❮](bold yellow)"
-
 
 # ============================================================
 # 21. ВИМКНЕНІ МОДУЛІ
