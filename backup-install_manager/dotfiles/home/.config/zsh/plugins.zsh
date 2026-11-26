@@ -37,7 +37,8 @@ fi
 # Vim-керування командним рядком та індикатор режиму.
 # ============================================================
 
-if [[ -r "$ZSH_CONFIG_DIR/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh" ]]; then
+UP_VIM_MODE=true
+if [[ "$UP_VIM_MODE" == "true" && -r "$ZSH_CONFIG_DIR/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh" ]]; then
 
     KEYTIMEOUT=30
     VIM_MODE_INITIAL_KEYMAP=viins
@@ -57,15 +58,18 @@ if [[ -r "$ZSH_CONFIG_DIR/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh" ]]; then
     source "$ZSH_CONFIG_DIR/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh"
 
     # Ініціалізація індикатора режиму
-    MODE_INDICATOR_PROMPT="${vim_mode_indicator_pfx}${MODE_INDICATOR_VIINS}"
+    UP_VIM_MODE_PROMPT=true
+    if [[ "$UP_VIM_MODE_PROMPT" == "true" ]]; then
+        MODE_INDICATOR_PROMPT="${vim_mode_indicator_pfx}${MODE_INDICATOR_VIINS}"
 
-    # Встановлення актуального режиму
-    vim-mode-update-prompt "$KEYMAP"
+        # Встановлення актуального режиму
+        vim-mode-update-prompt "$KEYMAP"
 
-    setopt PROMPT_SUBST
-    # Додаємо індикатор режиму до правого промпта Starship.
-    # Змінна MODE_INDICATOR_PROMPT оновлюється самим плагіном.
-    RPS1="${RPS1} \${MODE_INDICATOR_PROMPT}"
+        setopt PROMPT_SUBST
+        # Додаємо індикатор режиму до правого промпта Starship.
+        # Змінна MODE_INDICATOR_PROMPT оновлюється самим плагіном.
+        RPS1="${RPS1} \${MODE_INDICATOR_PROMPT}"
+    fi
 fi
 
 # ============================================================
